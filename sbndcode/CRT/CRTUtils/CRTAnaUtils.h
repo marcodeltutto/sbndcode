@@ -32,6 +32,10 @@
 
 #include "sbndcode/CRT/CRTProducts/CRTHit.hh"
 #include "sbndcode/CRT/CRTProducts/CRTTrack.hh"
+#include "sbndcode/CRT/CRTUtils/CRTTrackRecoAlg.h"
+#include "sbndcode/CRT/CRTUtils/CRTT0MatchAlg.h"
+#include "sbndcode/CRT/CRTUtils/CRTTrackMatchAlg.h"
+
 
 // c++
 #include <iostream>
@@ -48,18 +52,24 @@
 #include "TTree.h"
 
 
+namespace sbnd{
 namespace CRTAnaUtils{
 
-  std::vector<std::vector<sbnd::crt::CRTHit>> CreateCRTTzeros(std::vector<sbnd::crt::CRTHit> crtHits, double fTimeLimit);
+  std::vector<std::vector<art::Ptr<crt::CRTHit>>> CreateCRTTzeros(std::vector<art::Ptr<crt::CRTHit>> crtHits, double fTimeLimit);
 
-  std::vector<sbnd::crt::CRTTrack> CreateCRTTracks(std::vector<std::vector<sbnd::crt::CRTHit>> crtTzeros, double fAverageHitDist, bool fUseTopPlane, double fDistanceLimit);
+  std::vector<crt::CRTTrack> CreateCRTTracks(std::vector<std::vector<art::Ptr<crt::CRTHit>>> crtTzeros, 
+                                             double fAverageHitDist, bool fUseTopPlane, double fDistanceLimit);
 
-  std::vector<sbnd::crt::CRTTrack> CreateCRTTracks(std::vector<sbnd::crt::CRTHit> crtHits, double fTimeLimit, double fAverageHitDist, bool fUseTopPlane, double fDistanceLimit);
+  std::vector<crt::CRTTrack> CreateCRTTracks(std::vector<art::Ptr<crt::CRTHit>> crtHits, double fTimeLimit, 
+                                             double fAverageHitDist, bool fUseTopPlane, double fDistanceLimit);
 
-  double T0FromCRTHits(recob::Track tpcTrack, std::vector<sbnd::crt::CRTHit> crtHits, int tpc, double fMinTrackLength, double fTrackDirectionFrac, double fDistanceLimit);
+  double T0FromCRTHits(recob::Track tpcTrack, std::vector<crt::CRTHit> crtHits, int tpc, double fMinTrackLength, 
+                       double fTrackDirectionFrac, double fDistanceLimit);
 
-  double T0FromCRTTracks(recob::Track tpcTrack, std::vector<sbnd::crt::CRTTrack> crtTracks, int tpc, double fMaxAngleDiff, double fMaxDistance);
+  double T0FromCRTTracks(recob::Track tpcTrack, std::vector<crt::CRTTrack> crtTracks, int tpc, double fMaxAngleDiff, 
+                         double fMaxDistance);
 
+}
 }
 
 #endif

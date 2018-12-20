@@ -35,7 +35,7 @@
 #include "canvas/Persistency/Common/FindManyP.h"
 #include "canvas/Utilities/Exception.h"
 #include "larsim/MCCheater/BackTrackerService.h"
-
+#include "larsim/MCCheater/ParticleInventoryService.h"
 
 // Utility libraries
 #include "messagefacility/MessageLogger/MessageLogger.h"
@@ -267,6 +267,7 @@ namespace sbnd {
 
   void CRTT0MatchingAna::analyze(const art::Event& event)
   {
+    art::ServiceHandle<cheat::ParticleInventoryService> pi_serv;
 
     int nTracks = 0;
     int nMatches = 0;
@@ -284,7 +285,10 @@ namespace sbnd {
     std::map<int, simb::MCParticle> particles;
     for (auto const& particle: (*particleHandle)){
       int partId = particle.TrackId();
-      particles[partId] = particle;
+      art::Ptr<simb::MCTruth> truth = pi_serv->TrackIdToMCTruth_P(partId);
+      if(truth->Origin() == simb::kBeamNeutrino){
+        particles[partId] = particle;
+      }
     }
 
     if(fVerbose) std::cout<<"Number of true particles = "<<particles.size()<<std::endl;
@@ -399,7 +403,7 @@ namespace sbnd {
         // Loop over the hits on the tagger
         for(auto &crtHit : taggerHits.second){
           double trueDist = DistToCrtHit(trueCross, crtHit);
-          double crtTime = ((double)(int)crtHit.ts1_ns) * 1e-3; // [us]
+          double crtTime = ((double)(int)crtHit.ts1_ns) * 1e-4; // [us]
           if(trueDist<20. && std::abs(crtTime - trueTime)<1.) {
             if(fVerbose) std::cout<<tagger<<": CRT pos = ("<<crtHit.x_pos<<", "<<crtHit.y_pos<<", "<<crtHit.z_pos
                                   <<"), time = "<<crtTime<<"\nTrue pos = ("<<trueCross.X()<<", "
@@ -454,7 +458,7 @@ namespace sbnd {
         // Loop over all the CRT hits
         for(auto &crtHit : taggerHits.second){
           // Check if hit is within the allowed t0 range
-          double crtTime = ((double)(int)crtHit.ts1_ns) * 1e-3; // [us]
+          double crtTime = ((double)(int)crtHit.ts1_ns) * 1e-4; // [us]
           if (!(crtTime >= t0MinMax.first-10. && crtTime <= t0MinMax.second+10.)) continue;
           TVector3 crtPoint(crtHit.x_pos, crtHit.y_pos, crtHit.z_pos);
 

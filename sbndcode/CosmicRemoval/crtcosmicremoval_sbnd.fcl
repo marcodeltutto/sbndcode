@@ -56,7 +56,7 @@ physics:
       SimModuleLabel:      "largeant"        # Simulation producer module label
       CrtHitModuleLabel:   "crthit"          # CRT hit producer module label
       TpcTrackModuleLabel: "pmalgtrackmaker" # TPC track producer module label
-      Verbose:             true             # Print extra information about what's going on
+      Verbose:             false             # Print extra information about what's going on
     }
   }
 

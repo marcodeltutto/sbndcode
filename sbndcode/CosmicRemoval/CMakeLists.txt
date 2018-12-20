@@ -32,7 +32,7 @@ art_make(
                            ${ROOT_ROOFIT}
                            ${ROOT_ROOFITCORE} 
                            sbndcode_RecoUtils
-                           sbndcode_CRT_CRTUtils
+                           sbndcode_CRTUtils
                            sbndcode_CRT
                            sbndcode_CRTProducts
         )

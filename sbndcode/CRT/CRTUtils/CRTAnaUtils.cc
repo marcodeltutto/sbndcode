@@ -13,7 +13,7 @@ std::vector<std::vector<art::Ptr<sbnd::crt::CRTHit>>> CRTAnaUtils::CreateCRTTzer
   for(size_t i = 0; i < crtHits.size(); i++){
     if(iflag[i] == 0){
       std::vector<art::Ptr<sbnd::crt::CRTHit>> CRTTzero;
-      double time_ns_A = crtHits[i]->ts1_ns;
+      double time_ns_A = crtHits[i]->ts1_ns/10.; //FIXME
       iflag[i]=1;
       CRTTzero.push_back(crtHits[i]);
 
@@ -22,7 +22,7 @@ std::vector<std::vector<art::Ptr<sbnd::crt::CRTHit>>> CRTAnaUtils::CreateCRTTzer
       for(size_t j = i+1; j < crtHits.size(); j++){
         if(iflag[j] == 0){
           // If ts1_ns - ts1_ns < diff then put them in a vector
-          double time_ns_B = crtHits[j]->ts1_ns;
+          double time_ns_B = crtHits[j]->ts1_ns/10.; //FIXME
           double diff = std::abs(time_ns_B - time_ns_A) * 1e-3; // [us]
           if(diff < fTimeLimit){
             iflag[j] = 1;
@@ -118,7 +118,7 @@ double CRTAnaUtils::T0FromCRTHits(recob::Track tpcTrack, std::vector<sbnd::crt::
   // Loop over all the CRT hits
   for(auto &crtHit : crtHits){
     // Check if hit is within the allowed t0 range
-    double crtTime = ((double)(int)crtHit.ts1_ns) * 1e-3;
+    double crtTime = ((double)(int)crtHit.ts1_ns) * 1e-4; //FIXME
     if (!(crtTime >= t0MinMax.first - 10. && crtTime <= t0MinMax.second + 10.)) continue;
     TVector3 crtPoint(crtHit.x_pos, crtHit.y_pos, crtHit.z_pos);
   
@@ -175,7 +175,7 @@ double CRTAnaUtils::T0FromCRTTracks(recob::Track tpcTrack, std::vector<sbnd::crt
     crtIndex++;
   }
  
-  std::vector<std::pair<int, double>> crtTpcMatchCandidates;
+  std::vector<std::pair<double, double>> crtTpcMatchCandidates;
   // Loop over the reco crt tracks
   for (auto const& recoCrtTrack : recoCrtTracks){
  
@@ -207,7 +207,7 @@ double CRTAnaUtils::T0FromCRTTracks(recob::Track tpcTrack, std::vector<sbnd::crt
   }
 
   // Choose the track which matches the closest
-  int bestTime = -99999;
+  double bestTime = -99999;
   if(crtTpcMatchCandidates.size() > 0){
     std::sort(crtTpcMatchCandidates.begin(), crtTpcMatchCandidates.end(), [](auto& left, auto& right){
               return left.second < right.second;});

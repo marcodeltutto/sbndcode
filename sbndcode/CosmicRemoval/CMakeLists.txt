@@ -25,6 +25,7 @@ art_make(
                            ${MF_UTILITIES}
                            ${FHICLCPP}
                            ${ROOT_GEOM}
+                           ${ROOT_GENVECTOR}
                            ${ROOT_XMLIO}
                            ${ROOT_GDML}
                            ${ROOT_BASIC_LIB_LIST}

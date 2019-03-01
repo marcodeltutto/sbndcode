@@ -334,20 +334,9 @@ namespace sbnd {
       nTracks++;
 
       // Calculate direction as an average over directions
-      size_t nTrackPoints = track.NumberTrajectoryPoints();
-      int endPoint = (int)floor(nTrackPoints*fTrackDirectionFrac);
-      double xTotStart = 0; double yTotStart = 0; double zTotStart = 0;
-      double xTotEnd = 0; double yTotEnd = 0; double zTotEnd = 0;
-      for(int i = 0; i < endPoint; i++){
-        xTotStart -= track.DirectionAtPoint(i).X();
-        yTotStart -= track.DirectionAtPoint(i).Y();
-        zTotStart -= track.DirectionAtPoint(i).Z();
-        xTotEnd += track.DirectionAtPoint(nTrackPoints - (i+1)).X();
-        yTotEnd += track.DirectionAtPoint(nTrackPoints - (i+1)).Y();
-        zTotEnd += track.DirectionAtPoint(nTrackPoints - (i+1)).Z();
-      } 
-      TVector3 startDir = {xTotStart/endPoint, yTotStart/endPoint, zTotStart/endPoint};
-      TVector3 endDir = {xTotEnd/endPoint, yTotEnd/endPoint, zTotEnd/endPoint};
+      std::pair<TVector3, TVector3> startEndDir = t0Alg.TrackDirectionAverage(track, fTrackDirectionFrac);
+      TVector3 startDir = startEndDir.first;
+      TVector3 endDir = startEndDir.second;
 
       // Get the start and end points
       TVector3 start = track.Vertex<TVector3>();

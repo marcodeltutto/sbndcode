@@ -96,6 +96,9 @@ namespace sbnd{
     // Function to calculate if a CRTTrack crosses the TPC volume
     bool CrossesTPC(crt::CRTTrack track);
 
+    // Function to calculate if a CRTTrack crosses the TPC volume
+    bool CrossesAPA(crt::CRTTrack track);
+
   private:
 
     geo::GeometryCore const* fGeometryService;

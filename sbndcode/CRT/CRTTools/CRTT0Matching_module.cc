@@ -174,20 +174,9 @@ namespace sbnd {
         if (tpc != (int)hits[hits.size()-1]->WireID().TPC) continue; 
 
         // Calculate direction as an average over directions
-        size_t nTrackPoints = trackList[track_i]->NumberTrajectoryPoints();
-        int endPoint = (int)floor(nTrackPoints*fTrackDirectionFrac);
-        double xTotStart = 0; double yTotStart = 0; double zTotStart = 0;
-        double xTotEnd = 0; double yTotEnd = 0; double zTotEnd = 0;
-        for(int i = 0; i < endPoint; i++){
-          xTotStart += trackList[track_i]->DirectionAtPoint(i).X();
-          yTotStart += trackList[track_i]->DirectionAtPoint(i).Y();
-          zTotStart += trackList[track_i]->DirectionAtPoint(i).Z();
-          xTotEnd += trackList[track_i]->DirectionAtPoint(nTrackPoints - (i+1)).X();
-          yTotEnd += trackList[track_i]->DirectionAtPoint(nTrackPoints - (i+1)).Y();
-          zTotEnd += trackList[track_i]->DirectionAtPoint(nTrackPoints - (i+1)).Z();
-        }
-        TVector3 startDir = {-xTotStart/endPoint, -yTotStart/endPoint, -zTotStart/endPoint};
-        TVector3 endDir = {xTotEnd/endPoint, yTotEnd/endPoint, zTotEnd/endPoint};
+        std::pair<TVector3, TVector3> startEndDir = t0Alg.TrackDirectionAverage(*trackList[track_i], fTrackDirectionFrac);
+        TVector3 startDir = startEndDir.first;
+        TVector3 endDir = startEndDir.second;
 
         TVector3 start = trackList[track_i]->Vertex<TVector3>();
         TVector3 end = trackList[track_i]->End<TVector3>();

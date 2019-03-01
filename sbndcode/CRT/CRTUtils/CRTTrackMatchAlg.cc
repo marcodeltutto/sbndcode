@@ -246,4 +246,52 @@ bool CRTTrackMatchAlg::CrossesTPC(crt::CRTTrack track){
 } // CRTTrackMatchAlg::CrossesTPC()
 
 
+// Function to calculate if a CRTTrack crosses the wire planes
+bool CRTTrackMatchAlg::CrossesAPA(crt::CRTTrack track){
+
+  // Check if particle enters the TPC
+  bool crosses = false;
+  double xmax = 2.0 * fGeometryService->DetHalfWidth();
+  double ymax = fGeometryService->DetHalfHeight();
+  double zmin = 0.;
+  double zmax = fGeometryService->DetLength();
+
+  if(track.complete){
+    // Get track info
+    TVector3 start(track.x1_pos, track.y1_pos, track.z1_pos);
+    TVector3 end(track.x2_pos, track.y2_pos, track.z2_pos);
+    TVector3 diff = end - start;
+    // Loop over trajectory points
+    int npts = 100;
+    for (int traj_i = 0; traj_i < npts; traj_i++){
+      TVector3 trajPoint = start + ((traj_i+1)/100.)*diff;
+      // Check if point is within reconstructable volume
+      if (std::abs(trajPoint[0]) > xmax-10 && std::abs(trajPoint[0]) < xmax + 10 && std::abs(trajPoint[1]) <= ymax && trajPoint[2] >= zmin && trajPoint[2] <= zmax){
+        crosses = true;
+      }
+    }
+  }
+
+  // If track just between top two planes
+  else{
+    //
+    TVector3 start(track.x1_pos, track.y1_pos, track.z1_pos);
+    TVector3 end(track.x2_pos, track.y2_pos, track.z2_pos);
+    if(start.Y() < end.Y()) std::swap(start, end);
+    TVector3 diff = (end - start).Unit();
+    int npts = 100;
+    for (int traj_i = 0; traj_i < npts; traj_i++){
+      // TODO: length of track needs to be more detector agnostic
+      TVector3 trajPoint = start + (100.*(traj_i+1))*diff;
+      // Check if point is within reconstructable volume
+      if (std::abs(trajPoint[0]) > xmax-10 && std::abs(trajPoint[0]) < xmax+10 && std::abs(trajPoint[1]) <= ymax && trajPoint[2] >= zmin && trajPoint[2] <= zmax){
+        crosses = true;
+      }
+    }
+  }
+
+  return crosses;
+
+} // CRTTrackMatchAlg::CrossesAPA()
+
 }

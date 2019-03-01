@@ -8,15 +8,18 @@
 
 // sbndcode includes
 #include "sbndcode/RecoUtils/RecoUtils.h"
+#include "sbndcode/CosmicRemoval/CosmicRemovalUtils/CosmicRemovalUtils.h"
 #include "sbndcode/CRT/CRTUtils/CRTAnaUtils.h"
 #include "sbndcode/CRT/CRTUtils/CRTT0MatchAlg.h"
 #include "sbndcode/CRT/CRTProducts/CRTTrack.hh"
 #include "sbndcode/CRT/CRTUtils/CRTTruthRecoAlg.h"
+#include "sbndcode/CRT/CRTUtils/CRTTrackMatchAlg.h"
 
 // LArSoft includes
 #include "lardataobj/AnalysisBase/T0.h"
 #include "lardataobj/RecoBase/Hit.h"
 #include "lardataobj/RecoBase/Track.h"
+#include "lardataobj/RecoBase/PFParticle.h"
 #include "lardataobj/AnalysisBase/Calorimetry.h"
 #include "lardataobj/AnalysisBase/ParticleID.h"
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
@@ -123,11 +126,6 @@ namespace sbnd {
         Comment("tag of calorimetry producer data product")
       };
 
-      fhicl::Atom<art::InputTag> PidModuleLabel {
-        Name("PidModuleLabel"),
-        Comment("tag of PID producer data product")
-      };
-
       fhicl::Atom<bool> Verbose {
         Name("Verbose"),
         Comment("Print information about what's going on")
@@ -154,19 +152,15 @@ namespace sbnd {
     // Called once, at end of the job
     virtual void endJob() override;
 
-    bool EntersFiducial(recob::Track track, double fiducial, double fiducialTop);
-
-    bool InFiducial(geo::Point_t point, double fiducial, double fiducialTop);
+    //bool InFiducial(geo::Point_t point, double fiducial, double fiducialTop);
 
     int DetectedInTPC(std::vector<art::Ptr<recob::Hit>> hits);
 
-    double T0FromCpaStitching(recob::Track track, std::vector<recob::Track> tracks, double stitchDist, double stitchAngle);
+    std::pair<double, bool> T0FromCpaStitching(recob::Track track, std::vector<recob::Track> tracks, double stitchDist, double stitchAngle);
 
     double T0FromApaCross(recob::Track track, std::vector<double> t0s, int tpc);
 
-    bool IsStoppingMuon(art::Ptr<anab::ParticleID> pid, art::Ptr<anab::Calorimetry> calo);
-
-    double StoppingEnd(std::vector<art::Ptr<anab::Calorimetry>> calo, geo::Point_t end, int id);
+    double StoppingEnd(std::vector<art::Ptr<anab::Calorimetry>> calo, geo::Point_t end);
     
     // Function to draw true and reco tracks
     void DrawTrueTracks(RecoTruth truthMatch, bool truth, bool tpctracks, int id);
@@ -178,7 +172,6 @@ namespace sbnd {
     art::InputTag fCrtHitModuleLabel; ///< name of CRT track producer
     art::InputTag fTpcTrackModuleLabel; ///< name of TPC track producer
     art::InputTag fCaloModuleLabel; ///< name of calorimetry producer
-    art::InputTag fPidModuleLabel; ///< name of calorimetry producer
     bool          fVerbose;             ///< print information about what's going on
     int           fTrackID;
 
@@ -191,6 +184,9 @@ namespace sbnd {
     TH1D* hStoppingChi2;
     TH1D* hOtherChi2;
     TGraph* gdEdxResRg;
+
+    TH1D* hApaCrossMinDist;
+    TH1D* hLepMinDist;
 
     TH1D* hFidTotalMu;
 
@@ -250,14 +246,67 @@ namespace sbnd {
     TH1D* hHitLengthTotalCos;
     TH1D* hHitLengthCutCos;
 
+    TH1D* hMuECos;
+    TH1D* hInFidMuECos;
+    TH1D* hFidMuECos;
+    TH1D* hDiffMuECos;
+    TH1D* hStopMuECos;
+    TH1D* hStitchMuECos;
+    TH1D* hTrackMuECos;
+    TH1D* hHitMuECos;
+    TH1D* hApaTMuECos;
+    TH1D* hApaSMuECos;
+    TH1D* hRemovedIDMuECos;
+    TH1D* hRemovedMuECos;
+
+    TH1D* hMuENu;
+    TH1D* hInFidMuENu;
+    TH1D* hFidMuENu;
+    TH1D* hDiffMuENu;
+    TH1D* hStopMuENu;
+    TH1D* hStitchMuENu;
+    TH1D* hTrackMuENu;
+    TH1D* hHitMuENu;
+    TH1D* hApaTMuENu;
+    TH1D* hApaSMuENu;
+    TH1D* hRemovedIDMuENu;
+    TH1D* hRemovedMuENu;
+
+    TH1D* hRecoLenCos;
+    TH1D* hInFidRecoLenCos;
+    TH1D* hFidRecoLenCos;
+    TH1D* hDiffRecoLenCos;
+    TH1D* hStopRecoLenCos;
+    TH1D* hStitchRecoLenCos;
+    TH1D* hTrackRecoLenCos;
+    TH1D* hHitRecoLenCos;
+    TH1D* hApaTRecoLenCos;
+    TH1D* hApaSRecoLenCos;
+    TH1D* hRemovedIDRecoLenCos;
+    TH1D* hRemovedRecoLenCos;
+
+    TH1D* hRecoLenNu;
+    TH1D* hInFidRecoLenNu;
+    TH1D* hFidRecoLenNu;
+    TH1D* hDiffRecoLenNu;
+    TH1D* hStopRecoLenNu;
+    TH1D* hStitchRecoLenNu;
+    TH1D* hTrackRecoLenNu;
+    TH1D* hHitRecoLenNu;
+    TH1D* hApaTRecoLenNu;
+    TH1D* hApaSRecoLenNu;
+    TH1D* hRemovedIDRecoLenNu;
+    TH1D* hRemovedRecoLenNu;
+
     // Other variables shared between different methods.
     geo::GeometryCore const* fGeometryService;                 ///< pointer to Geometry provider
     detinfo::DetectorProperties const* fDetectorProperties;    ///< pointer to detector properties provider
     detinfo::DetectorClocks const* fDetectorClocks;            ///< pointer to detector clocks provider
 
     CRTTruthRecoAlg truthAlg;
+    CRTTrackMatchAlg trackAlg;
 
-    double timeLim = 20.;
+    double timeLim = 4.; //FIXME fcl param
 
     // Performance Counters
     // Tracks from primary cosmic particles
@@ -266,6 +315,8 @@ namespace sbnd {
     int nCosmicTracksFid = 0;
     int nCosmicRemovedExit = 0;
     int nCosmicRemovedStop = 0;
+    int nCosmicRemovedApaStop = 0;
+    int nCosmicRemovedApaThrough = 0;
     int nCosmicRemovedDiffTPC = 0;
     int nCosmicRemovedStitch = 0;
     int nCosmicRemovedTrack = 0;
@@ -276,6 +327,8 @@ namespace sbnd {
     int nNuTracksFid = 0;
     int nNuRemovedExit = 0;
     int nNuRemovedStop = 0;
+    int nNuRemovedApaStop = 0;
+    int nNuRemovedApaThrough = 0;
     int nNuRemovedDiffTPC = 0;
     int nNuRemovedStitch = 0;
     int nNuRemovedTrack = 0;
@@ -286,6 +339,8 @@ namespace sbnd {
     int nLepTracksFid = 0;
     int nLepRemovedExit = 0;
     int nLepRemovedStop = 0;
+    int nLepRemovedApaStop = 0;
+    int nLepRemovedApaThrough = 0;
     int nLepRemovedDiffTPC = 0;
     int nLepRemovedStitch = 0;
     int nLepRemovedTrack = 0;
@@ -317,7 +372,6 @@ namespace sbnd {
     , fCrtHitModuleLabel    (config().CrtHitModuleLabel())
     , fTpcTrackModuleLabel  (config().TpcTrackModuleLabel())
     , fCaloModuleLabel      (config().CaloModuleLabel())
-    , fPidModuleLabel       (config().PidModuleLabel())
     , fVerbose              (config().Verbose())
     , fTrackID              (config().TrackID())
   {
@@ -341,6 +395,9 @@ namespace sbnd {
     hStoppingChi2 = tfs->make<TH1D>("StoppingChi2", "", 100, -1.5, 1.5);
     hOtherChi2 = tfs->make<TH1D>("OtherChi2", "", 100, -1.5, 1.5);
     gdEdxResRg       = tfs->makeAndRegister<TGraph>("dEdxResRg",      ";Residual range (cm);dE/dx");
+
+    hApaCrossMinDist = tfs->make<TH1D>("ApaCrossMinDist", "", 100, 0, 50);
+    hLepMinDist      = tfs->make<TH1D>("LepMinDist", "", 100, 0, 50);
 
     fFidExitMu       = tfs->makeAndRegister<TGraphAsymmErrors>("FidExitMu",      ";Fiducial volume cut (cm);Percentage removed");
     fStitchAngleMu   = tfs->makeAndRegister<TGraphAsymmErrors>("StitchAngleMu",  ";Stitch angle (deg);Percentage removed"      );
@@ -390,6 +447,58 @@ namespace sbnd {
     hHitDistCutCos     = tfs->make<TH1D>("HitDistCutCos",     "", 10, 0, 100);
     hHitLengthCutCos   = tfs->make<TH1D>("HitLengthCutCos",   "", 10, 0, 100);
 
+    hMuECos           = tfs->make<TH1D>("MuECos",         "", 20, 0, 10);
+    hInFidMuECos      = tfs->make<TH1D>("InFidMuECos",         "", 20, 0, 10);
+    hFidMuECos        = tfs->make<TH1D>("FidMuECos",      "", 20, 0, 10);
+    hDiffMuECos       = tfs->make<TH1D>("DiffMuECos",     "", 20, 0, 10);
+    hStopMuECos       = tfs->make<TH1D>("StopMuECos",     "", 20, 0, 10);
+    hStitchMuECos     = tfs->make<TH1D>("StitchMuECos",   "", 20, 0, 10);
+    hTrackMuECos      = tfs->make<TH1D>("TrackMuECos",    "", 20, 0, 10);
+    hHitMuECos        = tfs->make<TH1D>("HitMuECos",      "", 20, 0, 10);
+    hApaTMuECos       = tfs->make<TH1D>("ApaTMuECos",      "", 20, 0, 10);
+    hApaSMuECos       = tfs->make<TH1D>("ApaSMuECos",      "", 20, 0, 10);
+    hRemovedIDMuECos    = tfs->make<TH1D>("RemovedIDMuECos",  "", 20, 0, 10);
+    hRemovedMuECos    = tfs->make<TH1D>("RemovedMuECos",  "", 20, 0, 10);
+
+    hMuENu           = tfs->make<TH1D>("MuENu",         "", 20, 0, 2);
+    hInFidMuENu      = tfs->make<TH1D>("InFidMuENu",         "", 20, 0, 2);
+    hFidMuENu        = tfs->make<TH1D>("FidMuENu",      "", 20, 0, 2);
+    hDiffMuENu       = tfs->make<TH1D>("DiffMuENu",     "", 20, 0, 2);
+    hStopMuENu       = tfs->make<TH1D>("StopMuENu",     "", 20, 0, 2);
+    hStitchMuENu     = tfs->make<TH1D>("StitchMuENu",   "", 20, 0, 2);
+    hTrackMuENu      = tfs->make<TH1D>("TrackMuENu",    "", 20, 0, 2);
+    hHitMuENu        = tfs->make<TH1D>("HitMuENu",      "", 20, 0, 2);
+    hApaTMuENu       = tfs->make<TH1D>("ApaTMuENu",      "", 20, 0, 2);
+    hApaSMuENu       = tfs->make<TH1D>("ApaSMuENu",      "", 20, 0, 2);
+    hRemovedIDMuENu    = tfs->make<TH1D>("RemovedIDMuENu",  "", 20, 0, 2);
+    hRemovedMuENu    = tfs->make<TH1D>("RemovedMuENu",  "", 20, 0, 2);
+
+    hRecoLenCos           = tfs->make<TH1D>("RecoLenCos",         "", 20, 0, 200);
+    hInFidRecoLenCos      = tfs->make<TH1D>("InFidRecoLenCos",         "", 20, 0, 200);
+    hFidRecoLenCos        = tfs->make<TH1D>("FidRecoLenCos",      "", 20, 0, 200);
+    hDiffRecoLenCos       = tfs->make<TH1D>("DiffRecoLenCos",     "", 20, 0, 200);
+    hStopRecoLenCos       = tfs->make<TH1D>("StopRecoLenCos",     "", 20, 0, 200);
+    hStitchRecoLenCos     = tfs->make<TH1D>("StitchRecoLenCos",   "", 20, 0, 200);
+    hTrackRecoLenCos      = tfs->make<TH1D>("TrackRecoLenCos",    "", 20, 0, 200);
+    hHitRecoLenCos        = tfs->make<TH1D>("HitRecoLenCos",      "", 20, 0, 200);
+    hApaTRecoLenCos       = tfs->make<TH1D>("ApaTRecoLenCos",      "", 20, 0, 200);
+    hApaSRecoLenCos       = tfs->make<TH1D>("ApaSRecoLenCos",      "", 20, 0, 200);
+    hRemovedIDRecoLenCos    = tfs->make<TH1D>("RemovedIDRecoLenCos",  "", 20, 0, 200);
+    hRemovedRecoLenCos    = tfs->make<TH1D>("RemovedRecoLenCos",  "", 20, 0, 200);
+
+    hRecoLenNu           = tfs->make<TH1D>("RecoLenNu",         "", 20, 0, 200);
+    hInFidRecoLenNu      = tfs->make<TH1D>("InFidRecoLenNu",         "", 20, 0, 200);
+    hFidRecoLenNu        = tfs->make<TH1D>("FidRecoLenNu",      "", 20, 0, 200);
+    hDiffRecoLenNu       = tfs->make<TH1D>("DiffRecoLenNu",     "", 20, 0, 200);
+    hStopRecoLenNu       = tfs->make<TH1D>("StopRecoLenNu",     "", 20, 0, 200);
+    hStitchRecoLenNu     = tfs->make<TH1D>("StitchRecoLenNu",   "", 20, 0, 200);
+    hTrackRecoLenNu      = tfs->make<TH1D>("TrackRecoLenNu",    "", 20, 0, 200);
+    hHitRecoLenNu        = tfs->make<TH1D>("HitRecoLenNu",      "", 20, 0, 200);
+    hApaTRecoLenNu       = tfs->make<TH1D>("ApaTRecoLenNu",      "", 20, 0, 200);
+    hApaSRecoLenNu       = tfs->make<TH1D>("ApaSRecoLenNu",      "", 20, 0, 200);
+    hRemovedIDRecoLenNu    = tfs->make<TH1D>("RemovedIDRecoLenNu",  "", 20, 0, 200);
+    hRemovedRecoLenNu    = tfs->make<TH1D>("RemovedRecoLenNu",  "", 20, 0, 200);
+
     // Initial output
     if(fVerbose) std::cout<<"----------------- TPC Cosmic Removal Ana Module -------------------"<<std::endl;
 
@@ -419,10 +528,10 @@ namespace sbnd {
     // Retrieve the TPC tracks
     auto tpcTrackHandle = event.getValidHandle<std::vector<recob::Track>>(fTpcTrackModuleLabel);
 
+    
     // Get track to hit associations
     art::FindManyP<recob::Hit> findManyHits(tpcTrackHandle, event, fTpcTrackModuleLabel);
     art::FindManyP<anab::Calorimetry> findManyCalo(tpcTrackHandle, event, fCaloModuleLabel);
-    art::FindManyP<anab::ParticleID> findManyPid(tpcTrackHandle, event, fPidModuleLabel);
 
     if(fVerbose) std::cout<<"Number of CRT hits = "<<crtHitHandle->size()<<std::endl
                           <<"Number of TPC tracks = "<<tpcTrackHandle->size()<<std::endl;
@@ -432,22 +541,30 @@ namespace sbnd {
     for(auto const& crtHit : (*crtHitHandle)){
       crtHits.push_back(crtHit);
     }
-    std::vector<crt::CRTTrack> crtTracks = CRTAnaUtils::CreateCRTTracks(crtHitsPtr, 0.2, 30., true, 25.); 
+    std::vector<crt::CRTTrack> crtTracks = CRTAnaUtils::CreateCRTTracks(crtHitsPtr, 0.2, 30., true, 25.); //FIXME fcl params 
     if(fVerbose) std::cout<<"Number of CRTTracks = "<<crtTracks.size()<<std::endl;
 
-    std::vector<std::vector<art::Ptr<crt::CRTHit>>> crtT0Ptr = CRTAnaUtils::CreateCRTTzeros(crtHitsPtr, 2.);
-    std::vector<double> crtT0;
+    std::vector<std::vector<art::Ptr<crt::CRTHit>>> crtT0Ptr = CRTAnaUtils::CreateCRTTzeros(crtHitsPtr, 2.); //FIXME fcl param
+    std::vector<double> stopT0;
     for(size_t i = 0; i < crtT0Ptr.size(); i++){
       double t0 = 0;
       double npts = 0;
       for(size_t j = 0; j < crtT0Ptr[i].size(); j++){
-        if(crtT0Ptr[i][j]->tagger != "volTaggerTopHigh_0"){
-          t0 += crtT0Ptr[i][0]->ts1_ns*1e-4;
-          npts++;
-        }
+        if(crtT0Ptr[i][j]->tagger == "volTaggerTopHigh_0") continue;
+        if(crtT0Ptr[i][j]->tagger == "volTaggerBot_0") continue;
+        if(crtT0Ptr[i][j]->y_pos < -200.) continue; //FIXME detprops
+        if(std::abs(crtT0Ptr[i][j]->x_pos) < 200.) continue; //FIXME detprops
+        t0 += (double)(int)crtT0Ptr[i][0]->ts1_ns*1e-4; //FIXME
+        npts++;
       }
-      if(t0 != 0) crtT0.push_back(t0/npts);
+      if(t0 != 0) stopT0.push_back(t0/npts);
     }
+    std::vector<double> throughT0;
+    for(auto const& crtTrack : crtTracks){
+      double trackT0 = (double)(int)crtTrack.ts1_ns*1e-3;
+      if(trackAlg.CrossesAPA(crtTrack)) throughT0.push_back(trackT0);
+    }
+    if(fVerbose) std::cout<<"Stopping CRT t0 size = "<<stopT0.size()<<" Through going CRT t0 size = "<<throughT0.size()<<"\n";
 
     // Loop over true particles in readout window
     std::map<int, simb::MCParticle> particles;
@@ -468,7 +585,7 @@ namespace sbnd {
         if(fVerbose && particle.Mother()==0) 
           std::cout<<"Nu VTX = "<<vtx<<" ID = "<<partId<<" pdg = "<<particle.PdgCode()<<" time = "<<time<<" length = "<<particle.Trajectory().TotalLength()
                    <<" start = ("<<particle.Vx()<<", "<<particle.Vy()<<", "<<particle.Vz()<<") end = ("<<particle.EndX()<<", "<<particle.EndY()<<", "<<particle.EndZ()<<")\n";
-        if(!InFiducial(vtx, 0, 0)) continue;
+        if(!CosmicRemovalUtils::InFiducial(vtx, 0, 0)) continue;
         if(std::abs(particle.PdgCode())==13 && particle.Mother()==0) lepParticleIds.push_back(partId);
         nuParticleIds.push_back(partId);
 
@@ -483,6 +600,27 @@ namespace sbnd {
 
     if(fVerbose) std::cout<<"Number of true particles = "<<particles.size()<<"\n\n";
 
+    // Get t0s returned from pandora
+    std::map<int, std::vector<double>> t0Map;
+    if(fTpcTrackModuleLabel == "pandoraTrack"){
+      art::Handle< std::vector<recob::PFParticle> > pfParticleHandle;
+      event.getByLabel("pandora", pfParticleHandle);
+      art::FindManyP<anab::T0> findManyT0(pfParticleHandle, event, "pandora");
+      art::FindManyP<recob::Track> pfPartToTrackAssoc(pfParticleHandle, event, fTpcTrackModuleLabel);
+      for (unsigned int i = 0; i < pfParticleHandle->size(); ++i){
+        const art::Ptr<recob::PFParticle> pParticle(pfParticleHandle, i);
+        int pfpKey = pParticle->Self();
+        const std::vector< art::Ptr<recob::Track> > associatedTracks(pfPartToTrackAssoc.at(pfpKey));
+        const std::vector< art::Ptr<anab::T0> > associatedT0s(findManyT0.at(pfpKey));
+        for(size_t j = 0; j < associatedTracks.size(); j++){
+          int trackId = associatedTracks[j]->ID();
+          for(size_t k = 0; k < associatedT0s.size(); k++){
+            t0Map[trackId].push_back(associatedT0s[k]->Time()*1e-3);
+          }
+        }
+      }
+    }
+
     std::map<int, TrackMatch> matchingMap;
     std::vector<recob::Track> tpcTracks;
     std::vector<recob::Track> tpcTracksTPC0;
@@ -490,6 +628,7 @@ namespace sbnd {
 
     // Loop over the tpc tracks
     for(auto const& tpcTrack : (*tpcTrackHandle)){
+
       tpcTracks.push_back(tpcTrack);
 
       std::vector<art::Ptr<recob::Hit>> hits = findManyHits.at(tpcTrack.ID());
@@ -536,7 +675,6 @@ namespace sbnd {
         }
         gdEdxResRg->Draw();
       }
-      std::vector<art::Ptr<anab::ParticleID>> pids = findManyPid.at(tpcTrack.ID());
 
       if(fVerbose) std::cout<<"trueID = "<<trueId<<" pdg = "<<particles[trueId].PdgCode()<<" time = "<<trueTime<<" reco length = "<<tpcTrack.Length()
                             <<" reco start = "<<tpcTrack.Start()<<" end = "<<tpcTrack.End()<<"\n";
@@ -552,6 +690,8 @@ namespace sbnd {
         nLepTracks++;
         if(fVerbose) std::cout<<"Primary lepton!\n";
         //Fill total histograms
+        hMuENu->Fill(particles[trueId].E());
+        hRecoLenNu->Fill(tpcTrack.Length());
         for(size_t i = 0; i < 10; i++){
           hFidTotalMu->Fill(fidStart + i*fidStep);
           hStitchAngleTotalMu->Fill(saStart + i*saStep);
@@ -569,12 +709,14 @@ namespace sbnd {
         if(fVerbose) std::cout<<"From neutrino!\n";
       }
       // Else is it from a primary cosmic (true length > 500)
-      else if(particles[trueId].Trajectory().TotalLength() > 500.){
+      else if(particles[trueId].Trajectory().TotalLength() > 500. && std::abs(particles[trueId].PdgCode())==13){
         // Set primary cosmic flag
         isCos = true;
         nCosmicTracks++;
         if(fVerbose) std::cout<<"Primary cosmic!\n";
         //Fill total histograms
+        hMuECos->Fill(particles[trueId].E());
+        hRecoLenCos->Fill(tpcTrack.Length());
         for(size_t i = 0; i < 10; i++){
           hFidTotalCos->Fill(fidStart + i*fidStep);
           hStitchAngleTotalCos->Fill(saStart + i*saStep);
@@ -585,89 +727,84 @@ namespace sbnd {
           hHitLengthTotalCos->Fill(hlStart + i*hlStep);  
         }
       }
-      //geo::Point_t start {particles[trueId].Vx(), particles[trueId].Vy(), particles[trueId].Vz()};
-      //geo::Point_t end {particles[trueId].EndX(), particles[trueId].EndY(), particles[trueId].EndZ()};
-      /*if(isCos){// && ((InFiducial(end, 0, 0) && !InFiducial(start, 0,0))||(!InFiducial(end, 0, 0) && InFiducial(start, 0,0)))){
-        if(!InFiducial(tpcTrack.Start(), 5, 5) && InFiducial(tpcTrack.End(), 5, 5)){
-          hStoppingChi2->Fill(StoppingEnd(calos[2], tpcTrack.End(), tpcTrack.ID()));
-        }
-        if(InFiducial(tpcTrack.Start(), 5, 5) && !InFiducial(tpcTrack.End(), 5, 5)){
-          hStoppingChi2->Fill(StoppingEnd(calos[2], tpcTrack.Start(), tpcTrack.ID()));
-        }
-      }
-      else if (isLep){
-        if(!InFiducial(tpcTrack.Start(), 5, 5) && InFiducial(tpcTrack.End(), 5, 5)){
-          hOtherChi2->Fill(StoppingEnd(calos[2], tpcTrack.End(), tpcTrack.ID()));
-        }
-        if(InFiducial(tpcTrack.Start(), 5, 5) && !InFiducial(tpcTrack.End(), 5, 5)){
-          hOtherChi2->Fill(StoppingEnd(calos[2], tpcTrack.Start(), tpcTrack.ID()));
-        }
-      }*/
 
+      bool startInFiducial = CosmicRemovalUtils::InFiducial(tpcTrack.Vertex(), 10, 10); //FIXME fcl params
+      bool endInFiducial = CosmicRemovalUtils::InFiducial(tpcTrack.End(), 10, 10); //FIXME fcl params
+      bool startStops = StoppingEnd(calos, tpcTrack.Vertex());
+      bool endStops = StoppingEnd(calos, tpcTrack.End());
+      if(fVerbose&&startStops) std::cout<<"START STOPPING\n";
+      if(fVerbose&&endStops) std::cout<<"END STOPPING\n";
 
       // FIDUCIAL VOLUME CUT
       // Remove any tracks that enter and exit the fiducial volume
-      if(!removed && !InFiducial(tpcTrack.Start(), 10, 10) && !InFiducial(tpcTrack.End(), 10, 10)){ 
+      bool inFiducial = true;
+      if(!removed && !startInFiducial && !endInFiducial){ 
         removed = true;
         if(fVerbose) std::cout<<"REMOVED! - exits fiducial\n";
         if(isNu) nNuRemovedExit++;
-        if(isLep) nLepRemovedExit++;
+        if(isLep){ 
+          hFidMuENu->Fill(particles[trueId].E());
+          hFidRecoLenNu->Fill(tpcTrack.Length());
+          nLepRemovedExit++;
+        }
         // If primary cosmic flag
-        if(isCos) nCosmicRemovedExit++;
+        if(isCos){ 
+          hFidMuECos->Fill(particles[trueId].E());
+          hFidRecoLenCos->Fill(tpcTrack.Length());
+          nCosmicRemovedExit++;
+        }
+        inFiducial = false;
       }
 
       if(isNu && !removed) nNuTracksFid++;
-      if(isLep && !removed) nLepTracksFid++;
-      if(isCos && !removed) nCosmicTracksFid++;
-
-
-      /*std::cout<<"pids size = "<<pids.size()<<" calos size = "<<calos.size()<<"\n";
-      if(!InFiducial(tpcTrack.Start(), 5, 5)){
-        std::cout<<"Start not in fiducial\n";
+      if(isLep && !removed){ 
+        hInFidMuENu->Fill(particles[trueId].E());
+        hInFidRecoLenNu->Fill(tpcTrack.Length());
+        nLepTracksFid++;
       }
-      if(!InFiducial(tpcTrack.End(), 5, 5)){
-        std::cout<<"End not in fiducial\n";
-      }*/
-      /*if((!removed && IsStoppingMuon(pids[2], calos[2])) && (!InFiducial(tpcTrack.Start(), 5, 5) || !InFiducial(tpcTrack.End(), 5, 5))){
-        removed = true;
-        if(fVerbose) std::cout<<"REMOVED! - stopping muon\n";
-        if(isNu) nNuRemoved++;
-        if(isLep) nLepRemoved++;
-        if(isCos) nCosmicRemoved++;
+      if(isCos && !removed){ 
+        hInFidMuECos->Fill(particles[trueId].E());
+        hInFidRecoLenCos->Fill(tpcTrack.Length());
+        nCosmicTracksFid++;
       }
-      if(IsStoppingMuon(pids[2], calos[2]) && (!InFiducial(tpcTrack.Start(), 5, 5) || !InFiducial(tpcTrack.End(), 5, 5))){
-        if(isNu) nNuRemovedStop++;
-        if(isLep) nLepRemovedStop++;
-        if(isCos) nCosmicRemovedStop++;
-      }*/
 
-      if(!removed && !InFiducial(tpcTrack.Start(), 5, 5) && InFiducial(tpcTrack.End(), 5, 5)){
-        if(StoppingEnd(calos, tpcTrack.End(), tpcTrack.ID())){
+      if(!removed && !CosmicRemovalUtils::InFiducial(tpcTrack.Start(), 5, 5) && CosmicRemovalUtils::InFiducial(tpcTrack.End(), 5, 5)){ //FIXME fcl params
+        if(endStops){
           removed = true;
           if(fVerbose) std::cout<<"REMOVED! - stopping muon\n";
-          if(isNu) nNuRemoved++;
-          if(isLep) nLepRemoved++;
-          if(isCos) nCosmicRemoved++;
         }
       }
-      if(!InFiducial(tpcTrack.Start(), 5, 5) && InFiducial(tpcTrack.End(), 5, 5) && StoppingEnd(calos, tpcTrack.End(), tpcTrack.ID())){
+      if(inFiducial && !CosmicRemovalUtils::InFiducial(tpcTrack.Start(), 5, 5) && CosmicRemovalUtils::InFiducial(tpcTrack.End(), 5, 5) && endStops){ //FIXME fcl params
         if(isNu) nNuRemovedStop++;
-        if(isLep) nLepRemovedStop++;
-        if(isCos) nCosmicRemovedStop++;
+        if(isLep){ 
+          hStopMuENu->Fill(particles[trueId].E());
+          hStopRecoLenNu->Fill(tpcTrack.Length());
+          nLepRemovedStop++;
+        }
+        if(isCos){ 
+          hStopMuECos->Fill(particles[trueId].E());
+          hStopRecoLenCos->Fill(tpcTrack.Length());
+          nCosmicRemovedStop++;
+        }
       }
-      if(!removed && InFiducial(tpcTrack.Start(), 5, 5) && !InFiducial(tpcTrack.End(), 5, 5)){
-        if(StoppingEnd(calos, tpcTrack.Start(), tpcTrack.ID())){
+      if(!removed && CosmicRemovalUtils::InFiducial(tpcTrack.Start(), 5, 5) && !CosmicRemovalUtils::InFiducial(tpcTrack.End(), 5, 5)){ // FIXME fcl params
+        if(startStops){
           removed = true;
           if(fVerbose) std::cout<<"REMOVED! - stopping muon\n";
-          if(isNu) nNuRemoved++;
-          if(isLep) nLepRemoved++;
-          if(isCos) nCosmicRemoved++;
         }
       }
-      if(InFiducial(tpcTrack.Start(), 5, 5) && !InFiducial(tpcTrack.End(), 5, 5) && StoppingEnd(calos, tpcTrack.Start(), tpcTrack.ID())){
+      if(inFiducial && CosmicRemovalUtils::InFiducial(tpcTrack.Start(), 5, 5) && !CosmicRemovalUtils::InFiducial(tpcTrack.End(), 5, 5) && startStops){ // FIXME fcl params
         if(isNu) nNuRemovedStop++;
-        if(isLep) nLepRemovedStop++;
-        if(isCos) nCosmicRemovedStop++;
+        if(isLep){ 
+          hStopMuENu->Fill(particles[trueId].E());
+          hStopRecoLenNu->Fill(tpcTrack.Length());
+          nLepRemovedStop++;
+        }
+        if(isCos){ 
+          hStopMuECos->Fill(particles[trueId].E());
+          hStopRecoLenCos->Fill(tpcTrack.Length());
+          nCosmicRemovedStop++;
+        }
       }
 
       // TPC CUT
@@ -683,33 +820,41 @@ namespace sbnd {
         if(fVerbose) std::cout<<"TRACK STITCHED\n";
       }
       else if(tpc == 0){
-        if(!removed && (startX>0 || endX>0)){ 
+        if(!removed && (startX>0 || endX>0)){ //FIXME detprops
           removed = true;
           if(fVerbose) std::cout<<"REMOVED! - diff tpc\n";
-          if(isNu) nNuRemoved++;
-          if(isLep) nLepRemoved++;
-          // If primary cosmic flag
-          if(isCos) nCosmicRemoved++;
         }
-        if(startX>0 || endX>0){ 
+        if(inFiducial && (startX>0 || endX>0)){ 
           if(isNu) nNuRemovedDiffTPC++;
-          if(isLep) nLepRemovedDiffTPC++;
-          if(isCos) nCosmicRemovedDiffTPC++;
+          if(isLep){ 
+            hDiffMuENu->Fill(particles[trueId].E());
+            hDiffRecoLenNu->Fill(tpcTrack.Length());
+            nLepRemovedDiffTPC++;
+          }
+          if(isCos){ 
+            hDiffMuECos->Fill(particles[trueId].E());
+            hDiffRecoLenCos->Fill(tpcTrack.Length());
+            nCosmicRemovedDiffTPC++;
+          }
         }
       }
       else if(tpc == 1){
-        if(!removed && (startX<0 || endX<0)){
+        if(!removed && (startX<0 || endX<0)){ //FIXME detprops
           removed = true;
           if(fVerbose) std::cout<<"REMOVED! - diff tpc\n";
-          if(isNu) nNuRemoved++;
-          if(isLep) nLepRemoved++;
-          // If primary cosmic flag
-          if(isCos) nCosmicRemoved++;
         }
-        if(startX<0 || endX<0){
+        if(inFiducial && (startX<0 || endX<0)){
           if(isNu) nNuRemovedDiffTPC++;
-          if(isLep) nLepRemovedDiffTPC++;
-          if(isCos) nCosmicRemovedDiffTPC++;
+          if(isLep){ 
+            hDiffMuENu->Fill(particles[trueId].E());
+            hDiffRecoLenNu->Fill(tpcTrack.Length());
+            nLepRemovedDiffTPC++;
+          }
+          if(isCos){ 
+            hDiffMuECos->Fill(particles[trueId].E());
+            hDiffRecoLenCos->Fill(tpcTrack.Length());
+            nCosmicRemovedDiffTPC++;
+          }
         }
       }
       else std::cout<<"SOMETHING WRONG\n";
@@ -717,57 +862,179 @@ namespace sbnd {
       // TIME CUTS
       // Match CPA crossers, remove any outside of beam window
       double stitchTime = -99999;
+      if(t0Map[tpcTrack.ID()].size()>0) stitchTime = t0Map[tpcTrack.ID()][0];
+      bool stitchExit = false;
       if(tpc == 0){
-        stitchTime = T0FromCpaStitching(tpcTrack, tpcTracksTPC1, 50., 15.);
+        std::pair<double, bool> stitchResults = T0FromCpaStitching(tpcTrack, tpcTracksTPC1, 50., 30.);
+        stitchTime = stitchResults.first;
+        stitchExit = stitchResults.second;
       }
       else if(tpc == 1){
-        stitchTime = T0FromCpaStitching(tpcTrack, tpcTracksTPC0, 50., 15.);
+        std::pair<double, bool> stitchResults = T0FromCpaStitching(tpcTrack, tpcTracksTPC0, 50., 30.);
+        stitchTime = stitchResults.first;
+        stitchExit = stitchResults.second;
       }
-      if(stitchTime != -99999 && std::abs(stitchTime)>timeLim){
+      if(inFiducial && stitchTime != -99999 && (std::abs(stitchTime)>timeLim||stitchExit)){
         if(isNu) nNuRemovedStitch++;
-        if(isLep) nLepRemovedStitch++;
-        if(isCos) nCosmicRemovedStitch++;
+        if(isLep){ 
+          hStitchMuENu->Fill(particles[trueId].E());
+          hStitchRecoLenNu->Fill(tpcTrack.Length());
+          nLepRemovedStitch++;
+        }
+        if(isCos){ 
+          hStitchMuECos->Fill(particles[trueId].E());
+          hStitchRecoLenCos->Fill(tpcTrack.Length());
+          nCosmicRemovedStitch++;
+        }
+      }
+
+      if(!removed && stitchExit){
+        removed = true;
+        if(fVerbose) std::cout<<"REMOVED! - Stitched track exits\n";
       }
 
       // Do CRT time matching
-      // Try to get T0 from CRTTracks
-      double trackTime = CRTAnaUtils::T0FromCRTTracks(tpcTrack, crtTracks, tpc, 0.2, 80.);
-      if(trackTime != -99999 && std::abs(trackTime)>timeLim){
+      // Try to get T0 from CRTTracks //FIXME check if matched to complete tracks or not
+      double trackTime = CRTAnaUtils::T0FromCRTTracks(tpcTrack, crtTracks, tpc, 0.3, 80.); //FIXME fcl params
+      if(inFiducial && trackTime != -99999){
         if(isNu) nNuRemovedTrack++;
-        if(isLep) nLepRemovedTrack++;
-        if(isCos) nCosmicRemovedTrack++;
+        if(isLep){ 
+          hTrackMuENu->Fill(particles[trueId].E());
+          hTrackRecoLenNu->Fill(tpcTrack.Length());
+          nLepRemovedTrack++;
+        }
+        if(isCos){ 
+          hTrackMuECos->Fill(particles[trueId].E());
+          hTrackRecoLenCos->Fill(tpcTrack.Length());
+          nCosmicRemovedTrack++;
+        }
+      }
+      if(!removed && trackTime != -99999){
+        removed = true;
+        if(fVerbose) std::cout<<"REMOVED! - matches track\n";
       }
 
       // Try to get T0 from CRTHits
-      double hitTime = CRTAnaUtils::T0FromCRTHits(tpcTrack, crtHits, tpc, 20., 0.5, 15.);
-      if(hitTime != -99999 && std::abs(hitTime)>timeLim){
+      double hitTime = CRTAnaUtils::T0FromCRTHits(tpcTrack, crtHits, tpc, 20., 0.5, 30.); //FIXME fcl params
+      if(inFiducial && hitTime != -99999 && std::abs(hitTime)>timeLim){
         if(isNu) nNuRemovedHit++;
-        if(isLep) nLepRemovedHit++;
-        if(isCos) nCosmicRemovedHit++;
+        if(isLep){ 
+          hHitMuENu->Fill(particles[trueId].E());
+          hHitRecoLenNu->Fill(tpcTrack.Length());
+          nLepRemovedHit++;
+        }
+        if(isCos){ 
+          hHitMuECos->Fill(particles[trueId].E());
+          hHitRecoLenCos->Fill(tpcTrack.Length());
+          nCosmicRemovedHit++;
+        }
       }
 
       if(fVerbose) std::cout<<"True time = "<<trueTime<<" ticks, track time = "<<trackTime
                             <<" ticks, hit time = "<<hitTime<<" stitch time = "<<stitchTime<<"\n";
-
-      double crossTime = T0FromApaCross(tpcTrack, crtT0, tpc);
-      if(crossTime != -99999 && (!InFiducial(tpcTrack.Vertex(), 10., 10.) || !InFiducial(tpcTrack.End(), 10., 10.))) std::cout<<"Removed - cross & exit\n";
-      if(crossTime != -99999 && (StoppingEnd(calos, tpcTrack.Start(), tpcTrack.ID()) || StoppingEnd(calos, tpcTrack.End(), tpcTrack.ID()))) std::cout<<"Removed - cross & stop\n";
+/*
+      double crossTimeStop = T0FromApaCross(tpcTrack, stopT0, tpc);
+      double matchedTimeStop = -99999;
+      if(tpc == 0){
+      if(tpcTrack.Vertex().X() < tpcTrack.End().X() && endStops) matchedTimeStop = crossTimeStop;
+        else if(startStops) matchedTimeStop = crossTimeStop;
+      }
+      else if(tpc == 1){
+        if(tpcTrack.Vertex().X() > tpcTrack.End().X() && endStops) matchedTimeStop = crossTimeStop;
+        else if(startStops) matchedTimeStop = crossTimeStop;
+      }
+      if(matchedTimeStop != -99999 && std::abs(matchedTimeStop)>timeLim){
+        if(isNu) nNuRemovedApaStop++;
+        if(isLep){ 
+          hApaSMuENu->Fill(particles[trueId].E());
+          hApaSRecoLenNu->Fill(tpcTrack.Length());
+          nLepRemovedApaStop++;
+        }
+        if(isCos){ 
+          hApaSMuECos->Fill(particles[trueId].E());
+          hApaSRecoLenCos->Fill(tpcTrack.Length());
+          nCosmicRemovedApaStop++;
+        }
+      }
+*/
+      double crossTimeThrough = T0FromApaCross(tpcTrack, throughT0, tpc);
+      double matchedTimeThrough = -99999;
+      if(tpc == 0){
+        if(tpcTrack.Vertex().X() < tpcTrack.End().X() && !endInFiducial) matchedTimeThrough = crossTimeThrough;
+        else if(!startInFiducial) matchedTimeThrough = crossTimeThrough;
+      }
+      else if(tpc == 1){
+        if(tpcTrack.Vertex().X() > tpcTrack.End().X() && !endInFiducial) matchedTimeThrough = crossTimeThrough;
+        else if(!startInFiducial) matchedTimeThrough = crossTimeThrough;
+      }
+      if(inFiducial && matchedTimeThrough != -99999 && std::abs(matchedTimeThrough)>timeLim){
+        if(isNu) nNuRemovedApaThrough++;
+        if(isLep){ 
+          hApaTMuENu->Fill(particles[trueId].E());
+          hApaTRecoLenNu->Fill(tpcTrack.Length());
+          nLepRemovedApaThrough++;
+        }
+        if(isCos){ 
+          hApaTMuECos->Fill(particles[trueId].E());
+          hApaTRecoLenCos->Fill(tpcTrack.Length());
+          nCosmicRemovedApaThrough++;
+        }
+      }
+      //if(fVerbose) std::cout<<"Cross time stop = "<<crossTimeStop<<" cross time through-going = "<<crossTimeThrough<<"\n";
 
       double matchedTime = -99999;
-      if(trackTime != -99999) matchedTime = trackTime;
-      else if(stitchTime != -99999) matchedTime = stitchTime;
-      //else if(crossTime != -99999) matchedTime = crossTime;
+      if(stitchTime != -99999) matchedTime = stitchTime;
       else if(hitTime != -99999) matchedTime = hitTime;
+      else if(crossTimeThrough != -99999){ 
+        if(tpc == 0){
+          if(tpcTrack.Vertex().X() < tpcTrack.End().X() && !endInFiducial) matchedTime = crossTimeThrough;
+          else if(!startInFiducial) matchedTime = crossTimeThrough;
+        }
+        else if(tpc == 1){
+          if(tpcTrack.Vertex().X() > tpcTrack.End().X() && !endInFiducial) matchedTime = crossTimeThrough;
+          else if(!startInFiducial) matchedTime = crossTimeThrough;
+        }
+      }
+      /*if(matchedTime == -99999 && crossTimeStop != -99999){
+        if(tpc == 0){
+          if(tpcTrack.Vertex().X() < tpcTrack.End().X() && endStops) matchedTime = crossTimeStop;
+          else if(startStops) matchedTime = crossTimeStop;
+        }
+        else if(tpc == 1){
+          if(tpcTrack.Vertex().X() > tpcTrack.End().X() && endStops) matchedTime = crossTimeStop;
+          else if(startStops) matchedTime = crossTimeStop;
+        }
+      }*/
 
       if(fVerbose) std::cout<<"Matched time = "<<matchedTime<<"\n";
 
       if(!removed && matchedTime != -99999 && (std::abs(matchedTime) > timeLim)){
         removed = true;
         if(fVerbose) std::cout<<"REMOVED! - outside beam\n";
+      }
+
+      if(removed && inFiducial){
         if(isNu) nNuRemoved++;
-        if(isLep) nLepRemoved++;
-        // If primary cosmic flag
-        if(isCos) nCosmicRemoved++;
+        if(isLep){
+          nLepRemoved++;
+          hRemovedIDMuENu->Fill(particles[trueId].E());
+          hRemovedIDRecoLenNu->Fill(tpcTrack.Length());
+        }
+        if(isCos){
+          nCosmicRemoved++;
+          hRemovedIDMuECos->Fill(particles[trueId].E());
+          hRemovedIDRecoLenCos->Fill(tpcTrack.Length());
+        }
+      }
+      if(removed){
+        if(isLep){
+          hRemovedMuENu->Fill(particles[trueId].E());
+          hRemovedRecoLenNu->Fill(tpcTrack.Length());
+        }
+        if(isCos){
+          hRemovedMuECos->Fill(particles[trueId].E());
+          hRemovedRecoLenCos->Fill(tpcTrack.Length());
+        }
       }
 
       if(fVerbose) std::cout<<"\n";
@@ -781,18 +1048,17 @@ namespace sbnd {
         double td = tdStart + i*tdStep;
         double hd = hdStart + i*hdStep;
         double hl = hlStart + i*hlStep;
-        if(!InFiducial(tpcTrack.Start(), fidCut, fidCut) && !InFiducial(tpcTrack.End(), fidCut, fidCut)){
+        if(!CosmicRemovalUtils::InFiducial(tpcTrack.Start(), 10, fidCut) && !CosmicRemovalUtils::InFiducial(tpcTrack.End(), 10, fidCut)){
           if(isLep) hFidExitCutMu->Fill(fidCut);
           if(isCos) hFidExitCutCos->Fill(fidCut);
         }
 
-
         double time = -99999;
         if(tpc == 0){
-          time = T0FromCpaStitching(tpcTrack, tpcTracksTPC1, 50., sa);
+          time = T0FromCpaStitching(tpcTrack, tpcTracksTPC1, 50., sa).first;
         }
         else if(tpc == 1){
-          time = T0FromCpaStitching(tpcTrack, tpcTracksTPC0, 50., sa);
+          time = T0FromCpaStitching(tpcTrack, tpcTracksTPC0, 50., sa).first;
         }
         if(time != -99999 && std::abs(time)>timeLim){
           if(isLep) hStitchAngleCutMu->Fill(sa);
@@ -801,10 +1067,10 @@ namespace sbnd {
 
         time = -99999;
         if(tpc == 0){
-          time = T0FromCpaStitching(tpcTrack, tpcTracksTPC1, sd, 15.);
+          time = T0FromCpaStitching(tpcTrack, tpcTracksTPC1, sd, 15.).first;
         }
         else if(tpc == 1){
-          time = T0FromCpaStitching(tpcTrack, tpcTracksTPC0, sd, 15.);
+          time = T0FromCpaStitching(tpcTrack, tpcTracksTPC0, sd, 15.).first;
         }
         if(time != -99999 && std::abs(time) > timeLim){
           if(isLep) hStitchDistCutMu->Fill(sd);
@@ -848,7 +1114,7 @@ namespace sbnd {
     truthMatch.tpcTracks = tpcTracks;
     truthMatch.matchingMap = matchingMap;
 
-    DrawTrueTracks(truthMatch, true, true, fTrackID);
+    //DrawTrueTracks(truthMatch, true, true, fTrackID);
 
 
   } // TPCCosmicRemoval::analyze()
@@ -864,6 +1130,8 @@ namespace sbnd {
              <<"Removed in stitch cut     = "<<nNuRemovedStitch<<"\n"
              <<"Removed in CRT track cut  = "<<nNuRemovedTrack<<"\n"
              <<"Removed in CRT hit cut    = "<<nNuRemovedHit<<"\n"
+             <<"Removed in APA stop cut   = "<<nNuRemovedApaStop<<"\n"
+             <<"Removed in APA through cut= "<<nNuRemovedApaThrough<<"\n"
              <<"Total removed by cosmicID = "<<nNuRemoved<<"\n"
              <<"Percentage removed        = "<<(double)nNuRemoved/nNuTracksFid<<"\n"
              <<"-----------------------------------------------------------\n"
@@ -875,6 +1143,8 @@ namespace sbnd {
              <<"Removed in stitch cut     = "<<nLepRemovedStitch<<"\n"
              <<"Removed in CRT track cut  = "<<nLepRemovedTrack<<"\n"
              <<"Removed in CRT hit cut    = "<<nLepRemovedHit<<"\n"
+             <<"Removed in APA stop cut   = "<<nLepRemovedApaStop<<"\n"
+             <<"Removed in APA through cut= "<<nLepRemovedApaThrough<<"\n"
              <<"Total removed by cosmicID = "<<nLepRemoved<<"\n"
              <<"Percentage removed        = "<<(double)nLepRemoved/nLepTracksFid<<"\n"
              <<"-----------------------------------------------------------\n"
@@ -886,12 +1156,14 @@ namespace sbnd {
              <<"Removed in stitch cut     = "<<nCosmicRemovedStitch<<"\n"
              <<"Removed in CRT track cut  = "<<nCosmicRemovedTrack<<"\n"
              <<"Removed in CRT hit cut    = "<<nCosmicRemovedHit<<"\n"
+             <<"Removed in APA stop cut   = "<<nCosmicRemovedApaStop<<"\n"
+             <<"Removed in APA through cut= "<<nCosmicRemovedApaThrough<<"\n"
              <<"Total removed by cosmicID = "<<nCosmicRemoved<<"\n"
              <<"Percentage removed        = "<<(double)nCosmicRemoved/nCosmicTracksFid<<"\n";
 
     std::ofstream myfile;
     myfile.open("results.txt");
-  myfile<<nNuTracks<<","<<nNuTracksFid<<","<<nNuRemovedExit<<","<<nNuRemovedStop<<","<<nNuRemovedDiffTPC<<","<<nNuRemovedStitch<<","<<nNuRemovedTrack<<","<<nNuRemovedHit<<","<<nNuRemoved<<","<<(double)nNuRemoved/nNuTracksFid<<","<<nLepTracks<<","<<nLepTracksFid<<","<<nLepRemovedExit<<","<<nLepRemovedStop<<","<<nLepRemovedDiffTPC<<","<<nLepRemovedStitch<<","<<nLepRemovedTrack<<","<<nLepRemovedHit<<","<<nLepRemoved<<","<<(double)nLepRemoved/nLepTracksFid<<","<<nCosmicTracks<<","<<nCosmicTracksFid<<","<<nCosmicRemovedExit<<","<<nCosmicRemovedStop<<","<<nCosmicRemovedDiffTPC<<","<<nCosmicRemovedStitch<<","<<nCosmicRemovedTrack<<","<<nCosmicRemovedHit<<","<<nCosmicRemoved<<","<<(double)nCosmicRemoved/nCosmicTracksFid<<"\n";
+  myfile<<nNuTracks<<","<<nNuTracksFid<<","<<nNuRemovedExit<<","<<nNuRemovedStop<<","<<nNuRemovedDiffTPC<<","<<nNuRemovedStitch<<","<<nNuRemovedTrack<<","<<nNuRemovedHit<<","<<nNuRemovedApaStop<<","<<nNuRemovedApaThrough<<","<<nNuRemoved<<","<<(double)nNuRemoved/nNuTracksFid<<","<<nLepTracks<<","<<nLepTracksFid<<","<<nLepRemovedExit<<","<<nLepRemovedStop<<","<<nLepRemovedDiffTPC<<","<<nLepRemovedStitch<<","<<nLepRemovedTrack<<","<<nLepRemovedHit<<","<<nLepRemovedApaStop<<","<<nLepRemovedApaThrough<<","<<nLepRemoved<<","<<(double)nLepRemoved/nLepTracksFid<<","<<nCosmicTracks<<","<<nCosmicTracksFid<<","<<nCosmicRemovedExit<<","<<nCosmicRemovedStop<<","<<nCosmicRemovedDiffTPC<<","<<nCosmicRemovedStitch<<","<<nCosmicRemovedTrack<<","<<nCosmicRemovedHit<<","<<nCosmicRemovedApaStop<<","<<nCosmicRemovedApaThrough<<","<<nCosmicRemoved<<","<<(double)nCosmicRemoved/nCosmicTracksFid;
     myfile.close();
 
     fFidExitMu->BayesDivide(hFidExitCutMu, hFidTotalMu);      
@@ -925,7 +1197,7 @@ namespace sbnd {
     fHitLengthCos->Draw("ap");
 
   } // TPCCosmicRemoval::endJob()
-
+/*
   bool TPCCosmicRemoval::InFiducial(geo::Point_t point, double fiducial, double fiducialTop){
     //
     double xmin = -200 + fiducial; //-2.0 * fGeometryService->DetHalfWidth() + fiducial;
@@ -942,12 +1214,12 @@ namespace sbnd {
 
     return false;
   }
-
+*/
   int TPCCosmicRemoval::DetectedInTPC(std::vector<art::Ptr<recob::Hit>> hits){
     //
     int tpc = hits[0]->WireID().TPC;
     for(size_t i = 0; i < hits.size(); i++){
-      if((int)hits[i]->WireID().TPC != tpc) return -tpc;
+      if((int)hits[i]->WireID().TPC != tpc) return -1;
     }
     return tpc;
   }
@@ -1021,6 +1293,8 @@ namespace sbnd {
         tpctrack[i] = new TPolyLine3D(npts);
         for(size_t j = 0; j < npts; j++){
           auto& pos = tr.LocationAtPoint(j);
+          if(pos.X()==-999 || (pos.X()==0&&pos.Y()==0)) continue;
+          //std::cout<<pos.X()<<", "<<pos.Y()<<", "<<pos.Z()<<"\n";
           tpctrack[i]->SetPoint(j, pos.X(), pos.Y(), pos.Z());
         }
         // Draw a line between them
@@ -1038,10 +1312,11 @@ namespace sbnd {
 
   } // TPCCosmicRemoval::DrawTrueTracks()
 
-  double TPCCosmicRemoval::T0FromCpaStitching(recob::Track t1, std::vector<recob::Track> tracks, double stitchDist, double stitchAngle){
+  std::pair<double,bool> TPCCosmicRemoval::T0FromCpaStitching(recob::Track t1, std::vector<recob::Track> tracks, double stitchDist, double stitchAngle){
     //
-    std::vector<std::pair<double, double>> matchCandidates;
+    std::vector<std::pair<double, std::pair<double, bool>>> matchCandidates;
     double matchedTime = -99999;
+    std::pair<double, bool> returnVal = std::make_pair(matchedTime, false);
 
     TVector3 trk1Front = t1.Vertex<TVector3>();
     TVector3 trk1Back = t1.End<TVector3>();
@@ -1049,7 +1324,7 @@ namespace sbnd {
 
     for(auto & track : tracks){
       bool print = false;
-      //if(t1.ID()==1 && track.ID()==5) print = true;
+      //if(t1.ID()==25 && track.ID()==11) print = true;
 
       TVector3 trk2Front = track.Vertex<TVector3>();
       TVector3 trk2Back = track.End<TVector3>();
@@ -1057,18 +1332,22 @@ namespace sbnd {
 
       if(print) std::cout<<"Closest X1 = "<<closestX1<<" closest X2 = "<<closestX2<<"\n";
 
-      if(std::abs(closestX1-closestX2) < 10){
+      if(std::abs(closestX1-closestX2) < 10){ //FIXME fcl parameter
         TVector3 t1Pos = trk1Front;
+        TVector3 t1PosEnd = trk1Back;
         TVector3 t1Dir = t1.VertexDirection<TVector3>();
         if(std::abs(trk1Back.X()) == closestX1){ 
           t1Pos = trk1Back;
+          t1PosEnd = trk1Front;
           t1Dir = t1.EndDirection<TVector3>();
         }
 
         TVector3 t2Pos = trk2Front;
+        TVector3 t2PosEnd = trk2Back;
         TVector3 t2Dir = track.VertexDirection<TVector3>();
         if(std::abs(trk2Back.X()) == closestX2){ 
           t2Pos = trk2Back;
+          t2PosEnd = trk2Front;
           t2Dir = track.EndDirection<TVector3>();
         }
 
@@ -1080,9 +1359,13 @@ namespace sbnd {
         if(print) std::cout<<"t1 pos = ("<<t1Pos.X()<<", "<<t1Pos.Y()<<", "<<t1Pos.Z()<<"), t2 pos = ("<<t2Pos.X()<<", "<<t2Pos.Y()<<", "<<t2Pos.Z()<<")\n";
         if(print) std::cout<<"Cos lim = "<<cos(TMath::Pi() * 15 / 180.)<<"Cos = "<<trkCos<<" dist = "<<dist<<" stitch dist = "<<stitchDist<<"\n";
 
+        geo::Point_t mergeStart {t1PosEnd.X(), t1PosEnd.Y(), t1PosEnd.Z()};
+        geo::Point_t mergeEnd {t2PosEnd.X(), t2PosEnd.Y(), t2PosEnd.Z()};
+        bool exits = false;
+        if(!CosmicRemovalUtils::InFiducial(mergeStart, 10, 10) && !CosmicRemovalUtils::InFiducial(mergeEnd, 10, 10)) exits = true; //FIXME fcl params
+
         if(dist < stitchDist && trkCos > cos(TMath::Pi() * stitchAngle / 180.)){ 
-          if(print) std::cout<<"Hello\n";
-          matchCandidates.push_back(std::make_pair(trkCos, closestX1));
+          matchCandidates.push_back(std::make_pair(trkCos, std::make_pair(closestX1, exits)));
         }
       }
     }
@@ -1090,30 +1373,29 @@ namespace sbnd {
     if(matchCandidates.size() > 0){
       std::sort(matchCandidates.begin(), matchCandidates.end(), [](auto& left, auto& right){
                 return left.first < right.first;});
-      double shiftX = matchCandidates[0].second;
-      matchedTime = -(shiftX/fDetectorProperties->DriftVelocity()-17.); 
+      double shiftX = matchCandidates[0].second.first;
+      matchedTime = -(shiftX/fDetectorProperties->DriftVelocity()-17.); //FIXME
+      returnVal = std::make_pair(matchedTime, matchCandidates[0].second.second);
     }
 
-    return matchedTime;
+    return returnVal;
   }
 
   double TPCCosmicRemoval::T0FromApaCross(recob::Track track, std::vector<double> t0s, int tpc){
 
-    bool print = true;
+    bool print = false;
     //if(track.ID() == 1) print = true;
 
     double crossTime = -99999;
     //double xmin = -2.0 * fGeometryService->DetHalfWidth();
     double xmax = 2.0 * fGeometryService->DetHalfWidth();
 
-    if(print) std::cout<<"t0 size = "<<t0s.size()<<std::endl;
-
     double minDist = 99999;
     double startX = track.Vertex().X();
     double endX = track.End().X();
     geo::Point_t point = track.Vertex();
     // Don't try to shift tracks near the Apa
-    if(std::abs(startX) > xmax-10. || std::abs(endX) > xmax-10.) return crossTime;
+    if(std::abs(startX) > xmax-10. || std::abs(endX) > xmax-10.) return crossTime; //FIXME fcl params
     // If in tpc 0 use start/end with lowest X
     if(tpc == 0 && endX < startX) point = track.End();
     // If in tpc 1 use start/end with highest X
@@ -1130,126 +1412,90 @@ namespace sbnd {
       if(tpc == 1) shiftedX = point.X() + shift;
       if(print) std::cout<<"shifted x = "<<shiftedX<<std::endl;
       //Check track still in TPC
-      if(std::abs(shiftedX) > 201.){ 
-        if(print) std::cout<<"shifted outside tpc\n\n"<<std::endl;
+      if(std::abs(shiftedX) > 201.){ //FIXME
+        //if(print) std::cout<<"shifted outside tpc\n\n"<<std::endl;
         continue;
       }
       //Calculate distance between start/end and APA
-      double dist = std::abs(std::abs(shiftedX)-199.6);
+      double dist = std::abs(std::abs(shiftedX)-199.6);//FIXME
       if(print) std::cout<<"dist = "<<dist<<"\n\n";
       if(dist < minDist) {
         minDist = dist;
         crossTime = t0;
       }
     }
-    if(print) std::cout<<"minDist = "<<minDist<<" crossTime = "<<crossTime<<std::endl;
+    if(fVerbose) std::cout<<"minDist = "<<minDist<<" crossTime = "<<crossTime<<std::endl;
     //If distance < limit take CRT time
-    if(minDist < 5.){
+    if(minDist < 2.){ //FIXME
       return crossTime;
     }
     return -99999;
       
   }
 
-  bool TPCCosmicRemoval::IsStoppingMuon(art::Ptr<anab::ParticleID> pid, art::Ptr<anab::Calorimetry> calo){
-    /*TFile *file = TFile::Open("dEdxrestemplates.root");
-    TProfile *dedx_range_mu = (TProfile*)file->Get("dedx_range_mu");
-    size_t nhits = calo->dEdx().size();
-    int npts = 0;
-    double chi2 = 0;
-    //Loop over hits in track trajectory
-    for(size_t i = 0; i < nhits; i++){
-      // If hit is on plane 2
-      double dEdx = (calo->dEdx())[i];
-      double resrg = (calo->ResidualRange())[i];
-      // Make sure res range is right way round
-      // If residual range is < 25
-      // If dedx < 30
-      if(resrg > 0.3 && resrg < 20){
-        int bin = dedx_range_mu->FindBin(resrg);
-        double err = 0.04231 + 0.0001783*dEdx*dEdx*dEdx;
-        chi2 += pow((dEdx - dedx_range_mu->GetBinContent(bin))/std::sqrt(pow(dedx_range_mu->GetBinError(bin),2)+pow(err,2)),2);
-        npts++;
-      }
-    }
-    // Calculate chi2
-    chi2 = chi2/npts;*/
-    size_t nhits = calo->dEdx().size();
-    std::vector<double> vdedx;
-    std::vector<double> vresrg;
-    for(size_t i = 0; i < nhits; i++){
-      // If hit is on plane 2
-      double dEdx = (calo->dEdx())[i];
-      double resrg = (calo->ResidualRange())[i];
-      if(resrg>1 && resrg<20 && dEdx < 20){
-        vdedx.push_back(dEdx);
-        vresrg.push_back(resrg);
-      }
-    }
-    if(vdedx.size()==0) return false;
-    
-    TGraph *gresrgdedx = new TGraph(vdedx.size(), &vresrg[0], &vdedx[0]);
-    gresrgdedx->Fit("pol0", "Q");
-    TF1* polfit = gresrgdedx->GetFunction("pol0");
-    double chi2pol = polfit->GetChisquare();
-    gresrgdedx->Fit("expo", "Q");
-    TF1* expfit = gresrgdedx->GetFunction("expo");
-    double chi2exp = expfit->GetChisquare();
-    std::cout<<"Pol chi2 = "<<chi2pol<<" exp chi2 = "<<chi2exp<<"\n";
-    if(pid->PlaneID().Plane != 2) std::cout<<"NOT PLANE 2!\n";
-    double chi2 = pid->MinChi2();
-    std::cout<<"Muon Chi2 = "<<pid->Chi2Muon()<<" min chi2 = "<<pid->MinChi2()<<" PDG = "<<pid->Pdg()<<"\n";
-    if((chi2exp < chi2pol && chi2exp > 0 && chi2exp < 10 && std::abs(chi2pol-chi2exp) > 1) || (chi2 > 0 && chi2 < 12)){ 
-      //std::cout<<"STOPPING\n";
-      return true;
-    }
-  
-    return false;
-  }
-
-  double TPCCosmicRemoval::StoppingEnd(std::vector<art::Ptr<anab::Calorimetry>> calos, geo::Point_t end, int id){
+  double TPCCosmicRemoval::StoppingEnd(std::vector<art::Ptr<anab::Calorimetry>> calos, geo::Point_t end){
     //Loop over residual range and dedx
-    size_t nhits = 0;
     if(calos.size()==0) return false;
+    size_t nhits = 0;
     art::Ptr<anab::Calorimetry> calo = calos[0];
     for( size_t i = calos.size(); i > 0; i--){
-      if(calos[i-1]->dEdx().size()!=0 && nhits==0){
+      if(calos[i-1]->dEdx().size() > nhits*1.5){
         nhits = calos[i-1]->dEdx().size();
         calo = calos[i-1];
       }
     }
     double distStart = (calo->XYZ()[0] - end).Mag2();
     double distEnd = (calo->XYZ()[nhits-1] - end).Mag2();
+
+    double maxDedx = 0;
+    double resrgStart = 0;
     std::vector<double> v_resrg;
     std::vector<double> v_dedx;
+    
     for(size_t i = 0; i < nhits; i++){
       double dedx = calo->dEdx()[i];
       double resrg = calo->ResidualRange()[i];
+
       if(distStart < distEnd && calo->ResidualRange()[0] > calo->ResidualRange()[nhits-1]) resrg = calo->ResidualRange()[0] - calo->ResidualRange()[i];
       if(distStart > distEnd && calo->ResidualRange()[0] < calo->ResidualRange()[nhits-1]) resrg = calo->ResidualRange()[nhits-1] - calo->ResidualRange()[i];
-      if(resrg > 1 && resrg < 20 && dedx < 30){
+
+      if(resrg < 10 && dedx > maxDedx && dedx < 30){
+        maxDedx = dedx;
+        resrgStart = resrg;
+      }
+
+    }
+    for(size_t i = 0; i < nhits; i++){
+      double dedx = calo->dEdx()[i];
+      double resrg = calo->ResidualRange()[i];
+
+      if(distStart < distEnd && calo->ResidualRange()[0] > calo->ResidualRange()[nhits-1]) resrg = calo->ResidualRange()[0] - calo->ResidualRange()[i];
+      if(distStart > distEnd && calo->ResidualRange()[0] < calo->ResidualRange()[nhits-1]) resrg = calo->ResidualRange()[nhits-1] - calo->ResidualRange()[i];
+
+      if(resrg > resrgStart && resrg < resrgStart+20 && dedx < 30){
         v_resrg.push_back(resrg);
         v_dedx.push_back(dedx);
       }
     }
+
     if(v_dedx.size() < 10) return false;
+
     TGraph *gdedx = new TGraph(v_dedx.size(), &v_resrg[0], &v_dedx[0]);
-    try{ gdedx->Fit("pol1", "Q"); } catch(...){ return false; }
-    TF1* polfit = gdedx->GetFunction("pol1");
-    double slope = polfit->GetParameter(1);
-    double chi2 = polfit->GetChisquare()/polfit->GetNDF();
-    if(id == fTrackID){
-      TCanvas *c3 = new TCanvas("c3","",700,700);
-      gdedx->SetMarkerStyle(3);
-      gdedx->Draw("ap");
-      c3->SaveAs("gdedx.root");
-    }
-    if(fVerbose) std::cout<<"resrg size = "<<v_resrg.size()<<" dedx size = "<<v_dedx.size()<<" slope = "<<slope<<" chi2 = "<<chi2<<"\n";
-    if(slope < -0.06 && chi2 < 5) return true;
+    try{ gdedx->Fit("pol0", "Q"); } catch(...){ return false; }
+    TF1* polfit = gdedx->GetFunction("pol0");
+    double polchi2 = polfit->GetChisquare();
+
+    try{ gdedx->Fit("expo", "Q"); } catch(...){ return false; }
+    TF1* expfit = gdedx->GetFunction("expo");
+    double expchi2 = expfit->GetChisquare();
+
+    if(fVerbose) std::cout<<"pol chi2 = "<<polchi2<<", exp chi2 = "<<expchi2<<", ratio = "<<polchi2/expchi2<<"\n";
+
+    if(polchi2/expchi2 > 1.4) return true;
+
     return false;
-    //return slope;
   }
 
   DEFINE_ART_MODULE(TPCCosmicRemoval)
 } // namespace sbnd
-
+//

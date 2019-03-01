@@ -127,5 +127,37 @@ double CRTT0MatchAlg::DistOfClosestApproach(TVector3 trackPos, TVector3 trackDir
 
 } // CRTT0MatchAlg::DistToOfClosestApproach()
 
+std::pair<TVector3, TVector3> CRTT0MatchAlg::TrackDirectionAverage(recob::Track track, double frac){
+
+  // Calculate direction as an average over directions
+  size_t nTrackPoints = track.NumberTrajectoryPoints();
+  recob::TrackTrajectory trajectory  = track.Trajectory();
+  std::vector<geo::Vector_t> validDirections;
+  for(size_t i = 0; i < nTrackPoints; i++){
+    if(trajectory.FlagsAtPoint(i)!=recob::TrajectoryPointFlags::InvalidHitIndex) continue;
+    validDirections.push_back(track.DirectionAtPoint(i));
+  }
+
+  size_t nValidPoints = validDirections.size();
+  int endPoint = (int)floor(nValidPoints*frac);
+  double xTotStart = 0; double yTotStart = 0; double zTotStart = 0;
+  double xTotEnd = 0; double yTotEnd = 0; double zTotEnd = 0;
+  for(int i = 0; i < endPoint; i++){
+    geo::Vector_t dirStart = validDirections.at(i);
+    geo::Vector_t dirEnd = validDirections.at(nValidPoints - (i+1));
+    xTotStart += dirStart.X();
+    yTotStart += dirStart.Y();
+    zTotStart += dirStart.Z();
+    xTotEnd += dirEnd.X();
+    yTotEnd += dirEnd.Y();
+    zTotEnd += dirEnd.Z();
+  }
+  TVector3 startDir = {-xTotStart/endPoint, -yTotStart/endPoint, -zTotStart/endPoint};
+  TVector3 endDir = {xTotEnd/endPoint, yTotEnd/endPoint, zTotEnd/endPoint};
+
+  return std::make_pair(startDir, endDir);
+
+} // CRTT0MatchAlg::TrackDirectionAverage()
+
 
 }

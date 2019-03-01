@@ -69,6 +69,10 @@ namespace CRTAnaUtils{
   double T0FromCRTTracks(recob::Track tpcTrack, std::vector<crt::CRTTrack> crtTracks, int tpc, double fMaxAngleDiff, 
                          double fMaxDistance);
 
+  std::vector<double> ApaT0sFromCRTHits(std::vector<art::Ptr<crt::CRTHit>> crtHits, double fTimeLimit);
+
+  std::vector<double> ApaT0sFromCRTTracks(std::vector<crt::CRTTrack> crtTracks);
+
 }
 }
 

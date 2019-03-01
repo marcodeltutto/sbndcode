@@ -1,16 +1,16 @@
-# A script to run an analysis module: TPCCosmicRemoval
+# A script to run an analysis module: NuMuSelection
 
 #include "simulationservices_sbnd.fcl"
 #include "messages_sbnd.fcl"
 #include "backtrackerservice.fcl"
 #include "particleinventoryservice.fcl"
 
-process_name: TPCCosmicRemoval
+process_name: NuMuSelection
 
 services:
 {
   # Load the service that manages root files for histograms.
-  TFileService:           { fileName: "tpccosmicremoval.root" }
+  TFileService:           { fileName: "numuselection.root" }
   ParticleInventoryService: @local::standard_particleinventoryservice
   BackTrackerService: @local::standard_backtrackerservice
 
@@ -46,24 +46,47 @@ physics:
   analyzers:
   {
     # This name defines a job step below, and will appear as a directory  in the output histogram file. 
-    TPCCosmicRemoval: 
+    NuMuSelection: 
     {
       # The "module_type" tells us which module to run. The name here
       # must match the name supplied to DEFINE_ART_MODULE
-      module_type:     "sbndcode/CosmicRemoval/TPCCosmicRemoval"
+      module_type:     "sbndcode/CosmicRemoval/NuMuSelection"
 
       # The input parameters
       SimModuleLabel:      "largeant"        # Simulation producer module label
       CrtHitModuleLabel:   "crthit"          # CRT hit producer module label
-      TpcTrackModuleLabel: "pandoraTrack" # TPC track producer module label
-      CaloModuleLabel:     "pandoraCalo" # TPC track producer module label
+      TpcTrackModuleLabel: "pmalgtrackmaker" # TPC track producer module label
+      CaloModuleLabel:     "pmatrackcalo" # TPC track producer module label
       Verbose:             false             # Print extra information about what's going on
-      TrackID:             -99999             # Print extra information about what's going on
+      # Fiducial volume cuts
+      Fiducial:            10.
+      FiducialTop:         10.
+      FiducialStop:        5.
+      # CPA stitching
+      CpaStitchDistance:   50.
+      CpaStitchAngle:      25.
+      CpaXDifference:      10.
+      # APA time matching
+      ApaDistance:         2.
+      # Stopping particle finder
+      ResRgMin:            10.
+      ResRgMax:            20.
+      DEdxMax:             30.
+      StoppingChi2Limit:   1.2
+      # CRT hit matching
+      MinTrackLength:      20.
+      TrackDirectionFrac:  0.5
+      DistanceLimit:       15.
+      # CRT track matching
+      MaxAngleDiff:        0.2
+      MaxDistance:         80.
+      # Beam time cut around t=0
+      BeamTimeLimit:       20.
     }
   }
 
   # Schedule job step(s) for execution by defining the analysis module for this job.
-  analysis: [ TPCCosmicRemoval ]
+  analysis: [ NuMuSelection ]
 
   # "end_paths" is a keyword and contains the modules that do not modify the art::Event;
   # i.e., analyzers and output streams.

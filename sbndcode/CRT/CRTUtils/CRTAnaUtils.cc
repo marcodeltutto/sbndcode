@@ -92,20 +92,9 @@ double CRTAnaUtils::T0FromCRTHits(recob::Track tpcTrack, std::vector<sbnd::crt::
   if (tpcTrack.Length() < fMinTrackLength) return -99999; 
 
   // Calculate direction as an average over directions
-  size_t nTrackPoints = tpcTrack.NumberTrajectoryPoints();
-  int endPoint = (int)floor(nTrackPoints*fTrackDirectionFrac);
-  double xTotStart = 0; double yTotStart = 0; double zTotStart = 0;
-  double xTotEnd = 0; double yTotEnd = 0; double zTotEnd = 0;
-  for(int i = 0; i < endPoint; i++){
-    xTotStart += tpcTrack.DirectionAtPoint(i).X();
-    yTotStart += tpcTrack.DirectionAtPoint(i).Y();
-    zTotStart += tpcTrack.DirectionAtPoint(i).Z();
-    xTotEnd += tpcTrack.DirectionAtPoint(nTrackPoints - (i+1)).X();
-    yTotEnd += tpcTrack.DirectionAtPoint(nTrackPoints - (i+1)).Y();
-    zTotEnd += tpcTrack.DirectionAtPoint(nTrackPoints - (i+1)).Z();
-  }
-  TVector3 startDir = {-xTotStart/endPoint, -yTotStart/endPoint, -zTotStart/endPoint};
-  TVector3 endDir = {xTotEnd/endPoint, yTotEnd/endPoint, zTotEnd/endPoint};
+  std::pair<TVector3, TVector3> startEndDir = t0Alg.TrackDirectionAverage(tpcTrack, fTrackDirectionFrac);
+  TVector3 startDir = startEndDir.first;
+  TVector3 endDir = startEndDir.second;
 
   auto start = tpcTrack.Vertex<TVector3>();
   auto end = tpcTrack.End<TVector3>();
@@ -216,6 +205,48 @@ double CRTAnaUtils::T0FromCRTTracks(recob::Track tpcTrack, std::vector<sbnd::crt
   
   return bestTime;
 
+}
+
+std::vector<double> CRTAnaUtils::ApaT0sFromCRTHits(std::vector<art::Ptr<crt::CRTHit>> crtHits, double fTimeLimit){
+
+  geo::GeometryCore const* fGeometryService = lar::providerFrom<geo::Geometry>();
+
+  std::vector<std::vector<art::Ptr<crt::CRTHit>>> crtT0Ptr = CreateCRTTzeros(crtHits, fTimeLimit);
+  std::vector<double> stopT0;
+  for(size_t i = 0; i < crtT0Ptr.size(); i++){
+    double t0 = 0;
+    double npts = 0;
+    for(size_t j = 0; j < crtT0Ptr[i].size(); j++){
+
+      if(crtT0Ptr[i][j]->tagger == "volTaggerTopHigh_0") continue;
+
+      if(crtT0Ptr[i][j]->tagger == "volTaggerBot_0") continue;
+
+      if(crtT0Ptr[i][j]->y_pos < -fGeometryService->DetHalfHeight()) continue;
+
+      if(std::abs(crtT0Ptr[i][j]->x_pos) < 2.*fGeometryService->DetHalfWidth()) continue;
+
+      t0 += (double)(int)crtT0Ptr[i][0]->ts1_ns*1e-4; //FIXME
+      npts++;
+    }
+
+    if(t0 != 0) stopT0.push_back(t0/npts);
+  }
+  return stopT0;
+}
+
+std::vector<double> CRTAnaUtils::ApaT0sFromCRTTracks(std::vector<crt::CRTTrack> crtTracks){
+
+  CRTTrackMatchAlg trackAlg;
+
+  std::vector<double> throughT0;
+
+  for(auto const& crtTrack : crtTracks){
+    double trackT0 = (double)(int)crtTrack.ts1_ns*1e-3;
+    if(trackAlg.CrossesAPA(crtTrack)) throughT0.push_back(trackT0);
+  }
+
+  return throughT0;
 }
 
 }

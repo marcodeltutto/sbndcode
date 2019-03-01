@@ -83,6 +83,8 @@ namespace sbnd{
     // Calculate the distance of closest approach between the end of a track and a crt hit
     double DistOfClosestApproach(TVector3 trackPos, TVector3 trackDir, crt::CRTHit crtHit, int tpc, double t0);
 
+    std::pair<TVector3, TVector3> TrackDirectionAverage(recob::Track track, double frac);
+
   private:
 
     geo::GeometryCore const* fGeometryService;

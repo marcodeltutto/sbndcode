@@ -1114,7 +1114,7 @@ namespace sbnd {
     truthMatch.tpcTracks = tpcTracks;
     truthMatch.matchingMap = matchingMap;
 
-    //DrawTrueTracks(truthMatch, true, true, fTrackID);
+    DrawTrueTracks(truthMatch, true, true, fTrackID);
 
 
   } // TPCCosmicRemoval::analyze()

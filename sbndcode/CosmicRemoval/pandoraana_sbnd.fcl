@@ -1,11 +1,11 @@
-# A script to run an analysis module: PandoraRemoval
+# A script to run an analysis module: PandoraAna
 
 #include "simulationservices_sbnd.fcl"
 #include "messages_sbnd.fcl"
 #include "backtrackerservice.fcl"
 #include "particleinventoryservice.fcl"
 
-process_name: PandoraRemoval
+process_name: PandoraAna
 
 services:
 {
@@ -46,11 +46,11 @@ physics:
   analyzers:
   {
     # This name defines a job step below, and will appear as a directory  in the output histogram file. 
-    PandoraRemoval: 
+    PandoraAna: 
     {
       # The "module_type" tells us which module to run. The name here
       # must match the name supplied to DEFINE_ART_MODULE
-      module_type:     "sbndcode/CosmicRemoval/PandoraRemoval"
+      module_type:     "sbndcode/CosmicRemoval/PandoraAna"
 
       # The input parameters
       SimModuleLabel:      "largeant"        # Simulation producer module label
@@ -60,36 +60,12 @@ physics:
       ShowerModuleLabel:   "pandoraShower" 
       PandoraLabel:        "pandora"
       Verbose:             false             # Print extra information about what's going on
-      # Fiducial volume cuts
-      Fiducial:            10.
-      FiducialTop:         10.
-      FiducialStop:        5.
-      # CPA stitching
-      CpaStitchDistance:   50.
-      CpaStitchAngle:      30.
-      CpaXDifference:      10.
-      # APA time matching
-      ApaDistance:         2.
-      # Stopping particle finder
-      ResRgMin:            10.
-      ResRgMax:            20.
-      DEdxMax:             30.
-      StoppingChi2Limit:   1.2
-      # CRT hit matching
-      MinTrackLength:      20.
-      TrackDirectionFrac:  0.5
-      DistanceLimit:       30.
-      # CRT track matching
-      MaxAngleDiff:        0.3
-      MaxDistance:         80.
-      # Beam time cut around t=0
-      BeamTimeLimit:       4.
 
     }
   }
 
   # Schedule job step(s) for execution by defining the analysis module for this job.
-  analysis: [ PandoraRemoval ]
+  analysis: [ PandoraAna ]
 
   # "end_paths" is a keyword and contains the modules that do not modify the art::Event;
   # i.e., analyzers and output streams.

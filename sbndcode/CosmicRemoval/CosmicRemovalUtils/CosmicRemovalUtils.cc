@@ -26,7 +26,7 @@ namespace sbnd{
     //
     int tpc = hits[0]->WireID().TPC;
     for(size_t i = 0; i < hits.size(); i++){
-      if((int)hits[i]->WireID().TPC != tpc) return -tpc;
+      if((int)hits[i]->WireID().TPC != tpc) return -1;
     }
     return tpc;
   }

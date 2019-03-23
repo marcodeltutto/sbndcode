@@ -1,11 +1,11 @@
-# A script to run an analysis module: PandoraRemoval
+# A script to run an analysis module: PandoraSelection
 
 #include "simulationservices_sbnd.fcl"
 #include "messages_sbnd.fcl"
 #include "backtrackerservice.fcl"
 #include "particleinventoryservice.fcl"
 
-process_name: PandoraRemoval
+process_name: PandoraSelection
 
 services:
 {
@@ -46,11 +46,11 @@ physics:
   analyzers:
   {
     # This name defines a job step below, and will appear as a directory  in the output histogram file. 
-    PandoraRemoval: 
+    PandoraSelection: 
     {
       # The "module_type" tells us which module to run. The name here
       # must match the name supplied to DEFINE_ART_MODULE
-      module_type:     "sbndcode/CosmicRemoval/PandoraRemoval"
+      module_type:     "sbndcode/CosmicRemoval/PandoraSelection"
 
       # The input parameters
       SimModuleLabel:      "largeant"        # Simulation producer module label
@@ -59,7 +59,7 @@ physics:
       CaloModuleLabel:     "pandoraCalo" # TPC track producer module label
       ShowerModuleLabel:   "pandoraShower" 
       PandoraLabel:        "pandora"
-      Verbose:             false             # Print extra information about what's going on
+      Verbose:             true             # Print extra information about what's going on
       # Fiducial volume cuts
       Fiducial:            10.
       FiducialTop:         10.
@@ -89,7 +89,7 @@ physics:
   }
 
   # Schedule job step(s) for execution by defining the analysis module for this job.
-  analysis: [ PandoraRemoval ]
+  analysis: [ PandoraSelection ]
 
   # "end_paths" is a keyword and contains the modules that do not modify the art::Event;
   # i.e., analyzers and output streams.

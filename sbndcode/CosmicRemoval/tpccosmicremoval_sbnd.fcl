@@ -57,7 +57,7 @@ physics:
       CrtHitModuleLabel:   "crthit"          # CRT hit producer module label
       TpcTrackModuleLabel: "pandoraTrack" # TPC track producer module label
       CaloModuleLabel:     "pandoraCalo" # TPC track producer module label
-      Verbose:             false             # Print extra information about what's going on
+      Verbose:             true             # Print extra information about what's going on
       TrackID:             -99999             # Print extra information about what's going on
     }
   }

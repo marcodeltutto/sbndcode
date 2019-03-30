@@ -10,7 +10,7 @@ process_name: PandoraAna
 services:
 {
   # Load the service that manages root files for histograms.
-  TFileService:           { fileName: "numuselection.root" }
+  TFileService:           { fileName: "pandoraana.root" }
   ParticleInventoryService: @local::standard_particleinventoryservice
   BackTrackerService: @local::standard_backtrackerservice
 

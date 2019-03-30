@@ -66,6 +66,8 @@ namespace CRTAnaUtils{
   double T0FromCRTHits(recob::Track tpcTrack, std::vector<crt::CRTHit> crtHits, int tpc, double fMinTrackLength, 
                        double fTrackDirectionFrac, double fDistanceLimit);
 
+  std::pair<crt::CRTHit, double> ClosestCRTHit(recob::Track tpcTrack, std::vector<crt::CRTHit> crtHits, int tpc, double fTrackDirectionFrac);
+
   double T0FromCRTTracks(recob::Track tpcTrack, std::vector<crt::CRTTrack> crtTracks, int tpc, double fMaxAngleDiff, 
                          double fMaxDistance);
 

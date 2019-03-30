@@ -139,6 +139,55 @@ double CRTAnaUtils::T0FromCRTHits(recob::Track tpcTrack, std::vector<sbnd::crt::
 
 }
 
+std::pair<crt::CRTHit, double> CRTAnaUtils::ClosestCRTHit(recob::Track tpcTrack, std::vector<sbnd::crt::CRTHit> crtHits, int tpc, double fTrackDirectionFrac){
+
+  sbnd::CRTT0MatchAlg t0Alg;
+  
+  // Calculate direction as an average over directions
+  std::pair<TVector3, TVector3> startEndDir = t0Alg.TrackDirectionAverage(tpcTrack, fTrackDirectionFrac);
+  TVector3 startDir = startEndDir.first;
+  TVector3 endDir = startEndDir.second;
+
+  auto start = tpcTrack.Vertex<TVector3>();
+  auto end = tpcTrack.End<TVector3>();
+
+  // ====================== Matching Algorithm ========================== //
+  // Get the allowed t0 range
+  std::pair<double, double> t0MinMax = t0Alg.TrackT0Range(start.X(), end.X(), tpc);
+  std::vector<std::pair<crt::CRTHit, double>> t0Candidates;
+
+  // Loop over all the CRT hits
+  for(auto &crtHit : crtHits){
+    // Check if hit is within the allowed t0 range
+    double crtTime = ((double)(int)crtHit.ts1_ns) * 1e-4; //FIXME
+    if (!(crtTime >= t0MinMax.first - 10. && crtTime <= t0MinMax.second + 10.)) continue;
+    TVector3 crtPoint(crtHit.x_pos, crtHit.y_pos, crtHit.z_pos);
+  
+    // Calculate the distance between the crossing point and the CRT hit
+    double startDist = t0Alg.DistOfClosestApproach(start, startDir, crtHit, tpc, crtTime);
+    double endDist = t0Alg.DistOfClosestApproach(end, endDir, crtHit, tpc, crtTime);
+    // If the distance is less than some limit record the time
+    if ((crtPoint-start).Mag() < (crtPoint-end).Mag()){ 
+      t0Candidates.push_back(std::make_pair(crtHit, startDist));
+    }
+    else{
+      t0Candidates.push_back(std::make_pair(crtHit, endDist));
+    }
+  
+  }
+
+  // Sort the candidates by distance
+  std::sort(t0Candidates.begin(), t0Candidates.end(), [](auto& left, auto& right){
+            return left.second < right.second;});
+
+  if(t0Candidates.size() > 0){
+    return t0Candidates[0];
+  }
+  crt::CRTHit hit;
+  return std::make_pair(hit, -99999);
+
+}
+
 double CRTAnaUtils::T0FromCRTTracks(recob::Track tpcTrack, std::vector<sbnd::crt::CRTTrack> crtTracks, int tpc, double fMaxAngleDiff, double fMaxDistance){
 
   sbnd::CRTTrackMatchAlg trackAlg;

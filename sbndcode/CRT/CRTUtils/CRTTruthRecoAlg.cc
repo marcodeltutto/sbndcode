@@ -231,6 +231,46 @@ std::pair<TVector3, TVector3> CRTTruthRecoAlg::TpcCrossPoints(simb::MCParticle c
 
 } // CRTTrackMatchingAna::TpcCrossPoints()
 
+// Function to calculate the CRT crossing points of a true particle
+double CRTTruthRecoAlg::TpcLength(simb::MCParticle const& particle){
+
+  double xmin = -200.;//-2.0 * fGeometryService->DetHalfWidth();
+  double xmax = 200.;//2.0 * fGeometryService->DetHalfWidth();
+  double ymin = -fGeometryService->DetHalfHeight();
+  double ymax = fGeometryService->DetHalfHeight();
+  double zmin = 0.;
+  double zmax = fGeometryService->DetLength();
+  
+  TVector3 start, end;
+  TVector3 disp;
+  double length = 0.;
+
+  bool first = true;
+  // Get the trajectory of the true particle
+  size_t npts = particle.NumberTrajectoryPoints();
+
+  // Loop over particle trajectory
+  for (size_t i = 0; i < npts; i++){
+    TVector3 trajPoint(particle.Vx(i), particle.Vy(i), particle.Vz(i));
+    // If the particle is inside the tagger volume then set to true.
+    if(trajPoint[0]>xmin && trajPoint[0]<xmax &&
+       trajPoint[1]>ymin && trajPoint[1]<ymax &&
+       trajPoint[2]>zmin && trajPoint[2]<zmax){
+      if(first) start = trajPoint;
+      else{
+        disp -= trajPoint;
+        length += disp.Mag();
+      }
+      first = false;
+      disp = trajPoint;
+      end = trajPoint;
+    }
+  }
+
+  return length;
+
+} // CRTTrackMatchingAna::TpcLength()
+
 // Function to project a track position on to a tagger
 TVector3 CRTTruthRecoAlg::T0ToXYZPosition(TVector3 position, TVector3 direction, std::string tagger, int tpc, double t0){
 

@@ -24,6 +24,8 @@
 #include "lardataobj/AnalysisBase/ParticleID.h"
 #include "larcore/Geometry/Geometry.h"
 #include "larcorealg/Geometry/GeometryCore.h"
+#include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
+#include "lardata/DetectorInfoServices/DetectorClocksService.h"
 #include "larcoreobj/SimpleTypesAndConstants/geo_types.h"
 #include "nusimdata/SimulationBase/MCParticle.h"
 #include "nusimdata/SimulationBase/MCTruth.h"
@@ -277,10 +279,23 @@ namespace sbnd {
     double        fBeamTimeLimit;
 
     geo::GeometryCore const* fGeometryService;                 ///< pointer to Geometry provider
+    detinfo::DetectorProperties const* fDetectorProperties;    ///< pointer to detector properties provider
+    detinfo::DetectorClocks const* fDetectorClocks;            ///< pointer to detector clocks provider
     CRTTruthRecoAlg truthAlg;
     // histograms
+    TH1D *hNuMuMom;
+    TH1D *hCrMuMom;
+    TH1D *hCrMuMomHigh;
+    TH1D *hNuMuMomRemain;
+    TH1D *hCrMuMomRemain;
+    TH1D *hCrMuMomRemainHigh;
+    TH1D *hNuMuMomSelect;
+    TH1D *hCrMuMomSelect;
+    TH1D *hCrMuMomSelectHigh;
+
     int nPfParts = 0;
     int nPfPartsRemain = 0;
+    int nPfPartsSelect = 0;
     int nNuPfp = 0;
     int nNuMuPfp = 0;
     int nCrPfp = 0;
@@ -290,6 +305,9 @@ namespace sbnd {
     int nNuPfpRemain = 0;
     int nNuMuPfpRemain = 0;
     int nCrPfpRemain = 0;
+    int nNuPfpSelect = 0;
+    int nNuMuPfpSelect = 0;
+    int nCrPfpSelect = 0;
 
     void GetPFParticleIdMap(const PFParticleHandle &pfParticleHandle, PFParticleIdMap &pfParticleMap);
 
@@ -333,6 +351,8 @@ namespace sbnd {
     , fBeamTimeLimit        (config().BeamTimeLimit())
   {
     fGeometryService    = lar::providerFrom<geo::Geometry>();
+    fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>(); 
+    fDetectorClocks = lar::providerFrom<detinfo::DetectorClocksService>(); 
 
   } // PandoraSelection()
 
@@ -341,6 +361,16 @@ namespace sbnd {
   {
     // Access tfileservice to handle creating and writing histograms
     art::ServiceHandle<art::TFileService> tfs;
+
+    hNuMuMom           = tfs->make<TH1D>("hNuMuMom",           "", 20, 0, 2);
+    hCrMuMom           = tfs->make<TH1D>("hCrMuMom",           "", 20, 0, 2);
+    hCrMuMomHigh       = tfs->make<TH1D>("hCrMuMomHigh",       "", 20, 0, 10);
+    hNuMuMomRemain     = tfs->make<TH1D>("hNuMuMomRemain",     "", 20, 0, 2);
+    hCrMuMomRemain     = tfs->make<TH1D>("hCrMuMomRemain",     "", 20, 0, 2);
+    hCrMuMomRemainHigh = tfs->make<TH1D>("hCrMuMomRemainHigh", "", 20, 0, 10);
+    hNuMuMomSelect     = tfs->make<TH1D>("hNuMuMomSelect",     "", 20, 0, 2);
+    hCrMuMomSelect     = tfs->make<TH1D>("hCrMuMomSelect",     "", 20, 0, 2);
+    hCrMuMomSelectHigh = tfs->make<TH1D>("hCrMuMomSelectHigh", "", 20, 0, 10);
 
     // Initial output
     if(fVerbose) std::cout<<"----------------- Pandora Selection Ana Module -------------------"<<std::endl;
@@ -362,13 +392,13 @@ namespace sbnd {
     event.getByLabel(fPandoraLabel, pfParticleHandle);
 
     if( !pfParticleHandle.isValid() ){
-      std::cout<<"Failed to find the PFParticles."<<std::endl;
+      if(fVerbose) std::cout<<"Failed to find the PFParticles."<<std::endl;
       return;
     }
 
     PFParticleIdMap pfParticleMap;
     this->GetPFParticleIdMap(pfParticleHandle, pfParticleMap);
-
+    
     auto tpcTrackHandle = event.getValidHandle<std::vector<recob::Track>>(fTpcTrackModuleLabel);
     art::FindManyP<recob::Hit> findManyHits(tpcTrackHandle, event, fTpcTrackModuleLabel);
     art::FindManyP<anab::Calorimetry> findManyCalo(tpcTrackHandle, event, fCaloModuleLabel);
@@ -386,21 +416,71 @@ namespace sbnd {
     std::vector<int> nuParticleIds;
     std::vector<int> lepParticleIds;
 
+    std::vector<double> fakeTpc0Flashes;
+    std::vector<double> fakeTpc1Flashes;
+    double readoutWindowMuS  = fDetectorClocks->TPCTick2Time((double)fDetectorProperties->ReadOutWindowSize()); // [us]
+    double driftTimeMuS = (2.*fGeometryService->DetHalfWidth()+3.)/fDetectorProperties->DriftVelocity(); // [us]
+
     for (auto const& particle: (*particleHandle)){
 
       int partId = particle.TrackId();
       particles[partId] = particle;
       art::Ptr<simb::MCTruth> truth = pi_serv->TrackIdToMCTruth_P(partId);
+      int pdg = std::abs(particle.PdgCode());
+      double time = particle.T() * 1e-3;
       if(truth->Origin() == simb::kBeamNeutrino){
         geo::Point_t vtx;
         vtx.SetX(truth->GetNeutrino().Nu().Vx()); vtx.SetY(truth->GetNeutrino().Nu().Vy()); vtx.SetZ(truth->GetNeutrino().Nu().Vz());
         if(!CosmicRemovalUtils::InFiducial(vtx, 0, 0)) continue;
-        if(std::abs(particle.PdgCode())==13 && particle.Mother()==0){ 
+        if(pdg==13 && particle.Mother()==0){ 
           lepParticleIds.push_back(partId);
         }
         nuParticleIds.push_back(partId);
       }
+      //Check if time is in reconstructible window
+      if(time < -driftTimeMuS || time > readoutWindowMuS) continue; 
+      //Check if particle is visible, electron, muon, proton, pion, kaon, photon
+      if(!(pdg==13||pdg==11||pdg==22||pdg==2212||pdg==211||pdg==321||pdg==111)) continue;
+      //Loop over the trajectory
+      int npts = particle.NumberTrajectoryPoints();
+      double TPC0Energy = 0;
+      double TPC1Energy = 0;
+      for(int i = 1; i < npts; i++){
+        geo::Point_t pt;
+        pt.SetX(particle.Vx(i)); pt.SetY(particle.Vy(i)); pt.SetZ(particle.Vz(i));
+        if(!CosmicRemovalUtils::InFiducial(pt, 0, 0)) continue;
+        if(pt.X() < 0) TPC0Energy += particle.E(i-1) - particle.E(i);
+        else TPC1Energy += particle.E(i-1) - particle.E(i);
+      }
+      if(TPC0Energy > 0.05) fakeTpc0Flashes.push_back(time);
+      else if(TPC1Energy > 0.05) fakeTpc1Flashes.push_back(time);
     }
+
+    bool tpc0BeamFlash = false;
+    std::sort(fakeTpc0Flashes.begin(), fakeTpc0Flashes.end());
+    double previousTime = -99999;
+    for(size_t i = 0; i < fakeTpc0Flashes.size(); i++){
+      double time = fakeTpc0Flashes[i];
+      if(time > 0 && time < fBeamTimeLimit) tpc0BeamFlash = true;
+      if(std::abs(time-previousTime) < 0.1){
+        fakeTpc0Flashes.erase(fakeTpc0Flashes.begin()+i);
+      }
+      else previousTime = time;
+    }
+
+    bool tpc1BeamFlash = false;
+    std::sort(fakeTpc1Flashes.begin(), fakeTpc1Flashes.end());
+    previousTime = -99999;
+    for(size_t i = 0; i < fakeTpc1Flashes.size(); i++){
+      double time = fakeTpc1Flashes[i];
+      if(time > 0 && time < fBeamTimeLimit) tpc1BeamFlash = true;
+      if(std::abs(time-previousTime) < 0.1){
+        fakeTpc1Flashes.erase(fakeTpc1Flashes.begin()+i);
+      }
+      else previousTime = time;
+    }
+
+    if(!tpc0BeamFlash && !tpc1BeamFlash) return;
 
     if(fVerbose) std::cout<<"Number of true particles = "<<particles.size()<<"\n";
 
@@ -445,8 +525,18 @@ namespace sbnd {
           continue;
         }
         if(std::find(nuParticleIds.begin(), nuParticleIds.end(), trueId) != nuParticleIds.end()) {if(fVerbose) std::cout<<"From neutrino!\n"; isTrueNu = true;}
-        else{ if(fVerbose) std::cout<<"From cosmic\n";}
-        if(std::find(lepParticleIds.begin(), lepParticleIds.end(), trueId) != lepParticleIds.end()){ if(fVerbose) std::cout<<"Primary muon\n"; isTrueNuMu = true;}
+        else{ 
+          if(fVerbose) std::cout<<"From cosmic\n";
+          if(std::abs(particles[trueId].PdgCode())==13){ 
+            hCrMuMom->Fill(particles[trueId].P());
+            hCrMuMomHigh->Fill(particles[trueId].P());
+          }
+        }
+        if(std::find(lepParticleIds.begin(), lepParticleIds.end(), trueId) != lepParticleIds.end()){ 
+          if(fVerbose) std::cout<<"Primary muon\n"; 
+          isTrueNuMu = true;
+          hNuMuMom->Fill(particles[trueId].P());
+        }
       }
 
       if(isTrueNu) nNuPfp++;
@@ -488,7 +578,9 @@ namespace sbnd {
 
       int trueId = RecoUtils::TrueParticleIDFromTotalRecoHits(hits, false);
       if (particles.find(trueId) == particles.end()) continue;
-      if (track.Length() > 10.) trackT0s.push_back(particles[trueId].T() * 1e-3);
+      //FIXME should be true length in TPC not reco length
+      std::pair<TVector3, TVector3> se = truthAlg.TpcCrossPoints(particles[trueId]);
+      if ((se.second-se.first).Mag() > 10.) trackT0s.push_back(particles[trueId].T() * 1e-3);
     }
 
     // Get t0s returned from pandora
@@ -582,6 +674,9 @@ namespace sbnd {
         else if(tpc == 1 && (startX<0 || endX<0)) nuTrack.diffTpc = true;
         else nuTrack.diffTpc = false;
 
+        if(tpc0BeamFlash && !tpc1BeamFlash && tpc == 1) nuTrack.diffTpc = true;
+        if(tpc1BeamFlash && !tpc0BeamFlash && tpc == 0) nuTrack.diffTpc = true;
+
         //--------------------------------- CPA STITCHING CUT --------------------------------------
         double stitchTime = -99999;
         bool stitchExit = false;
@@ -610,7 +705,7 @@ namespace sbnd {
         }
         if(stitchTime == -99999 && t0Map[tpcTrack.ID()].size()>0) stitchTime = t0Map[tpcTrack.ID()][0];
         // If tracks are stitched, get time and remove any outside of beam window
-        if(stitchTime != -99999 && (std::abs(stitchTime) > fBeamTimeLimit || stitchExit)) nuTrack.isStitched = true;
+        if(stitchTime != -99999 && (stitchTime < 0 || stitchTime > fBeamTimeLimit || stitchExit)) nuTrack.isStitched = true;
         else nuTrack.isStitched = false;
        
         //--------------------------------- CRTTRACK MATCHING --------------------------------------
@@ -627,18 +722,14 @@ namespace sbnd {
 
         //----------------- APA CROSS MATCHING FOR THROUGH GOING PARTICLES -------------------------
         // Match APA crossers with times from CRT tracks that cross the APA
-        double crossTimeThrough = CosmicRemovalUtils::T0FromApaCross(tpcTrack, trackT0s, tpc, fFiducial, 2.);
         nuTrack.crossesApa = false;
-        if(crossTimeThrough != -99999 && std::abs(crossTimeThrough) > fBeamTimeLimit){ 
-          // Check that the end that doesn't cross the APA exits the TPC
-          if(tpc == 0){
-            if(tpcTrack.Vertex().X() < tpcTrack.End().X() && (!endInFiducial || nuTrack.endStops)) nuTrack.crossesApa = true;
-            else if(!startInFiducial || nuTrack.startStops) nuTrack.crossesApa = true;
-          }
-          else if(tpc == 1){
-            if(tpcTrack.Vertex().X() > tpcTrack.End().X() && (!endInFiducial || nuTrack.endStops)) nuTrack.crossesApa = true;
-            else if(!startInFiducial || nuTrack.startStops) nuTrack.crossesApa = true;
-          }
+        if(tpc == 0){
+          double crossTimeThrough = CosmicRemovalUtils::T0FromApaCross(tpcTrack, fakeTpc0Flashes, tpc, fFiducial, 2.);
+          if(crossTimeThrough != -99999 && (crossTimeThrough<0 || crossTimeThrough>fBeamTimeLimit)) nuTrack.crossesApa = true;
+        }
+        if(tpc == 1){
+          double crossTimeThrough = CosmicRemovalUtils::T0FromApaCross(tpcTrack, fakeTpc1Flashes, tpc, fFiducial, 2.);
+          if(crossTimeThrough != -99999 && (crossTimeThrough<0 || crossTimeThrough>fBeamTimeLimit)) nuTrack.crossesApa = true;
         }
 
         nuTracks.push_back(nuTrack);
@@ -683,47 +774,26 @@ namespace sbnd {
         size_t secTrack = 99999;
         TVector3 start = longestTrack.Vertex<TVector3>();
         TVector3 end = longestTrack.End<TVector3>();
-        TVector3 diff1;
-        TVector3 diff2;
-        bool t1StartEnd = 0;
-        bool t2StartEnd = 0;
+        double angle = 99999;
+        //bool t1StartEnd = 0;
+        //bool t2StartEnd = 0;
         for(size_t i = 1; i < nuTracks.size(); i++){
           recob::Track secondTrack = nuTracks[i].track;
+          if(secondTrack.Length() < 5) continue;
+          if(secTrack != 99999 && angle < 2.5) continue;
           TVector3 start2 = secondTrack.Vertex<TVector3>();
           TVector3 end2 = secondTrack.End<TVector3>();
           double minDist = 5;
           if((start-start2).Mag() < minDist){
             minDist = (start-start2).Mag();
             secTrack = i;
-            diff1 = end - start;
-            diff2 = end2 - start2;
-            t1StartEnd = 1;
-            t2StartEnd = 1;
+            angle = (end - start).Angle(end2 - start2);
+            //t1StartEnd = 1;
+            //t2StartEnd = 1;
           }
-          if((start-end2).Mag() < minDist){
-            minDist = (start-end2).Mag();
-            secTrack = i;
-            diff1 = end - start;
-            diff2 = start2 - end2;
-            t1StartEnd = 1;
-          }
-          if((end-start2).Mag() < minDist){
-            minDist = (end-start2).Mag();
-            secTrack = i;
-            diff1 = start - end;
-            diff2 = end2 - start2;
-            t2StartEnd = 1;
-          }
-          if((end-end2).Mag() < minDist){
-            secTrack = i;
-            diff1 = start - end;
-            diff2 = start2 - end2;
-          }
-          if(secTrack != 99999) continue;
         }
 
         if(secTrack != 99999){
-          double angle = diff1.Angle(diff2);
           // Are the angles compatible with them being split tracks, near 180
           if(angle < 2.5) cutVeto = true;
         }
@@ -731,22 +801,12 @@ namespace sbnd {
         if(!cutVeto && secTrack != 99999){
           NuTrackCosId nuTrack2 = nuTracks[secTrack];
           //Do the fiducial volume cut assuming tracks are the same
-          TVector3 mergeStart = nuTrack.track.Vertex<TVector3>();
-          //bool mergeStartStops = nuTrack.startStops;
-          bool mergeStartInFidStop = nuTrack.startInFidStop;
-          if(t1StartEnd){ 
-            mergeStart = nuTrack.track.End<TVector3>();
-            //mergeStartStops = nuTrack.endStops;
-            mergeStartInFidStop = nuTrack.endInFidStop;
-          }
-          TVector3 mergeEnd = nuTrack2.track.Vertex<TVector3>();
-          //bool mergeEndStops = nuTrack2.startStops;
-          bool mergeEndInFidStop = nuTrack2.startInFidStop;
-          if(t2StartEnd){ 
-            mergeEnd = nuTrack2.track.End<TVector3>();
-            //mergeEndStops = nuTrack2.endStops;
-            mergeEndInFidStop = nuTrack2.endInFidStop;
-          }
+          TVector3 mergeStart = nuTrack.track.End<TVector3>();
+          bool mergeStartStops = nuTrack.endStops;
+          bool mergeStartInFidStop = nuTrack.endInFidStop;
+          TVector3 mergeEnd = nuTrack2.track.End<TVector3>();
+          bool mergeEndStops = nuTrack2.endStops;
+          bool mergeEndInFidStop = nuTrack2.endInFidStop;
           if(!mergeStartInFidStop && !mergeEndInFidStop){
             if(fVerbose) std::cout<<"Track not in fiducial volume\n";
             if(isTrueNu) nNuPfpFid++;
@@ -758,17 +818,17 @@ namespace sbnd {
           //Find the vertex
           //Do the stopping cut for the longest track and assuming tracks are split
           if((nuTrack.startStops && !nuTrack.endInFidStop && nuTrack.track.End().Y() > 0) 
-              || (nuTrack.endStops && !nuTrack.startInFidStop && nuTrack.track.Vertex().Y() > 0)){
-              //|| (mergeStartStops && !mergeEndInFidStop && mergeEnd.Y() > 0)
-              //|| (mergeEndStops && !mergeStartInFidStop && mergeStart.Y() > 0)){
+              || (nuTrack.endStops && !nuTrack.startInFidStop && nuTrack.track.Vertex().Y() > 0)
+              || (mergeStartStops && !mergeEndInFidStop && mergeEnd.Y() > 0)
+              || (mergeEndStops && !mergeStartInFidStop && mergeStart.Y() > 0)){
             if(fVerbose) std::cout<<"Stopping particle\n";
             continue;
           }
           //Do crt hit cut for both tracks
-          double crtHitTime = std::abs(((double)(int)nuTrack.closestCrtHit.ts1_ns)*1e-4);
-          double crtHitTime2 = std::abs(((double)(int)nuTrack2.closestCrtHit.ts1_ns)*1e-4);
-          if((nuTrack.closestCrtHitDistance < fDistanceLimit && crtHitTime > fBeamTimeLimit)
-              || (nuTrack2.track.Length()>20 && nuTrack2.closestCrtHitDistance < fDistanceLimit && crtHitTime2 > fBeamTimeLimit)){
+          double crtHitTime = ((double)(int)nuTrack.closestCrtHit.ts1_ns)*1e-4;
+          double crtHitTime2 = ((double)(int)nuTrack2.closestCrtHit.ts1_ns)*1e-4;
+          if((nuTrack.closestCrtHitDistance < fDistanceLimit && (crtHitTime<0 || crtHitTime>fBeamTimeLimit))
+              || (nuTrack2.track.Length()>20 && nuTrack2.closestCrtHitDistance < fDistanceLimit && (crtHitTime2<0 || crtHitTime2>fBeamTimeLimit))){
             if(fVerbose) std::cout<<"Matches CRT hit outside of beam\n";
             continue;
           }
@@ -809,9 +869,68 @@ namespace sbnd {
       //If particle passes then select
       nPfPartsRemain++;
 
-      if(isTrueNu){ std::cout<<"NU EVENT REMAINING!\n"; nNuPfpRemain++; }
-      else{ std::cout<<"COSMIC REMAINING!\n"; nCrPfpRemain++; }
-      if(isTrueNuMu){ std::cout<<"NU MU EVENT REMAINING!\n"; nNuMuPfpRemain++; }
+      if(isTrueNu){ if(fVerbose) std::cout<<"NU EVENT REMAINING!\n"; nNuPfpRemain++; }
+      else{ if(fVerbose) std::cout<<"COSMIC REMAINING!\n"; nCrPfpRemain++; }
+      if(isTrueNuMu){ if(fVerbose) std::cout<<"NU MU EVENT REMAINING!\n"; nNuMuPfpRemain++; }
+
+      //Loop over the nuTracks
+      for(size_t i = 0; i < nuTracks.size(); i++){
+        //Get the true ID
+        std::vector<art::Ptr<recob::Hit>> hits = findManyHits.at(nuTracks[i].track.ID());
+        int trueId = RecoUtils::TrueParticleIDFromTotalRecoHits(hits, false);
+        if(particles.find(trueId) == particles.end()) continue;
+        //Check it matches a true muon
+        if(std::abs(particles[trueId].PdgCode()) != 13) continue;
+        //Is it from neutrino
+        if(std::find(lepParticleIds.begin(), lepParticleIds.end(), trueId) != lepParticleIds.end()) {
+          hNuMuMomRemain->Fill(particles[trueId].P());
+        }
+        //Is is from cosmic
+        if(std::find(nuParticleIds.begin(), nuParticleIds.end(), trueId) == nuParticleIds.end()) {
+          hCrMuMomRemain->Fill(particles[trueId].P());
+          hCrMuMomRemainHigh->Fill(particles[trueId].P());
+        }
+      }
+
+      //----------------------------------------------------------------------------------------------------------
+      //                                          NUMU SELECTION
+      //----------------------------------------------------------------------------------------------------------
+
+      //Get primary vertex from pandora
+      TVector3 nuVtx = nuTracks[0].track.Vertex<TVector3>();
+      //Fiducial volume cut of vertex (16.5 cm from anode, 30 cm from top/bottom (?), 95cm total from front+back
+      if(nuVtx.X() < -184.5 || nuVtx.X() > 184.15 || nuVtx.Y() < -185 || nuVtx.Y() > 185 || nuVtx.Z() < 15. || nuVtx.Z() > 420) continue;
+      //If longest track is contained, check pid chi2, select mu/pi, select length > 50 cm
+      bool exits = nuTracks[0].endInFidStop;
+      double length = nuTracks[0].track.Length();
+      if(!exits && length < 50.) continue;
+      //If longest track exits, select length > 100 cm
+      if(exits && length < 100.) continue;
+
+      nPfPartsSelect++;
+      if(isTrueNu){ if(fVerbose) std::cout<<"NU EVENT SELECTED!\n"; nNuPfpSelect++; }
+      else{ if(fVerbose) std::cout<<"COSMIC SELECTED!\n"; nCrPfpSelect++; }
+      if(isTrueNuMu){ if(fVerbose) std::cout<<"NU MU EVENT SELECTED!\n"; nNuMuPfpSelect++; }
+
+      //Loop over the nuTracks
+      for(size_t i = 0; i < nuTracks.size(); i++){
+        //Get the true ID
+        std::vector<art::Ptr<recob::Hit>> hits = findManyHits.at(nuTracks[i].track.ID());
+        int trueId = RecoUtils::TrueParticleIDFromTotalRecoHits(hits, false);
+        if(particles.find(trueId) == particles.end()) continue;
+        //Check it matches a true muon
+        if(std::abs(particles[trueId].PdgCode()) != 13) continue;
+        //Is it from neutrino
+        if(std::find(lepParticleIds.begin(), lepParticleIds.end(), trueId) != lepParticleIds.end()) {
+          hNuMuMomSelect->Fill(particles[trueId].P());
+        }
+        //Is is from cosmic
+        if(std::find(nuParticleIds.begin(), nuParticleIds.end(), trueId) == nuParticleIds.end()) {
+          hCrMuMomSelect->Fill(particles[trueId].P());
+          hCrMuMomSelectHigh->Fill(particles[trueId].P());
+        }
+      }
+
     }
 
     //DrawTrueTracks(pfpNuTracks, particles, true, true);
@@ -834,7 +953,17 @@ namespace sbnd {
              <<"Number remaining after cosmic ID = "<<nPfPartsRemain<<"\n"
              <<"From neutrinos                   = "<<nNuPfpRemain<<"\n"
              <<"From cosmic rays                 = "<<nCrPfpRemain<<"\n"
-             <<"From nu mu                       = "<<nNuMuPfpRemain<<"\n";
+             <<"From nu mu                       = "<<nNuMuPfpRemain<<"\n"
+             <<"---------------------------------------------\n"
+             <<"Number remaining after selection = "<<nPfPartsSelect<<"\n"
+             <<"From neutrinos                   = "<<nNuPfpSelect<<"\n"
+             <<"From cosmic rays                 = "<<nCrPfpSelect<<"\n"
+             <<"From nu mu                       = "<<nNuMuPfpSelect<<"\n";
+
+    std::ofstream myfile;
+    myfile.open("results.txt");
+    myfile<<nPfParts<<","<<nNuPfp<<","<<nCrPfp<<","<<nNuMuPfp<<","<<nNuPfpFid<<","<<nCrPfpFid<<","<<nNuMuPfpFid<<","<<nPfPartsRemain<<","<<nNuPfpRemain<<","<<nCrPfpRemain<<","<<nNuMuPfpRemain<<","<<nPfPartsSelect<<","<<nNuPfpSelect<<","<<nCrPfpSelect<<","<<nNuMuPfpSelect;
+    myfile.close();
 
   } // PandoraSelection::endJob()
 

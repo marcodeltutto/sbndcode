@@ -10,7 +10,7 @@ process_name: PandoraSelection
 services:
 {
   # Load the service that manages root files for histograms.
-  TFileService:           { fileName: "numuselection.root" }
+  TFileService:           { fileName: "pandoraselection.root" }
   ParticleInventoryService: @local::standard_particleinventoryservice
   BackTrackerService: @local::standard_backtrackerservice
 
@@ -59,7 +59,7 @@ physics:
       CaloModuleLabel:     "pandoraCalo" # TPC track producer module label
       ShowerModuleLabel:   "pandoraShower" 
       PandoraLabel:        "pandora"
-      Verbose:             true             # Print extra information about what's going on
+      Verbose:             false             # Print extra information about what's going on
       # Fiducial volume cuts
       Fiducial:            10.
       FiducialTop:         10.

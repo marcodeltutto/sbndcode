@@ -157,12 +157,18 @@ namespace sbnd {
 
     // histograms
     TH1D *hTrueMuLength;
-    TH1D *hRecoMuLength;
+    TH1D *hTrueMuE;
+    TH1D *hTrueMuLengthReco;
+    TH1D *hTrueMuEReco;
     TH1D *hTrueCrLength;
     TH1D *hRecoCrLength;
     TH1D *hMuLengthDiff;
     TH1D *hTrueMuTheta;
     TH1D *hTrueMuPhi;
+    TH1D *hRecoLongLength;
+    TH1D *hRecoLongTheta;
+    TH1D *hRecoLongPhi;
+    TH1D *hRecoMuLength;
     TH1D *hRecoMuTheta;
     TH1D *hRecoMuPhi;
     TH1D *hTrueCrTheta;
@@ -175,6 +181,7 @@ namespace sbnd {
     TH1D *hRecoSecTrackLength;
     TH1D *hRecoCrSecTrackAngle;
     TH1D *hRecoCrSecTrackLength;
+    TH1D *hMuVertexDiff;
 
     TH2D *hTrueMuThetaPhi;
     TH2D *hRecoMuThetaPhi;
@@ -190,6 +197,15 @@ namespace sbnd {
     int nMu = 0;
     int nNuIsMu = 0;
     int nCrIsMu = 0;
+
+    int nPandCr = 0;
+    int nPandNu = 0;
+    int nNuPandCut = 0;
+    int nNuMuPandCut = 0;
+    int nCrPandCut = 0;
+    int nNuPandKeep = 0;
+    int nNuMuPandKeep = 0;
+    int nCrPandKeep = 0;
 
     void GetPFParticleIdMap(const PFParticleHandle &pfParticleHandle, PFParticleIdMap &pfParticleMap);
 
@@ -222,33 +238,40 @@ namespace sbnd {
     // Access tfileservice to handle creating and writing histograms
     art::ServiceHandle<art::TFileService> tfs;
 
-    hTrueMuLength         = tfs->make<TH1D>("hTrueMuLength",          "", 50, 0,    500);
-    hRecoMuLength         = tfs->make<TH1D>("hRecoMuLength",          "", 50, 0,    500);
-    hTrueCrLength         = tfs->make<TH1D>("hTrueCrLength",          "", 50, 0,    500);
-    hRecoCrLength         = tfs->make<TH1D>("hRecoCrLength",          "", 50, 0,    500);
-    hMuLengthDiff         = tfs->make<TH1D>("hMuLengthDiff",          "", 50, -100, 100);
-    hTrueMuTheta          = tfs->make<TH1D>("hTrueMuTheta",           "", 50, 0,    3.2);
-    hTrueMuPhi            = tfs->make<TH1D>("hTrueMuPhi",             "", 50, -3.2, 3.2);
-    hRecoMuTheta          = tfs->make<TH1D>("hRecoMuTheta",           "", 50, 0,    3.2);
-    hRecoMuPhi            = tfs->make<TH1D>("hRecoMuPhi",             "", 50, -3.2, 3.2);
-    hTrueCrTheta          = tfs->make<TH1D>("hTrueCrTheta",           "", 50, 0,    3.2);
-    hTrueCrPhi            = tfs->make<TH1D>("hTrueCrPhi",             "", 50, -3.2, 3.2);
-    hRecoCrTheta          = tfs->make<TH1D>("hRecoCrTheta",           "", 50, 0,    3.2);
-    hRecoCrPhi            = tfs->make<TH1D>("hRecoCrPhi",             "", 50, -3.2, 3.2);
-    hTrueSecTrackAngle    = tfs->make<TH1D>("hTrueSecTrackAngle",     "", 50, 0,    3.2);
-    hRecoSecTrackAngle    = tfs->make<TH1D>("hRecoSecTrackAngle",     "", 50, 0,    3.2);
-    hTrueSecTrackLength   = tfs->make<TH1D>("hTrueSecTrackLength",    "", 50, 0,    250);
-    hRecoSecTrackLength   = tfs->make<TH1D>("hRecoSecTrackLength",    "", 50, 0,    250);
-    hRecoCrSecTrackAngle  = tfs->make<TH1D>("hRecoCrSecTrackAngle",   "", 50, 0,    3.2);
-    hRecoCrSecTrackLength = tfs->make<TH1D>("hRecoCrSecTrackLength",  "", 50, 0,    250);
+    hTrueMuLength         = tfs->make<TH1D>("hTrueMuLength",          "", 20, 0,    500);
+    hTrueMuE              = tfs->make<TH1D>("hTrueMuE",               "", 20, 0,    2);
+    hTrueMuLengthReco     = tfs->make<TH1D>("hTrueMuLengthReco",      "", 20, 0,    500);
+    hTrueMuEReco          = tfs->make<TH1D>("hTrueMuEReco",           "", 20, 0,    2);
+    hTrueCrLength         = tfs->make<TH1D>("hTrueCrLength",          "", 20, 0,    500);
+    hRecoCrLength         = tfs->make<TH1D>("hRecoCrLength",          "", 20, 0,    500);
+    hMuLengthDiff         = tfs->make<TH1D>("hMuLengthDiff",          "", 50, -50, 50);
+    hMuVertexDiff         = tfs->make<TH1D>("hMuVertexDiff",          "", 30, 0, 30);
+    hTrueMuTheta          = tfs->make<TH1D>("hTrueMuTheta",           "", 20, 0,    3.2);
+    hTrueMuPhi            = tfs->make<TH1D>("hTrueMuPhi",             "", 20, -3.2, 3.2);
+    hRecoLongLength       = tfs->make<TH1D>("hRecoLongLength",        "", 20, 0,    500);
+    hRecoLongTheta        = tfs->make<TH1D>("hRecoLongTheta",         "", 20, 0,    3.2);
+    hRecoLongPhi          = tfs->make<TH1D>("hRecoLongPhi",           "", 20, -3.2, 3.2);
+    hRecoMuLength         = tfs->make<TH1D>("hRecoMuLength",          "", 20, 0,    500);
+    hRecoMuTheta          = tfs->make<TH1D>("hRecoMuTheta",           "", 20, 0,    3.2);
+    hRecoMuPhi            = tfs->make<TH1D>("hRecoMuPhi",             "", 20, -3.2, 3.2);
+    hTrueCrTheta          = tfs->make<TH1D>("hTrueCrTheta",           "", 20, 0,    3.2);
+    hTrueCrPhi            = tfs->make<TH1D>("hTrueCrPhi",             "", 20, -3.2, 3.2);
+    hRecoCrTheta          = tfs->make<TH1D>("hRecoCrTheta",           "", 20, 0,    3.2);
+    hRecoCrPhi            = tfs->make<TH1D>("hRecoCrPhi",             "", 20, -3.2, 3.2);
+    hTrueSecTrackAngle    = tfs->make<TH1D>("hTrueSecTrackAngle",     "", 20, 0,    3.2);
+    hRecoSecTrackAngle    = tfs->make<TH1D>("hRecoSecTrackAngle",     "", 20, 0,    3.2);
+    hTrueSecTrackLength   = tfs->make<TH1D>("hTrueSecTrackLength",    "", 20, 0,    250);
+    hRecoSecTrackLength   = tfs->make<TH1D>("hRecoSecTrackLength",    "", 20, 0,    250);
+    hRecoCrSecTrackAngle  = tfs->make<TH1D>("hRecoCrSecTrackAngle",   "", 20, 0,    3.2);
+    hRecoCrSecTrackLength = tfs->make<TH1D>("hRecoCrSecTrackLength",  "", 20, 0,    250);
     
-    hTrueMuThetaPhi             = tfs->make<TH2D>("hTrueMuThetaPhi",            "", 20, 0, 3.2, 20, -3.2, 3.2);
-    hRecoMuThetaPhi             = tfs->make<TH2D>("hRecoMuThetaPhi",            "", 20, 0, 3.2, 20, -3.2, 3.2);
-    hTrueCrThetaPhi             = tfs->make<TH2D>("hTrueCrThetaPhi",            "", 20, 0, 3.2, 20, -3.2, 3.2);
-    hRecoCrThetaPhi             = tfs->make<TH2D>("hRecoCrThetaPhi",            "", 20, 0, 3.2, 20, -3.2, 3.2);
-    hTrueSecTrackLengthAngle    = tfs->make<TH2D>("hTrueSecTrackLengthAngle",   "", 20, 0, 250, 20, 0,    3.2);
-    hRecoSecTrackLengthAngle    = tfs->make<TH2D>("hRecoSecTrackLengthAngle",   "", 20, 0, 250, 20, 0,    3.2);
-    hRecoCrSecTrackLengthAngle  = tfs->make<TH2D>("hRecoCrSecTrackLengthAngle", "", 20, 0, 250, 20, 0,    3.2);
+    hTrueMuThetaPhi             = tfs->make<TH2D>("hTrueMuThetaPhi",            "", 10, 0, 3.2, 10, -3.2, 3.2);
+    hRecoMuThetaPhi             = tfs->make<TH2D>("hRecoMuThetaPhi",            "", 10, 0, 3.2, 10, -3.2, 3.2);
+    hTrueCrThetaPhi             = tfs->make<TH2D>("hTrueCrThetaPhi",            "", 10, 0, 3.2, 10, -3.2, 3.2);
+    hRecoCrThetaPhi             = tfs->make<TH2D>("hRecoCrThetaPhi",            "", 10, 0, 3.2, 10, -3.2, 3.2);
+    hTrueSecTrackLengthAngle    = tfs->make<TH2D>("hTrueSecTrackLengthAngle",   "", 10, 0, 250, 10, 0,    3.2);
+    hRecoSecTrackLengthAngle    = tfs->make<TH2D>("hRecoSecTrackLengthAngle",   "", 10, 0, 250, 10, 0,    3.2);
+    hRecoCrSecTrackLengthAngle  = tfs->make<TH2D>("hRecoCrSecTrackLengthAngle", "", 10, 0, 250, 10, 0,    3.2);
 
     // Initial output
     if(fVerbose) std::cout<<"----------------- Pandora Removal Ana Module -------------------"<<std::endl;
@@ -375,7 +398,8 @@ namespace sbnd {
           std::pair<TVector3, TVector3> se = truthAlg.TpcCrossPoints(part);
           TVector3 end(part.EndX(), part.EndY(), part.EndZ());
           TVector3 diff = end - vert;
-          hTrueMuLength->Fill((se.second-se.first).Mag());
+          hTrueMuLength->Fill(truthAlg.TpcLength(part));
+          hTrueMuE->Fill(part.E());
           hTrueMuTheta->Fill(diff.Theta());
           hTrueMuPhi->Fill(diff.Phi());
           hTrueMuThetaPhi->Fill(diff.Theta(), diff.Phi());
@@ -386,7 +410,7 @@ namespace sbnd {
             int pdg = std::abs(part2.PdgCode());
             if(j!=i && (pdg==13||pdg==211||pdg==2212) && part2.Mother()==0){
               std::pair<TVector3, TVector3> se2 = truthAlg.TpcCrossPoints(part2);
-              double len = (se2.second-se2.first).Mag();
+              double len = truthAlg.TpcLength(part2);
               if(len > secTrackLength){
                 secTrackLength = len;
                 TVector3 end2(part2.EndX(), part2.EndY(), part2.EndZ());
@@ -404,7 +428,7 @@ namespace sbnd {
       }
     }
 
-    for(size_t i = 0; i < crParticles.size(); i++){
+    for(size_t i = 0; i < crTruth.size(); i++){
       simb::MCParticle part = crTruth[i];
       if(std::abs(part.PdgCode())==13 && part.Mother()==0){
         std::pair<TVector3, TVector3> se = truthAlg.TpcCrossPoints(part);
@@ -413,7 +437,7 @@ namespace sbnd {
         if(start.X()==end.X() && start.Y()==end.Y() && start.Z()==start.Z()) continue;
         TVector3 diff = end - start;
         if(end.Y() > start.Y()) diff = start - end;
-        hTrueCrLength->Fill(diff.Mag());
+        hTrueCrLength->Fill(truthAlg.TpcLength(part));
         hTrueCrTheta->Fill(diff.Theta());
         hTrueCrPhi->Fill(diff.Phi());
         hTrueCrThetaPhi->Fill(diff.Theta(), diff.Phi());
@@ -422,13 +446,22 @@ namespace sbnd {
 
     auto tpcTrackHandle = event.getValidHandle<std::vector<recob::Track>>(fTpcTrackModuleLabel);
     art::FindManyP<recob::Hit> findManyHits(tpcTrackHandle, event, fTpcTrackModuleLabel);
+
+    auto tpcShowerHandle = event.getValidHandle<std::vector<recob::Shower>>(fShowerModuleLabel);
+    art::FindManyP<recob::Hit> findManyHitsShower(tpcShowerHandle, event, fShowerModuleLabel);
+
     art::FindManyP<anab::Calorimetry> findManyCalo(tpcTrackHandle, event, fCaloModuleLabel);
 
     std::vector<int> usedLepIds;
+    std::vector<int> nuRecoTrackIds;
+    std::vector<int> nuRecoShowerIds;
+    std::vector<int> crRecoTrackIds;
+    std::vector<int> crRecoShowerIds;
 
     for(auto const& track : tracks){
       std::vector<art::Ptr<recob::Hit>> hits = findManyHits.at(track->ID());
       int trueId = RecoUtils::TrueParticleIDFromTotalRecoHits(hits, false);
+      nuRecoTrackIds.push_back(trueId);
       if(std::find(lepParticleIds.begin(), lepParticleIds.end(), trueId) != lepParticleIds.end()){
         std::cout<<"-> Track ID = "<<track->ID()<<", true ID = "<<trueId<<" length = "<<track->Length()<<" start = "<<track->Vertex()<<" end = "<<track->End()<<"\n";
         if(std::find(usedLepIds.begin(), usedLepIds.end(), trueId) == usedLepIds.end()){
@@ -441,12 +474,51 @@ namespace sbnd {
       } 
     }
 
+    for(auto const& shower : showers){
+      std::vector<art::Ptr<recob::Hit>> hits = findManyHitsShower.at(shower->ID());
+      std::cout<<"Hits size = "<<hits.size()<<"\n";
+      int trueId = RecoUtils::TrueParticleIDFromTotalRecoHits(hits, false);
+      nuRecoShowerIds.push_back(trueId);
+    }
+/*
+    for(auto const& shower : crShowers){
+      std::vector<art::Ptr<recob::Hit>> hits = findManyHitsShower.at(shower->ID());
+      int trueId = RecoUtils::TrueParticleIDFromTotalRecoHits(hits, false);
+      crRecoShowerIds.push_back(trueId);
+    }
+*/
     for(auto const& crTrack : crTracks){
       std::vector<art::Ptr<recob::Hit>> hits = findManyHits.at(crTrack->ID());
       int trueId = RecoUtils::TrueParticleIDFromTotalRecoHits(hits, false);
+      crRecoTrackIds.push_back(trueId);
       if(std::find(lepParticleIds.begin(), lepParticleIds.end(), trueId) != lepParticleIds.end()){
         std::cout<<"-> Track ID = "<<crTrack->ID()<<", true ID = "<<trueId<<" length = "<<crTrack->Length()<<" start = "<<crTrack->Vertex()<<" end = "<<crTrack->End()<<"\n";
         nCrIsMu++;
+      }
+    }
+
+    for(size_t i = 0; i < lepParticleIds.size(); i++){
+      int lepId = lepParticleIds[i];
+      bool found = false;
+      std::cout<<"True particle "<<lepId<<":\n";
+      if(std::find(nuRecoTrackIds.begin(), nuRecoTrackIds.end(), lepId) != nuRecoTrackIds.end()){
+        found = true;
+        std::cout<<"ID AS NU TRACK\n";
+      }
+      /*if(std::find(nuRecoShowerIds.begin(), nuRecoShowerIds.end(), lepId) != nuRecoShowerIds.end()){
+        found = true;
+        std::cout<<"ID AS NU SHOWER\n";
+      }*/
+      if(std::find(crRecoTrackIds.begin(), crRecoTrackIds.end(), lepId) != crRecoTrackIds.end()){
+        found = true;
+        std::cout<<"ID AS CR TRACK\n";
+      }
+      /*if(std::find(crRecoShowerIds.begin(), nuRecoShowerIds.end(), lepId) != nuRecoShowerIds.end()){
+        found = true;
+        std::cout<<"ID AS CR SHOWER\n";
+      }*/
+      if(!found){
+        std::cout<<"MISSED!\n";
       }
     }
 
@@ -460,7 +532,7 @@ namespace sbnd {
       const int pdg(pParticle->PdgCode());
       const bool isNeutrino(std::abs(pdg) == pandora::NU_E || std::abs(pdg) == pandora::NU_MU || std::abs(pdg) == pandora::NU_TAU);
       //Find neutrino pfparticle
-      if(!isNeutrino) continue;
+      //if(!isNeutrino) continue;
 
       //Get the tracks associated with thedaughters
       bool isTrueNuMu = false;
@@ -483,12 +555,26 @@ namespace sbnd {
         nuTracks.push_back(tpcTrack);
       }
 
-      
+      if(!isNeutrino){ 
+        nPandCr++;
+        if(isTrueNu) nNuPandCut++;
+        else nCrPandCut++;
+        if(isTrueNuMu) nNuMuPandCut++;
+        continue;
+      }
+      nPandNu++;
+      if(isTrueNu) nNuPandKeep++;
+      else nCrPandKeep++;
+      if(isTrueNuMu) nNuMuPandKeep++;
+
       std::sort(nuTracks.begin(), nuTracks.end(), [](auto& left, auto& right){
                 return left.Length() > right.Length();});
       if(nuTracks.size() == 0){
         continue;
       }
+
+      TVector3 pandoraVtx = nuTracks[0].Vertex<TVector3>();
+
       if(nuTracks.size() > 1){
         // Get vertices of two longest tracks and see if they match
         size_t secTrack = 99999;
@@ -500,36 +586,44 @@ namespace sbnd {
           TVector3 start2 = nuTracks[i].Vertex<TVector3>();
           TVector3 end2 = nuTracks[i].End<TVector3>();
           double minDist = 5;
-          if((start-start2).Mag() < minDist){
-            minDist = (start-start2).Mag();
+          if((start - start2).Mag() < minDist){
             secTrack = i;
             diff1 = end - start;
             diff2 = end2 - start2;
-          }
-          if((start-end2).Mag() < minDist){
-            minDist = (start-end2).Mag();
-            secTrack = i;
-            diff1 = end - start;
-            diff2 = start2 - end2;
-          }
-          if((end-start2).Mag() < minDist){
-            minDist = (end-start2).Mag();
-            secTrack = i;
-            diff1 = start - end;
-            diff2 = end2 - start2;
-          }
-          if((end-end2).Mag() < minDist){
-            secTrack = i;
-            diff1 = start - end;
-            diff2 = start2 - end2;
           }
           if(secTrack != 99999) continue;
         }
         // 
         if(isTrueNuMu && secTrack!=99999){
-          hRecoMuLength->Fill(nuTracks[0].Length());
-          hRecoMuTheta->Fill(diff1.Theta());
-          hRecoMuPhi->Fill(diff1.Phi());
+          
+          bool nuFound = false;
+          for(size_t i = 0; i < nuTracks.size(); i++){
+            recob::Track nuTrack = nuTracks[i];
+            std::cout<<"----------------------------------->LENGTH = "<<nuTrack.Length();
+            std::vector<art::Ptr<recob::Hit>> hits = findManyHits.at(nuTrack.ID());
+            int trueId = RecoUtils::TrueParticleIDFromTotalRecoHits(hits, false);
+            if(std::find(lepParticleIds.begin(), lepParticleIds.end(), trueId) != lepParticleIds.end() && !nuFound){
+              simb::MCParticle part = particles[trueId];
+              nuFound = true;
+              std::cout<<" IS NU MU!";
+              double muLen = truthAlg.TpcLength(part);
+              hMuLengthDiff->Fill(nuTrack.Length()-muLen);
+              art::Ptr<simb::MCTruth> truth = pi_serv->TrackIdToMCTruth_P(trueId);
+              simb::MCParticle nu = truth->GetNeutrino().Nu();
+              TVector3 trueVtx(nu.Vx(), nu.Vy(), nu.Vz());
+              hMuVertexDiff->Fill((pandoraVtx-trueVtx).Mag());
+              hTrueMuLengthReco->Fill(muLen);
+              hTrueMuEReco->Fill(part.E());
+              hRecoLongLength->Fill(nuTrack.Length());
+              hRecoLongTheta->Fill((nuTrack.End<TVector3>()-nuTrack.Vertex<TVector3>()).Theta());
+              hRecoLongPhi->Fill((nuTrack.End<TVector3>()-nuTrack.Vertex<TVector3>()).Phi());
+            }
+            std::cout<<"\n";
+          }
+
+          hRecoLongLength->Fill(nuTracks[0].Length());
+          hRecoLongTheta->Fill(diff1.Theta());
+          hRecoLongPhi->Fill(diff1.Phi());
           hRecoSecTrackAngle->Fill(diff1.Angle(diff2));
           hRecoSecTrackLength->Fill(nuTracks[secTrack].Length());
           hRecoMuThetaPhi->Fill(diff1.Theta(), diff1.Phi());
@@ -549,28 +643,21 @@ namespace sbnd {
         }
       }
       // Treat as if only one track from vertex
-      std::vector<art::Ptr<anab::Calorimetry>> calos = findManyCalo.at(nuTracks[0].ID());
-      bool startExit = CosmicRemovalUtils::InFiducial(nuTracks[0].Vertex(), 5, 5);
-      bool endExit = CosmicRemovalUtils::InFiducial(nuTracks[0].End(), 5, 5);
-      bool startStops = CosmicRemovalUtils::StoppingEnd(calos, nuTracks[0].Vertex(), 10., 20., 30., 1.2);
-      bool endStops = CosmicRemovalUtils::StoppingEnd(calos, nuTracks[0].End(), 10., 20., 30., 1.2);
-      bool startVtx = true;
-      if(startExit && !endExit){
-        startVtx = false;
-      }
-      else if(!endExit && !startExit){
-        if(startStops && !endStops){
-          startVtx = false;
-        }
-        else if(nuTracks[0].End().Z() < nuTracks[0].Vertex().Z()){
-          startVtx = false;
-        }
-      }
-      else if(startExit && endExit) continue;
-
-      TVector3 diff = nuTracks[0].Vertex<TVector3>() - nuTracks[0].End<TVector3>();
-      if(startVtx) diff = nuTracks[0].End<TVector3>() - nuTracks[0].Vertex<TVector3>();
+      TVector3 diff = nuTracks[0].End<TVector3>() - nuTracks[0].Vertex<TVector3>();
       if(isTrueNuMu){
+        std::vector<art::Ptr<recob::Hit>> hits = findManyHits.at(nuTracks[0].ID());
+        int trueId = RecoUtils::TrueParticleIDFromTotalRecoHits(hits, false);
+        if(std::find(lepParticleIds.begin(), lepParticleIds.end(), trueId) != lepParticleIds.end()){
+          simb::MCParticle part = particles[trueId];
+          double muLen = truthAlg.TpcLength(part);
+          hMuLengthDiff->Fill(nuTracks[0].Length() - muLen);
+          art::Ptr<simb::MCTruth> truth = pi_serv->TrackIdToMCTruth_P(trueId);
+          simb::MCParticle nu = truth->GetNeutrino().Nu();
+          TVector3 trueVtx(nu.Vx(), nu.Vy(), nu.Vz());
+          hMuVertexDiff->Fill((pandoraVtx-trueVtx).Mag());
+          hTrueMuLengthReco->Fill(muLen);
+          hTrueMuEReco->Fill(part.E());
+        }
         hRecoMuLength->Fill(nuTracks[0].Length());
         hRecoMuTheta->Fill(diff.Theta());
         hRecoMuPhi->Fill(diff.Phi());
@@ -596,8 +683,22 @@ namespace sbnd {
 
     std::cout<<"Number of NuMuCC interactions in TPC = "<<nNuMuCC<<"\n"
              <<"Total true mu particles     = "<<nMu<<"\n"
+             <<"Total pandora nu slices     = "<<nPandNu<<"\n"
+             <<"Number of true cr           = "<<nCrPandKeep<<"\n"
+             <<"Number of true nu           = "<<nNuPandKeep<<"\n"
+             <<"Number of true numu         = "<<nNuMuPandKeep<<"\n"
              <<"Mu in neutrino collection   = "<<nNuIsMu<<"\n"
+             <<"-----------------------------------------------------\n"
+             <<"Total pandora cr slices     = "<<nPandCr<<"\n"
+             <<"Number of true cr           = "<<nCrPandCut<<"\n"
+             <<"Number of true nu           = "<<nNuPandCut<<"\n"
+             <<"Number of true numu         = "<<nNuMuPandCut<<"\n"
              <<"Mu in cosmic collection     = "<<nCrIsMu<<"\n";
+    
+    std::ofstream myfile;
+    myfile.open("results.txt");
+    myfile<<nNuMuCC<<","<<nMu<<","<<nPandNu<<","<<nCrPandKeep<<","<<nNuPandKeep<<","<<nNuMuPandKeep<<","<<nNuIsMu<<","<<nPandCr<<","<<nCrPandCut<<","<<nNuPandCut<<","<<nNuMuPandCut<<","<<nCrIsMu;
+    myfile.close();
 
   } // PandoraAna::endJob()
 

@@ -90,6 +90,8 @@ namespace sbnd{
     // Function to calculate the CRT crossing points of a true particle
     std::pair<TVector3, TVector3> TpcCrossPoints(simb::MCParticle const& particle);
 
+    double TpcLength(simb::MCParticle const& particle);
+
     // Convert start time to CRT crossing point
     TVector3 T0ToXYZPosition(TVector3 position, TVector3 direction, std::string tagger, int tpc, double t0);
 

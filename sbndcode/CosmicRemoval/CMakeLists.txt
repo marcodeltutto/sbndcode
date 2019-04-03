@@ -39,6 +39,7 @@ art_make(
                            sbndcode_CRTUtils
                            sbndcode_CRT
                            sbndcode_CRTProducts
+                           larreco_RecoAlg
         )
 
 install_headers()

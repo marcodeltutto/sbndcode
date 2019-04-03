@@ -53,38 +53,51 @@ physics:
       module_type:     "sbndcode/CosmicRemoval/PandoraSelection"
 
       # The input parameters
-      SimModuleLabel:      "largeant"        # Simulation producer module label
-      CrtHitModuleLabel:   "crthit"          # CRT hit producer module label
-      TpcTrackModuleLabel: "pandoraTrack" # TPC track producer module label
-      CaloModuleLabel:     "pandoraCalo" # TPC track producer module label
-      ShowerModuleLabel:   "pandoraShower" 
-      PandoraLabel:        "pandora"
-      Verbose:             false             # Print extra information about what's going on
-      # Fiducial volume cuts
-      Fiducial:            10.
-      FiducialTop:         10.
-      FiducialStop:        5.
-      # CPA stitching
-      CpaStitchDistance:   50.
-      CpaStitchAngle:      30.
-      CpaXDifference:      10.
-      # APA time matching
-      ApaDistance:         2.
-      # Stopping particle finder
-      ResRgMin:            10.
-      ResRgMax:            20.
-      DEdxMax:             30.
-      StoppingChi2Limit:   1.2
-      # CRT hit matching
-      MinTrackLength:      20.
-      TrackDirectionFrac:  0.5
-      DistanceLimit:       30.
-      # CRT track matching
-      MaxAngleDiff:        0.3
-      MaxDistance:         80.
-      # Beam time cut around t=0
-      BeamTimeLimit:       4.
-
+      inputs: {
+        SimModuleLabel:      "largeant"        # Simulation producer module label
+        CrtHitModuleLabel:   "crthit"          # CRT hit producer module label
+        TpcTrackModuleLabel: "pandoraTrack" # TPC track producer module label
+        CaloModuleLabel:     "pandoraCalo" # TPC track producer module label
+        ShowerModuleLabel:   "pandoraShower" 
+        PandoraLabel:        "pandora"
+        Verbose:             false             # Print extra information about what's going on
+        # Fiducial volume cuts
+        Fiducial:            10.
+        FiducialTop:         10.
+        FiducialStop:        5.
+        # CPA stitching
+        CpaStitchDistance:   50.
+        CpaStitchAngle:      30.
+        CpaXDifference:      10.
+        # APA time matching
+        ApaDistance:         2.
+        # Stopping particle finder
+        ResRgMin:            10.
+        ResRgMax:            20.
+        DEdxMax:             30.
+        StoppingChi2Limit:   1.2
+        # CRT hit matching
+        MinTrackLength:      20.
+        TrackDirectionFrac:  0.5
+        DistanceLimit:       30.
+        # CRT track matching
+        MaxAngleDiff:        0.3
+        MaxDistance:         80.
+        # Beam time cut around t=0
+        BeamTimeLimit:       4.
+      }
+      fitter: {
+        pIdHypothesis: 13
+        minNumSegments: 3
+        segmentLength: 14.0
+        minHitsPerSegment: 2
+        nElossSteps: 10
+        eLossMode: 0
+        pMin: 0.01
+        pMax: 7.50
+        pStep: 0.01
+        angResol: 3.0
+      }
     }
   }
 

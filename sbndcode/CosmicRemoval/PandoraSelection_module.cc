@@ -33,6 +33,9 @@
 #include "larcorealg/CoreUtils/NumericUtils.h" // util::absDiff()
 #include "larsim/MCCheater/BackTrackerService.h"
 #include "larsim/MCCheater/ParticleInventoryService.h"
+#include "lardataobj/RecoBase/MCSFitResult.h"
+#include "larreco/RecoAlg/TrajectoryMCSFitter.h"
+#include "larreco/RecoAlg/TrackMomentumCalculator.h"
 
 // Framework includes
 #include "art/Framework/Core/EDAnalyzer.h"
@@ -102,7 +105,7 @@ namespace sbnd {
   public:
 
     // Describes configuration parameters of the module
-    struct Config {
+    struct Inputs {
       using Name = fhicl::Name;
       using Comment = fhicl::Comment;
  
@@ -227,7 +230,22 @@ namespace sbnd {
         Comment("")
       };
 
+    }; // Inputs
 
+    // Describes configuration parameters of the module
+    struct Config {
+      using Name = fhicl::Name;
+      using Comment = fhicl::Comment;
+ 
+      // One Atom for each parameter
+      fhicl::Table<PandoraSelection::Inputs> inputs {
+        Name("inputs"),
+      };
+      
+      fhicl::Table<trkf::TrajectoryMCSFitter::Config> fitter {
+        Name("fitter"),
+      };
+      
     }; // Config
  
     using Parameters = art::EDAnalyzer::Table<Config>;
@@ -282,7 +300,12 @@ namespace sbnd {
     detinfo::DetectorProperties const* fDetectorProperties;    ///< pointer to detector properties provider
     detinfo::DetectorClocks const* fDetectorClocks;            ///< pointer to detector clocks provider
     CRTTruthRecoAlg truthAlg;
+    // Momentum fitters
+    trkf::TrajectoryMCSFitter     fMcsFitter; 
+    trkf::TrackMomentumCalculator fRangeFitter;
+    
     // histograms
+    TH1D *hNuMuMomTruth;
     TH1D *hNuMuMom;
     TH1D *hCrMuMom;
     TH1D *hCrMuMomHigh;
@@ -292,6 +315,9 @@ namespace sbnd {
     TH1D *hNuMuMomSelect;
     TH1D *hCrMuMomSelect;
     TH1D *hCrMuMomSelectHigh;
+    TH1D *hNuMuRecoMom;
+    TH1D *hNuRecoMom;
+    TH1D *hCrRecoMom;
 
     int nPfParts = 0;
     int nPfPartsRemain = 0;
@@ -325,30 +351,31 @@ namespace sbnd {
   // Constructor
   PandoraSelection::PandoraSelection(Parameters const& config)
     : EDAnalyzer(config)
-    , fSimModuleLabel       (config().SimModuleLabel())
-    , fCrtHitModuleLabel    (config().CrtHitModuleLabel())
-    , fTpcTrackModuleLabel  (config().TpcTrackModuleLabel())
-    , fCaloModuleLabel      (config().CaloModuleLabel())
-    , fShowerModuleLabel    (config().ShowerModuleLabel())
-    , fPandoraLabel         (config().PandoraLabel())
-    , fVerbose              (config().Verbose())
-    , fFiducial             (config().Fiducial())
-    , fFiducialTop          (config().FiducialTop())
-    , fFiducialStop         (config().FiducialStop())
-    , fCpaStitchDistance    (config().CpaStitchDistance())
-    , fCpaStitchAngle       (config().CpaStitchAngle())
-    , fCpaXDifference       (config().CpaXDifference())
-    , fApaDistance          (config().ApaDistance())
-    , fResRgMin             (config().ResRgMin())
-    , fResRgMax             (config().ResRgMax())
-    , fDEdxMax              (config().DEdxMax())
-    , fStoppingChi2Limit    (config().StoppingChi2Limit())
-    , fMinTrackLength       (config().MinTrackLength())
-    , fTrackDirectionFrac   (config().TrackDirectionFrac())
-    , fDistanceLimit        (config().DistanceLimit())
-    , fMaxAngleDiff         (config().MaxAngleDiff())
-    , fMaxDistance          (config().MaxDistance())
-    , fBeamTimeLimit        (config().BeamTimeLimit())
+    , fSimModuleLabel       (config().inputs().SimModuleLabel())
+    , fCrtHitModuleLabel    (config().inputs().CrtHitModuleLabel())
+    , fTpcTrackModuleLabel  (config().inputs().TpcTrackModuleLabel())
+    , fCaloModuleLabel      (config().inputs().CaloModuleLabel())
+    , fShowerModuleLabel    (config().inputs().ShowerModuleLabel())
+    , fPandoraLabel         (config().inputs().PandoraLabel())
+    , fVerbose              (config().inputs().Verbose())
+    , fFiducial             (config().inputs().Fiducial())
+    , fFiducialTop          (config().inputs().FiducialTop())
+    , fFiducialStop         (config().inputs().FiducialStop())
+    , fCpaStitchDistance    (config().inputs().CpaStitchDistance())
+    , fCpaStitchAngle       (config().inputs().CpaStitchAngle())
+    , fCpaXDifference       (config().inputs().CpaXDifference())
+    , fApaDistance          (config().inputs().ApaDistance())
+    , fResRgMin             (config().inputs().ResRgMin())
+    , fResRgMax             (config().inputs().ResRgMax())
+    , fDEdxMax              (config().inputs().DEdxMax())
+    , fStoppingChi2Limit    (config().inputs().StoppingChi2Limit())
+    , fMinTrackLength       (config().inputs().MinTrackLength())
+    , fTrackDirectionFrac   (config().inputs().TrackDirectionFrac())
+    , fDistanceLimit        (config().inputs().DistanceLimit())
+    , fMaxAngleDiff         (config().inputs().MaxAngleDiff())
+    , fMaxDistance          (config().inputs().MaxDistance())
+    , fBeamTimeLimit        (config().inputs().BeamTimeLimit())
+    , fMcsFitter            (config().fitter)
   {
     fGeometryService    = lar::providerFrom<geo::Geometry>();
     fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>(); 
@@ -362,6 +389,7 @@ namespace sbnd {
     // Access tfileservice to handle creating and writing histograms
     art::ServiceHandle<art::TFileService> tfs;
 
+    hNuMuMomTruth      = tfs->make<TH1D>("hNuMuMomTruth",      "", 20, 0, 2);
     hNuMuMom           = tfs->make<TH1D>("hNuMuMom",           "", 20, 0, 2);
     hCrMuMom           = tfs->make<TH1D>("hCrMuMom",           "", 20, 0, 2);
     hCrMuMomHigh       = tfs->make<TH1D>("hCrMuMomHigh",       "", 20, 0, 10);
@@ -371,6 +399,9 @@ namespace sbnd {
     hNuMuMomSelect     = tfs->make<TH1D>("hNuMuMomSelect",     "", 20, 0, 2);
     hCrMuMomSelect     = tfs->make<TH1D>("hCrMuMomSelect",     "", 20, 0, 2);
     hCrMuMomSelectHigh = tfs->make<TH1D>("hCrMuMomSelectHigh", "", 20, 0, 10);
+    hNuMuRecoMom       = tfs->make<TH1D>("hNuMuRecoMom",       "", 20, 0, 2);
+    hNuRecoMom         = tfs->make<TH1D>("hNuRecoMom",         "", 20, 0, 2);
+    hCrRecoMom         = tfs->make<TH1D>("hCrRecoMom",         "", 20, 0, 2);
 
     // Initial output
     if(fVerbose) std::cout<<"----------------- Pandora Selection Ana Module -------------------"<<std::endl;
@@ -434,6 +465,7 @@ namespace sbnd {
         if(!CosmicRemovalUtils::InFiducial(vtx, 0, 0)) continue;
         if(pdg==13 && particle.Mother()==0){ 
           lepParticleIds.push_back(partId);
+          hNuMuMomTruth->Fill(particle.P());
         }
         nuParticleIds.push_back(partId);
       }
@@ -716,6 +748,7 @@ namespace sbnd {
        
         //---------------------------------- CRTHIT MATCHING ---------------------------------------
         // Try to get T0 from CRTHits, remove any matched outside the beam
+
         std::pair<crt::CRTHit, double> closestHit = CRTAnaUtils::ClosestCRTHit(tpcTrack, crtHitsNoTop, tpc, fTrackDirectionFrac);
         nuTrack.closestCrtHit = closestHit.first;
         nuTrack.closestCrtHitDistance = closestHit.second;
@@ -929,6 +962,33 @@ namespace sbnd {
           hCrMuMomSelect->Fill(particles[trueId].P());
           hCrMuMomSelectHigh->Fill(particles[trueId].P());
         }
+      }
+
+      double recoMuMomentum = 0.;
+      const recob::Track& trk = nuTracks[0].track;
+      //Momentum calculation
+      if(!exits){
+        recoMuMomentum = fRangeFitter.GetTrackMomentum(length, 13);
+      }
+      else{
+        recob::MCSFitResult mcsResult = fMcsFitter.fitMcs(trk);
+        recoMuMomentum = mcsResult.bestMomentum();
+      }
+      if(recoMuMomentum <= 0) continue;
+
+      std::vector<art::Ptr<recob::Hit>> hits = findManyHits.at(nuTracks[0].track.ID());
+      int trueId = RecoUtils::TrueParticleIDFromTotalRecoHits(hits, false);
+      if(particles.find(trueId) == particles.end()) continue;
+      //Is it from neutrino
+      if(std::find(lepParticleIds.begin(), lepParticleIds.end(), trueId) != lepParticleIds.end()) {
+        hNuMuRecoMom->Fill(recoMuMomentum);
+      }
+      //Is is from cosmic
+      else if(std::find(nuParticleIds.begin(), nuParticleIds.end(), trueId) != nuParticleIds.end()) {
+        hNuRecoMom->Fill(recoMuMomentum);
+      }
+      else{
+        hCrRecoMom->Fill(recoMuMomentum);
       }
 
     }

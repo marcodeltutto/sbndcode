@@ -1,6 +1,8 @@
 #include "larg4crtfilter.fcl"
 #include "standard_g4_sbnd.fcl"
 
+services.SpaceCharge.EnableSimSpatialSCE: true
+services.SpaceCharge.EnableSimEfieldSCE: true
 
 physics.simulate: [ rns, largeant, filter, mcreco ]
 

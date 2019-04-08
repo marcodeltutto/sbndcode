@@ -3,7 +3,9 @@ art_make(
           MODULE_LIBRARIES
             larcore_Geometry_Geometry_service
             larcorealg_Geometry
+            lardata_DetectorInfoServices_DetectorClocksServiceStandard_service
             nusimdata_SimulationBase
+            sbndcode_RecoUtils
             ${ART_FRAMEWORK_CORE}
             ${ART_FRAMEWORK_PRINCIPAL}
             ${ART_FRAMEWORK_SERVICES_REGISTRY}

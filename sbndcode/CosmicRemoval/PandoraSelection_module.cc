@@ -858,8 +858,8 @@ namespace sbnd {
             continue;
           }
           //Do crt hit cut for both tracks
-          double crtHitTime = ((double)(int)nuTrack.closestCrtHit.ts1_ns)*1e-4;
-          double crtHitTime2 = ((double)(int)nuTrack2.closestCrtHit.ts1_ns)*1e-4;
+          double crtHitTime = ((double)(int)nuTrack.closestCrtHit.ts1_ns)*1e-4;//FIXME
+          double crtHitTime2 = ((double)(int)nuTrack2.closestCrtHit.ts1_ns)*1e-4;//FIXME
           if((nuTrack.closestCrtHitDistance < fDistanceLimit && (crtHitTime<0 || crtHitTime>fBeamTimeLimit))
               || (nuTrack2.track.Length()>20 && nuTrack2.closestCrtHitDistance < fDistanceLimit && (crtHitTime2<0 || crtHitTime2>fBeamTimeLimit))){
             if(fVerbose) std::cout<<"Matches CRT hit outside of beam\n";
@@ -886,7 +886,7 @@ namespace sbnd {
           if(fVerbose) std::cout<<"Stopping particle\n";
           continue;
         }
-        double crtHitTime = ((double)(int)nuTrack.closestCrtHit.ts1_ns)*1e-4;
+        double crtHitTime = ((double)(int)nuTrack.closestCrtHit.ts1_ns)*1e-4;//FIXME
         if(nuTrack.closestCrtHitDistance < fDistanceLimit && std::abs(crtHitTime) > fBeamTimeLimit){
           if(fVerbose) std::cout<<"Matches CRT hit outside of beam\n";
           continue;

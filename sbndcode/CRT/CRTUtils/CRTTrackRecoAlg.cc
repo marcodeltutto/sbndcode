@@ -56,7 +56,7 @@ std::vector<std::vector<art::Ptr<crt::CRTHit>>> CRTTrackRecoAlg::CreateCRTTzeros
   for(size_t i = 0; i<hits.size(); i++){
     if(iflag[i] == 0){
       std::vector<art::Ptr<crt::CRTHit>> crtTzero;
-      double time_ns_A = hits[i]->ts1_ns/10.; //FIXME
+      double time_ns_A = hits[i]->ts1_ns; //FIXME
       iflag[i]=1;
       crtTzero.push_back(hits[i]);
 
@@ -65,7 +65,7 @@ std::vector<std::vector<art::Ptr<crt::CRTHit>>> CRTTrackRecoAlg::CreateCRTTzeros
       for(size_t j = i+1; j<hits.size(); j++){
         if(iflag[j] == 0){
           // If ts1_ns - ts1_ns < diff then put them in a vector
-          double time_ns_B = hits[j]->ts1_ns/10.; //FIXME
+          double time_ns_B = hits[j]->ts1_ns; //FIXME
           double diff = std::abs(time_ns_B - time_ns_A) * 1e-3; // [us]
           if(diff < fTimeLimit){
             iflag[j] = 1;
@@ -240,7 +240,7 @@ crt::CRTHit CRTTrackRecoAlg::DoAverage(std::vector<art::Ptr<crt::CRTHit>> hits)
     xpos += hit->x_pos;
     ypos += hit->y_pos;
     zpos += hit->z_pos;
-    ts1_ns += (double)(int)hit->ts1_ns/10.; //FIXME
+    ts1_ns += (double)(int)hit->ts1_ns; //FIXME
     // For the errors get the maximum limits
     if(hit->x_pos + hit->x_err > xmax) xmax = hit->x_pos + hit->x_err;
     if(hit->x_pos - hit->x_err < xmin) xmin = hit->x_pos - hit->x_err;

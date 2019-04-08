@@ -60,7 +60,7 @@ physics:
         CaloModuleLabel:     "pandoraCalo" # TPC track producer module label
         ShowerModuleLabel:   "pandoraShower" 
         PandoraLabel:        "pandora"
-        Verbose:             false             # Print extra information about what's going on
+        Verbose:             true             # Print extra information about what's going on
         # Fiducial volume cuts
         Fiducial:            10.
         FiducialTop:         10.

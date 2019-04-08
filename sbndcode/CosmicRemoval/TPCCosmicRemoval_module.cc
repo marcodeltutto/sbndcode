@@ -554,7 +554,7 @@ namespace sbnd {
         if(crtT0Ptr[i][j]->tagger == "volTaggerBot_0") continue;
         if(crtT0Ptr[i][j]->y_pos < -200.) continue; //FIXME detprops
         if(std::abs(crtT0Ptr[i][j]->x_pos) < 200.) continue; //FIXME detprops
-        t0 += (double)(int)crtT0Ptr[i][0]->ts1_ns*1e-4; //FIXME
+        t0 += (double)(int)crtT0Ptr[i][0]->ts1_ns*1e-3; //FIXME
         npts++;
       }
       if(t0 != 0) stopT0.push_back(t0/npts);

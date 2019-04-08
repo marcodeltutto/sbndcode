@@ -13,7 +13,7 @@ std::vector<std::vector<art::Ptr<sbnd::crt::CRTHit>>> CRTAnaUtils::CreateCRTTzer
   for(size_t i = 0; i < crtHits.size(); i++){
     if(iflag[i] == 0){
       std::vector<art::Ptr<sbnd::crt::CRTHit>> CRTTzero;
-      double time_ns_A = crtHits[i]->ts1_ns/10.; //FIXME
+      double time_ns_A = crtHits[i]->ts1_ns; //FIXME
       iflag[i]=1;
       CRTTzero.push_back(crtHits[i]);
 
@@ -22,7 +22,7 @@ std::vector<std::vector<art::Ptr<sbnd::crt::CRTHit>>> CRTAnaUtils::CreateCRTTzer
       for(size_t j = i+1; j < crtHits.size(); j++){
         if(iflag[j] == 0){
           // If ts1_ns - ts1_ns < diff then put them in a vector
-          double time_ns_B = crtHits[j]->ts1_ns/10.; //FIXME
+          double time_ns_B = crtHits[j]->ts1_ns; //FIXME
           double diff = std::abs(time_ns_B - time_ns_A) * 1e-3; // [us]
           if(diff < fTimeLimit){
             iflag[j] = 1;
@@ -107,7 +107,7 @@ double CRTAnaUtils::T0FromCRTHits(recob::Track tpcTrack, std::vector<sbnd::crt::
   // Loop over all the CRT hits
   for(auto &crtHit : crtHits){
     // Check if hit is within the allowed t0 range
-    double crtTime = ((double)(int)crtHit.ts1_ns) * 1e-4; //FIXME
+    double crtTime = ((double)(int)crtHit.ts1_ns) * 1e-3; //FIXME
     if (!(crtTime >= t0MinMax.first - 10. && crtTime <= t0MinMax.second + 10.)) continue;
     TVector3 crtPoint(crtHit.x_pos, crtHit.y_pos, crtHit.z_pos);
   
@@ -159,7 +159,7 @@ std::pair<crt::CRTHit, double> CRTAnaUtils::ClosestCRTHit(recob::Track tpcTrack,
   // Loop over all the CRT hits
   for(auto &crtHit : crtHits){
     // Check if hit is within the allowed t0 range
-    double crtTime = ((double)(int)crtHit.ts1_ns) * 1e-4; //FIXME
+    double crtTime = ((double)(int)crtHit.ts1_ns) * 1e-3; //FIXME
     if (!(crtTime >= t0MinMax.first - 10. && crtTime <= t0MinMax.second + 10.)) continue;
     TVector3 crtPoint(crtHit.x_pos, crtHit.y_pos, crtHit.z_pos);
   
@@ -275,7 +275,7 @@ std::vector<double> CRTAnaUtils::ApaT0sFromCRTHits(std::vector<art::Ptr<crt::CRT
 
       if(std::abs(crtT0Ptr[i][j]->x_pos) < 2.*fGeometryService->DetHalfWidth()) continue;
 
-      t0 += (double)(int)crtT0Ptr[i][0]->ts1_ns*1e-4; //FIXME
+      t0 += (double)(int)crtT0Ptr[i][0]->ts1_ns*1e-3; //FIXME
       npts++;
     }
 

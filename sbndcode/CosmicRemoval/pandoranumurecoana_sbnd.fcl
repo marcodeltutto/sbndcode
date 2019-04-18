@@ -1,16 +1,16 @@
-# A script to run an analysis module: PandoraSelection
+# A script to run an analysis module: PandoraNuMuRecoAna
 
 #include "simulationservices_sbnd.fcl"
 #include "messages_sbnd.fcl"
 #include "backtrackerservice.fcl"
 #include "particleinventoryservice.fcl"
 
-process_name: PandoraSelection
+process_name: PandoraNuMuRecoAna
 
 services:
 {
   # Load the service that manages root files for histograms.
-  TFileService:           { fileName: "pandoraselection.root" }
+  TFileService:           { fileName: "pandoranumurecoana.root" }
   ParticleInventoryService: @local::standard_particleinventoryservice
   BackTrackerService: @local::standard_backtrackerservice
 
@@ -46,46 +46,20 @@ physics:
   analyzers:
   {
     # This name defines a job step below, and will appear as a directory  in the output histogram file. 
-    PandoraSelection: 
+    PandoraNuMuRecoAna: 
     {
       # The "module_type" tells us which module to run. The name here
       # must match the name supplied to DEFINE_ART_MODULE
-      module_type:     "sbndcode/CosmicRemoval/PandoraSelection"
+      module_type:     "sbndcode/CosmicRemoval/PandoraNuMuRecoAna"
 
       # The input parameters
       inputs: {
         SimModuleLabel:      "largeant"        # Simulation producer module label
-        CrtHitModuleLabel:   "crthit"          # CRT hit producer module label
-        CrtTrackModuleLabel: "crttrack"          # CRT track producer module label
         TpcTrackModuleLabel: "pandoraTrack" # TPC track producer module label
-        CaloModuleLabel:     "pandoraCalo" # TPC track producer module label
+        HitModuleLabel:      "gaushit" # TPC track producer module label
         ShowerModuleLabel:   "pandoraShower" 
         PandoraLabel:        "pandora"
         Verbose:             true             # Print extra information about what's going on
-        # Fiducial volume cuts
-        Fiducial:            10.
-        FiducialTop:         10.
-        FiducialStop:        5.
-        # CPA stitching
-        CpaStitchDistance:   50.
-        CpaStitchAngle:      30.
-        CpaXDifference:      10.
-        # APA time matching
-        ApaDistance:         2.
-        # Stopping particle finder
-        ResRgMin:            10.
-        ResRgMax:            20.
-        DEdxMax:             30.
-        StoppingChi2Limit:   1.2
-        # CRT hit matching
-        MinTrackLength:      20.
-        TrackDirectionFrac:  0.5
-        DistanceLimit:       30.
-        # CRT track matching
-        MaxAngleDiff:        0.3
-        MaxDistance:         80.
-        # Beam time cut around t=0
-        BeamTimeLimit:       4.
       }
       fitter: {
         pIdHypothesis: 13
@@ -103,7 +77,7 @@ physics:
   }
 
   # Schedule job step(s) for execution by defining the analysis module for this job.
-  analysis: [ PandoraSelection ]
+  analysis: [ PandoraNuMuRecoAna ]
 
   # "end_paths" is a keyword and contains the modules that do not modify the art::Event;
   # i.e., analyzers and output streams.

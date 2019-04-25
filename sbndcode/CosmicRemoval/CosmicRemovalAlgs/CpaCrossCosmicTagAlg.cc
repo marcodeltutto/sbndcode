@@ -1,0 +1,139 @@
+#include "CpaCrossCosmicTagAlg.h"
+
+namespace sbnd{
+
+CpaCrossCosmicTagAlg::CpaCrossCosmicTagAlg(const Config& config){
+
+  this->reconfigure(config);
+
+  fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>();
+
+}
+
+
+CpaCrossCosmicTagAlg::CpaCrossCosmicTagAlg(){
+
+  fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>();
+
+}
+
+
+CpaCrossCosmicTagAlg::~CpaCrossCosmicTagAlg(){
+
+}
+
+
+void CpaCrossCosmicTagAlg::reconfigure(const Config& config){
+
+  fCpaStitchDistance = config.CpaStitchDistance(); 
+  fCpaStitchAngle = config.CpaStitchAngle();
+  fCpaXDifference = config.CpaXDifference();
+  fFiducial = config.Fiducial();
+  fFiducialTop = config.FiducialTop();
+  fBeamTimeLimit = config.BeamTimeLimit();
+
+  return;
+}
+
+std::pair<double, bool> CpaCrossCosmicTagAlg::T0FromCpaStitching(recob::Track t1, std::vector<recob::Track> tracks){
+  
+  std::vector<std::pair<double, std::pair<double, bool>>> matchCandidates;
+  double matchedTime = -99999;
+  std::pair<double, bool> returnVal = std::make_pair(matchedTime, false);
+
+  TVector3 trk1Front = t1.Vertex<TVector3>();
+  TVector3 trk1Back = t1.End<TVector3>();
+  double closestX1 = std::min(std::abs(trk1Front.X()), std::abs(trk1Back.X()));
+
+  for(auto & track : tracks){
+
+    TVector3 trk2Front = track.Vertex<TVector3>();
+    TVector3 trk2Back = track.End<TVector3>();
+    double closestX2 = std::min(std::abs(trk2Front.X()), std::abs(trk2Back.X()));
+
+    if(std::abs(closestX1-closestX2) < fCpaXDifference){
+      TVector3 t1Pos = trk1Front;
+      TVector3 t1PosEnd = trk1Back;
+      TVector3 t1Dir = t1.VertexDirection<TVector3>();
+      if(std::abs(trk1Back.X()) == closestX1){ 
+        t1Pos = trk1Back;
+        t1PosEnd = trk1Front;
+        t1Dir = t1.EndDirection<TVector3>();
+      }
+
+      TVector3 t2Pos = trk2Front;
+      TVector3 t2PosEnd = trk2Back;
+      TVector3 t2Dir = track.VertexDirection<TVector3>();
+      if(std::abs(trk2Back.X()) == closestX2){ 
+        t2Pos = trk2Back;
+        t2PosEnd = trk2Front;
+        t2Dir = track.EndDirection<TVector3>();
+      }
+
+      double trkCos = std::abs(t1Dir.Dot(t2Dir));
+      t1Pos[0] = 0.;
+      t2Pos[0] = 0.;
+      double dist = (t1Pos-t2Pos).Mag();
+
+      geo::Point_t mergeStart {t1PosEnd.X(), t1PosEnd.Y(), t1PosEnd.Z()};
+      geo::Point_t mergeEnd {t2PosEnd.X(), t2PosEnd.Y(), t2PosEnd.Z()};
+      bool exits = false;
+      if(!CosmicRemovalUtils::InFiducial(mergeStart, fFiducial, fFiducialTop) && !CosmicRemovalUtils::InFiducial(mergeEnd, fFiducial, fFiducialTop)) exits = true;
+
+      if(dist < fCpaStitchDistance && trkCos > cos(TMath::Pi() * fCpaStitchAngle / 180.)){ 
+        matchCandidates.push_back(std::make_pair(trkCos, std::make_pair(closestX1, exits)));
+      }
+    }
+  }
+
+  if(matchCandidates.size() > 0){
+    std::sort(matchCandidates.begin(), matchCandidates.end(), [](auto& left, auto& right){
+              return left.first < right.first;});
+    double shiftX = matchCandidates[0].second.first;
+    matchedTime = -(shiftX/fDetectorProperties->DriftVelocity()-17.); //FIXME
+    returnVal = std::make_pair(matchedTime, matchCandidates[0].second.second);
+  }
+
+  return returnVal;
+}
+
+bool CpaCrossCosmicTagAlg::CpaCrossCosmicTag(recob::Track track, std::vector<recob::Track> tracks, art::FindManyP<recob::Hit> hitAssoc){
+
+  std::vector<recob::Track> tpcTracksTPC0;
+  std::vector<recob::Track> tpcTracksTPC1;
+  // Loop over the tpc tracks
+  for(auto const& tpcTrack : tracks){
+    // Work out where the associated wire hits were detected
+    std::vector<art::Ptr<recob::Hit>> hits = hitAssoc.at(tpcTrack.ID());
+    int tpc = CosmicRemovalUtils::DetectedInTPC(hits);
+    double startX = tpcTrack.Start().X();
+    double endX = tpcTrack.End().X();
+    if(tpc == 0 && !(startX>0 || endX>0)) tpcTracksTPC0.push_back(tpcTrack);
+    else if(tpc == 1 && !(startX<0 || endX<0)) tpcTracksTPC1.push_back(tpcTrack);
+  }
+
+  std::vector<art::Ptr<recob::Hit>> hits = hitAssoc.at(track.ID());
+  int tpc = CosmicRemovalUtils::DetectedInTPC(hits);
+
+  double stitchTime = -99999;
+  bool stitchExit = false;
+  // Try to match tracks from CPA crossers
+  if(tpc == 0){
+    std::pair<double, bool> stitchResults = T0FromCpaStitching(track, tpcTracksTPC1);
+    stitchTime = stitchResults.first;
+    stitchExit = stitchResults.second;
+  }
+  else if(tpc == 1){
+    std::pair<double, bool> stitchResults = T0FromCpaStitching(track, tpcTracksTPC0);
+    stitchTime = stitchResults.first;
+    stitchExit = stitchResults.second;
+  }
+
+  // If tracks are stitched, get time and remove any outside of beam window
+  if(stitchTime != -99999 && (stitchTime < 0 || stitchTime > fBeamTimeLimit || stitchExit)) return true;
+  
+  return false;
+
+}
+
+}

@@ -30,6 +30,7 @@
 #include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
 #include "lardata/DetectorInfoServices/DetectorClocksService.h"
 #include "lardataobj/AnalysisBase/Calorimetry.h"
+#include "nusimdata/SimulationBase/MCParticle.h"
 
 #include "sbndcode/CRT/CRTProducts/CRTHit.hh"
 #include "sbndcode/CRT/CRTProducts/CRTTrack.hh"
@@ -63,6 +64,10 @@ namespace CosmicRemovalUtils{
   double T0FromApaCross(recob::Track track, std::vector<double> t0s, int tpc, double fiducial, double distLimit);
 
   double StoppingEnd(std::vector<art::Ptr<anab::Calorimetry>> calo, geo::Point_t end, double rangeMin, double rangeMax, double dedxMax, double chi2Lim);
+
+  std::pair<std::vector<double>, std::vector<double>> FakeTpcFlashes(std::vector<simb::MCParticle> particles);
+
+  bool BeamFlash(std::vector<double> flashes, double beamTimeLimit);
   
 }
 }

@@ -12,6 +12,13 @@
 #include "sbndcode/CRT/CRTUtils/CRTAnaUtils.h"
 #include "sbndcode/CRT/CRTProducts/CRTTrack.hh"
 #include "sbndcode/CRT/CRTUtils/CRTTruthRecoAlg.h"
+#include "sbndcode/CRT/CRTUtils/CRTT0MatchAlg.h"
+#include "sbndcode/CosmicRemoval/CosmicRemovalAlgs/FiducialVolumeCosmicTagAlg.h"
+#include "sbndcode/CosmicRemoval/CosmicRemovalAlgs/StoppingParticleCosmicTagAlg.h"
+#include "sbndcode/CosmicRemoval/CosmicRemovalAlgs/GeometryCosmicTagAlg.h"
+#include "sbndcode/CosmicRemoval/CosmicRemovalAlgs/CpaCrossCosmicTagAlg.h"
+#include "sbndcode/CosmicRemoval/CosmicRemovalAlgs/ApaCrossCosmicTagAlg.h"
+#include "sbndcode/CosmicRemoval/CosmicRemovalAlgs/CrtTrackCosmicTagAlg.h"
 
 // LArSoft includes
 #include "lardataobj/AnalysisBase/T0.h"
@@ -96,8 +103,9 @@ namespace sbnd {
     bool diffTpc;
     bool matchesCrtTrack;
     bool isStitched;
-    crt::CRTHit closestCrtHit;
-    double closestCrtHitDistance;
+    //crt::CRTHit closestCrtHit;
+    //double closestCrtHitDistance;
+    double crtHitTime;
     bool crossesApa;
   };
 
@@ -105,7 +113,7 @@ namespace sbnd {
   public:
 
     // Describes configuration parameters of the module
-    struct Inputs {
+    struct Config {
       using Name = fhicl::Name;
       using Comment = fhicl::Comment;
  
@@ -164,69 +172,9 @@ namespace sbnd {
         Name("FiducialStop"),
         Comment("Fiducial volume cut for stopping tracks")
       };
-
-      fhicl::Atom<double> CpaStitchDistance {
-        Name("CpaStitchDistance"),
-        Comment("")
-      };
-      
-      fhicl::Atom<double> CpaStitchAngle {
-        Name("CpaStitchAngle"),
-        Comment("")
-      };
-      
-      fhicl::Atom<double> CpaXDifference {
-        Name("CpaXDifference"),
-        Comment("")
-      };
-      
-      fhicl::Atom<double> ApaDistance {
-        Name("ApaDistance"),
-        Comment("")
-      };
-      
-      fhicl::Atom<double> ResRgMin {
-        Name("ResRgMin"),
-        Comment("")
-      };
-      
-      fhicl::Atom<double> ResRgMax {
-        Name("ResRgMax"),
-        Comment("")
-      };
-      
-      fhicl::Atom<double> DEdxMax {
-        Name("DEdxMax"),
-        Comment("")
-      };
-      
-      fhicl::Atom<double> StoppingChi2Limit {
-        Name("StoppingChi2Limit"),
-        Comment("")
-      };
-      
-      fhicl::Atom<double> MinTrackLength {
-        Name("MinTrackLength"),
-        Comment("")
-      };
-      
-      fhicl::Atom<double> TrackDirectionFrac {
-        Name("TrackDirectionFrac"),
-        Comment("")
-      };
       
       fhicl::Atom<double> DistanceLimit {
         Name("DistanceLimit"),
-        Comment("")
-      };
-      
-      fhicl::Atom<double> MaxAngleDiff {
-        Name("MaxAngleDiff"),
-        Comment("")
-      };
-      
-      fhicl::Atom<double> MaxDistance {
-        Name("MaxDistance"),
         Comment("")
       };
 
@@ -235,24 +183,36 @@ namespace sbnd {
         Comment("")
       };
 
-    }; // Inputs
-
-    // Describes configuration parameters of the module
-    struct Config {
-      using Name = fhicl::Name;
-      using Comment = fhicl::Comment;
- 
-      // One Atom for each parameter
-      fhicl::Table<PandoraSelection::Inputs> inputs {
-        Name("inputs"),
+      fhicl::Table<FiducialVolumeCosmicTagAlg::Config> FVTagAlg {
+        Name("FVTagAlg"),
       };
-      
+
+      fhicl::Table<StoppingParticleCosmicTagAlg::Config> SPTagAlg {
+        Name("SPTagAlg"),
+      };
+
+      fhicl::Table<CpaCrossCosmicTagAlg::Config> CCTagAlg {
+        Name("CCTagAlg"),
+      };
+
+      fhicl::Table<ApaCrossCosmicTagAlg::Config> ACTagAlg {
+        Name("ACTagAlg"),
+      };
+
+      fhicl::Table<CRTT0MatchAlg::Config> CRTT0Alg {
+        Name("CRTT0Alg"),
+      };
+
+      fhicl::Table<CrtTrackCosmicTagAlg::Config> CTTagAlg {
+        Name("CTTagAlg"),
+      };
+
       fhicl::Table<trkf::TrajectoryMCSFitter::Config> fitter {
         Name("fitter"),
       };
-      
-    }; // Config
- 
+
+    }; // Inputs
+
     using Parameters = art::EDAnalyzer::Table<Config>;
  
     // Constructor: configures module
@@ -287,25 +247,20 @@ namespace sbnd {
     double        fFiducial;
     double        fFiducialTop;
     double        fFiducialStop;
-    double        fCpaStitchDistance;
-    double        fCpaStitchAngle;
-    double        fCpaXDifference;
-    double        fApaDistance;
-    double        fResRgMin;
-    double        fResRgMax;
-    double        fDEdxMax;
-    double        fStoppingChi2Limit;
-    double        fMinTrackLength;
-    double        fTrackDirectionFrac;
     double        fDistanceLimit;
-    double        fMaxAngleDiff;
-    double        fMaxDistance;
     double        fBeamTimeLimit;
 
     geo::GeometryCore const* fGeometryService;                 ///< pointer to Geometry provider
     detinfo::DetectorProperties const* fDetectorProperties;    ///< pointer to detector properties provider
     detinfo::DetectorClocks const* fDetectorClocks;            ///< pointer to detector clocks provider
     CRTTruthRecoAlg truthAlg;
+    FiducialVolumeCosmicTagAlg fvTag;
+    StoppingParticleCosmicTagAlg spTag;
+    GeometryCosmicTagAlg geoTag;
+    CpaCrossCosmicTagAlg ccTag;
+    ApaCrossCosmicTagAlg acTag;
+    CRTT0MatchAlg crtT0Alg;
+    CrtTrackCosmicTagAlg ctTag;
     // Momentum fitters
     trkf::TrajectoryMCSFitter     fMcsFitter; 
     trkf::TrackMomentumCalculator fRangeFitter;
@@ -387,31 +342,25 @@ namespace sbnd {
   // Constructor
   PandoraSelection::PandoraSelection(Parameters const& config)
     : EDAnalyzer(config)
-    , fSimModuleLabel       (config().inputs().SimModuleLabel())
-    , fCrtHitModuleLabel    (config().inputs().CrtHitModuleLabel())
-    , fCrtTrackModuleLabel  (config().inputs().CrtTrackModuleLabel())
-    , fTpcTrackModuleLabel  (config().inputs().TpcTrackModuleLabel())
-    , fCaloModuleLabel      (config().inputs().CaloModuleLabel())
-    , fShowerModuleLabel    (config().inputs().ShowerModuleLabel())
-    , fPandoraLabel         (config().inputs().PandoraLabel())
-    , fVerbose              (config().inputs().Verbose())
-    , fFiducial             (config().inputs().Fiducial())
-    , fFiducialTop          (config().inputs().FiducialTop())
-    , fFiducialStop         (config().inputs().FiducialStop())
-    , fCpaStitchDistance    (config().inputs().CpaStitchDistance())
-    , fCpaStitchAngle       (config().inputs().CpaStitchAngle())
-    , fCpaXDifference       (config().inputs().CpaXDifference())
-    , fApaDistance          (config().inputs().ApaDistance())
-    , fResRgMin             (config().inputs().ResRgMin())
-    , fResRgMax             (config().inputs().ResRgMax())
-    , fDEdxMax              (config().inputs().DEdxMax())
-    , fStoppingChi2Limit    (config().inputs().StoppingChi2Limit())
-    , fMinTrackLength       (config().inputs().MinTrackLength())
-    , fTrackDirectionFrac   (config().inputs().TrackDirectionFrac())
-    , fDistanceLimit        (config().inputs().DistanceLimit())
-    , fMaxAngleDiff         (config().inputs().MaxAngleDiff())
-    , fMaxDistance          (config().inputs().MaxDistance())
-    , fBeamTimeLimit        (config().inputs().BeamTimeLimit())
+    , fSimModuleLabel       (config().SimModuleLabel())
+    , fCrtHitModuleLabel    (config().CrtHitModuleLabel())
+    , fCrtTrackModuleLabel  (config().CrtTrackModuleLabel())
+    , fTpcTrackModuleLabel  (config().TpcTrackModuleLabel())
+    , fCaloModuleLabel      (config().CaloModuleLabel())
+    , fShowerModuleLabel    (config().ShowerModuleLabel())
+    , fPandoraLabel         (config().PandoraLabel())
+    , fVerbose              (config().Verbose())
+    , fFiducial             (config().Fiducial())
+    , fFiducialTop          (config().FiducialTop())
+    , fFiducialStop         (config().FiducialStop())
+    , fDistanceLimit        (config().DistanceLimit())
+    , fBeamTimeLimit        (config().BeamTimeLimit())
+    , fvTag                 (config().FVTagAlg())
+    , spTag                 (config().SPTagAlg())
+    , ccTag                 (config().CCTagAlg())
+    , acTag                 (config().ACTagAlg())
+    , crtT0Alg              (config().CRTT0Alg())
+    , ctTag                 (config().CTTagAlg())
     , fMcsFitter            (config().fitter)
   {
     fGeometryService    = lar::providerFrom<geo::Geometry>();
@@ -507,19 +456,6 @@ namespace sbnd {
     auto tpcTrackHandle = event.getValidHandle<std::vector<recob::Track>>(fTpcTrackModuleLabel);
     art::FindManyP<recob::Hit> findManyHits(tpcTrackHandle, event, fTpcTrackModuleLabel);
     art::FindManyP<anab::Calorimetry> findManyCalo(tpcTrackHandle, event, fCaloModuleLabel);
-    // Sort TPC tracks by which tpc they were detected in
-    std::vector<recob::Track> tpcTracksTPC0;
-    std::vector<recob::Track> tpcTracksTPC1;
-    // Loop over the tpc tracks
-    for(auto const& track : (*tpcTrackHandle)){
-      // Work out where the associated wire hits were detected
-      std::vector<art::Ptr<recob::Hit>> hits = findManyHits.at(track.ID());
-      int tpc = CosmicRemovalUtils::DetectedInTPC(hits);
-      double startX = track.Start().X();
-      double endX = track.End().X();
-      if(tpc == 0 && !(startX>0 || endX>0)) tpcTracksTPC0.push_back(track);
-      else if(tpc == 1 && !(startX<0 || endX<0)) tpcTracksTPC1.push_back(track);
-    }
 
     // Retrieve list of CRT hits
     auto crtHitHandle = event.getValidHandle<std::vector<crt::CRTHit>>(fCrtHitModuleLabel);
@@ -540,6 +476,7 @@ namespace sbnd {
 
     // Record all true particles and sort by type
     std::map<int, simb::MCParticle> particles;
+    std::vector<simb::MCParticle> parts;
     std::vector<int> nuParticleIds;
     std::vector<int> lepParticleIds;
     std::vector<int> dirtParticleIds;
@@ -550,6 +487,7 @@ namespace sbnd {
       // Store particle
       int partId = particle.TrackId();
       particles[partId] = particle;
+      parts.push_back(particle);
       // Get MCTruth
       art::Ptr<simb::MCTruth> truth = pi_serv->TrackIdToMCTruth_P(partId);
       int pdg = std::abs(particle.PdgCode());
@@ -584,74 +522,15 @@ namespace sbnd {
     //----------------------------------------------------------------------------------------------------------
 
     // Create fake flashes in each tpc
-    std::vector<double> fakeTpc0Flashes;
-    std::vector<double> fakeTpc1Flashes;
-
-    double readoutWindowMuS  = fDetectorClocks->TPCTick2Time((double)fDetectorProperties->ReadOutWindowSize()); // [us]
-    double driftTimeMuS = (2.*fGeometryService->DetHalfWidth()+3.)/fDetectorProperties->DriftVelocity(); // [us]
-
-    // Loop over all true particles
-    for (auto const& particle: (*particleHandle)){
-
-      // Get particle info
-      int pdg = std::abs(particle.PdgCode());
-      double time = particle.T() * 1e-3;
-
-      //Check if time is in reconstructible window
-      if(time < -driftTimeMuS || time > readoutWindowMuS) continue; 
-      //Check if particle is visible, electron, muon, proton, pion, kaon, photon
-      if(!(pdg==13||pdg==11||pdg==22||pdg==2212||pdg==211||pdg==321||pdg==111)) continue;
-
-      //Loop over the trajectory
-      int npts = particle.NumberTrajectoryPoints();
-      double TPC0Energy = 0;
-      double TPC1Energy = 0;
-      for(int i = 1; i < npts; i++){
-        geo::Point_t pt;
-        pt.SetX(particle.Vx(i)); pt.SetY(particle.Vy(i)); pt.SetZ(particle.Vz(i));
-        if(!CosmicRemovalUtils::InFiducial(pt, 0, 0)) continue;
-        // Add up the energy deposited in each tpc
-        if(pt.X() < 0) TPC0Energy += particle.E(i-1) - particle.E(i);
-        else TPC1Energy += particle.E(i-1) - particle.E(i);
-      }
-      // If the total energy deposited is > 50 MeV then create fake flash
-      if(TPC0Energy > 0.05) fakeTpc0Flashes.push_back(time);
-      else if(TPC1Energy > 0.05) fakeTpc1Flashes.push_back(time);
-    }
-    
-    // Is there a flash in time with the beam in tpc 0?
-    bool tpc0BeamFlash = false;
-    std::sort(fakeTpc0Flashes.begin(), fakeTpc0Flashes.end());
-    double previousTime = -99999;
-    // Loop over flashes in tpc 0
-    for(size_t i = 0; i < fakeTpc0Flashes.size(); i++){
-      double time = fakeTpc0Flashes[i];
-      if(time > 0 && time < fBeamTimeLimit) tpc0BeamFlash = true;
-      // Combine flashes within 0.1 us
-      if(std::abs(time-previousTime) < 0.1){
-        fakeTpc0Flashes.erase(fakeTpc0Flashes.begin()+i);
-      }
-      else previousTime = time;
-    }
-
-    // Is there a flash in time with the beam in tpc 1?
-    bool tpc1BeamFlash = false;
-    std::sort(fakeTpc1Flashes.begin(), fakeTpc1Flashes.end());
-    previousTime = -99999;
-    // Loop over flashes in tpc 0
-    for(size_t i = 0; i < fakeTpc1Flashes.size(); i++){
-      double time = fakeTpc1Flashes[i];
-      if(time > 0 && time < fBeamTimeLimit) tpc1BeamFlash = true;
-      // Combine flashes within 0.1 us
-      if(std::abs(time-previousTime) < 0.1){
-        fakeTpc1Flashes.erase(fakeTpc1Flashes.begin()+i);
-      }
-      else previousTime = time;
-    }
+    std::pair<std::vector<double>, std::vector<double>> fakeFlashes = CosmicRemovalUtils::FakeTpcFlashes(parts);
+    std::vector<double> fakeTpc0Flashes = fakeFlashes.first;
+    std::vector<double> fakeTpc1Flashes = fakeFlashes.second;
+    bool tpc0BeamFlash = CosmicRemovalUtils::BeamFlash(fakeTpc0Flashes, 4.);
+    bool tpc1BeamFlash = CosmicRemovalUtils::BeamFlash(fakeTpc1Flashes, 4.);
 
     // If there are no flashes in time with the beam then ignore the event
     if(!tpc0BeamFlash && !tpc1BeamFlash) return;
-
+ 
     //----------------------------------------------------------------------------------------------------------
     //                                          COSMIC ID - CALCULATING CUTS
     //----------------------------------------------------------------------------------------------------------
@@ -663,6 +542,7 @@ namespace sbnd {
     for (PFParticleIdMap::const_iterator it = pfParticleMap.begin(); it != pfParticleMap.end(); ++it){
 
       const art::Ptr<recob::PFParticle> pParticle(it->second);
+
       // Only look for primary particles
       if (!pParticle->IsPrimary()) continue;
       // Check if this particle is identified as the neutrino
@@ -687,8 +567,8 @@ namespace sbnd {
       for (const size_t daughterId : pParticle->Daughters()){
 
         // Get tracks associated with daughter
-        art::Ptr<recob::PFParticle> pParticle = pfParticleMap.at(daughterId);
-        const std::vector< art::Ptr<recob::Track> > associatedTracks(pfPartToTrackAssoc.at(pParticle.key()));
+        art::Ptr<recob::PFParticle> pDaughter = pfParticleMap.at(daughterId);
+        const std::vector< art::Ptr<recob::Track> > associatedTracks(pfPartToTrackAssoc.at(pDaughter.key()));
         if(associatedTracks.size() != 1) continue;
 
         // Get the first associated track FIXME deal with multiple
@@ -698,7 +578,7 @@ namespace sbnd {
         std::vector<art::Ptr<anab::Calorimetry>> calos = findManyCalo.at(tpcTrack.ID());
 
         // Get associated t0s from pandora
-        const std::vector< art::Ptr<anab::T0> > associatedT0s(findManyT0.at(pParticle.key()));
+        const std::vector< art::Ptr<anab::T0> > associatedT0s(findManyT0.at(pDaughter.key()));
 
         if(fVerbose) std::cout<<"Daughter track "<<daughterId<<":\n";
 
@@ -748,81 +628,43 @@ namespace sbnd {
 
         //---------------------------------  FIDUCIAL VOLUME CUT --------------------------------------
         // Remove any tracks that enter and exit the fiducial volume
-        bool startInFiducial = CosmicRemovalUtils::InFiducial(tpcTrack.Vertex(), fFiducial, fFiducialTop);
-        bool endInFiducial = CosmicRemovalUtils::InFiducial(tpcTrack.End(), fFiducial, fFiducialTop);
-        if(!startInFiducial && !endInFiducial)  nuTrack.inFiducial = false;
-        else nuTrack.inFiducial = true;
+        nuTrack.inFiducial = !fvTag.FiducialVolumeCosmicTag(tpcTrack);
 
         //---------------------------------  STOPPING PARTICLE CUT --------------------------------------
         nuTrack.startInFidStop =  CosmicRemovalUtils::InFiducial(tpcTrack.Vertex(), fFiducialStop, fFiducialStop);
         nuTrack.endInFidStop = CosmicRemovalUtils::InFiducial(tpcTrack.End(), fFiducialStop, fFiducialStop);
-        nuTrack.startStops = CosmicRemovalUtils::StoppingEnd(calos, tpcTrack.Vertex(), fResRgMin, fResRgMax, 
-                                                          fDEdxMax, fStoppingChi2Limit);
-        nuTrack.endStops = CosmicRemovalUtils::StoppingEnd(calos, tpcTrack.End(), fResRgMin, fResRgMax,
-                                                        fDEdxMax, fStoppingChi2Limit);
+
+        nuTrack.startStops = spTag.StoppingEnd(tpcTrack.Vertex(), calos);
+        nuTrack.endStops = spTag.StoppingEnd(tpcTrack.End(), calos);
 
          //---------------------------------  DIFFERENT TPC CUT --------------------------------------
         // Remove any tracks that are detected in one TPC and reconstructed in another
         int tpc = CosmicRemovalUtils::DetectedInTPC(hits);
-        double startX = tpcTrack.Start().X();
-        double endX = tpcTrack.End().X();
-        // Check if track is stitched
-        // If it is check the start/end points are in same TPC
-        if(tpc == 0 && (startX>0 || endX>0)) nuTrack.diffTpc = true;
-        else if(tpc == 1 && (startX<0 || endX<0)) nuTrack.diffTpc = true;
-        else nuTrack.diffTpc = false;
 
-        // Check if track is in different TPC to the flash in time with the beam
-        if(tpc0BeamFlash && !tpc1BeamFlash && tpc == 1) nuTrack.diffTpc = true;
-        if(tpc1BeamFlash && !tpc0BeamFlash && tpc == 0) nuTrack.diffTpc = true;
+        nuTrack.diffTpc = geoTag.GeometryCosmicTag(tpcTrack, hits, tpc0BeamFlash, tpc1BeamFlash);
 
         //--------------------------------- CPA STITCHING CUT --------------------------------------
-        double stitchTime = -99999;
-        bool stitchExit = false;
-        // Try to match tracks from CPA crossers
-        if(tpc == 0){
-          std::pair<double, bool> stitchResults = 
-            CosmicRemovalUtils::T0FromCpaStitching(tpcTrack, tpcTracksTPC1, fCpaStitchDistance, fCpaStitchAngle, 
-                                                   fCpaXDifference, fFiducial, fFiducialTop);
-          stitchTime = stitchResults.first;
-          stitchExit = stitchResults.second;
+        nuTrack.isStitched = ccTag.CpaCrossCosmicTag(tpcTrack, *tpcTrackHandle, findManyHits);
+
+        if(associatedT0s.size() > 0){
+          double pandoraTime = associatedT0s[0]->Time()*1e-3;
+          if(pandoraTime < 0 || pandoraTime > fBeamTimeLimit) nuTrack.isStitched = true;
         }
-        else if(tpc == 1){
-          std::pair<double, bool> stitchResults = 
-            CosmicRemovalUtils::T0FromCpaStitching(tpcTrack, tpcTracksTPC0, fCpaStitchDistance, fCpaStitchAngle, 
-                                                   fCpaXDifference, fFiducial, fFiducialTop);
-          stitchTime = stitchResults.first;
-          stitchExit = stitchResults.second;
-        }
-        //FIXME separate out the pandora t0s
-        if(stitchTime == -99999 && associatedT0s.size()>0) stitchTime = associatedT0s[0]->Time() * 1e-3;
-        // If tracks are stitched, get time and remove any outside of beam window
-        if(stitchTime != -99999 && (stitchTime < 0 || stitchTime > fBeamTimeLimit || stitchExit)) nuTrack.isStitched = true;
-        else nuTrack.isStitched = false;
-       
+    
         //--------------------------------- CRTTRACK MATCHING --------------------------------------
         // Try to get T0 from CRTTracks, if there's a match then remove the track
-        double trackTime = CRTAnaUtils::T0FromCRTTracks(tpcTrack, crtTracks, tpc, fMaxAngleDiff, fMaxDistance);
-        if(trackTime != -99999) nuTrack.matchesCrtTrack = true;
-        else nuTrack.matchesCrtTrack = false;
+        nuTrack.matchesCrtTrack = ctTag.CrtTrackCosmicTag(tpcTrack, crtTracks, tpc);
        
         //---------------------------------- CRTHIT MATCHING ---------------------------------------
         // Try to get T0 from CRTHits, remove any matched outside the beam
-        std::pair<crt::CRTHit, double> closestHit = CRTAnaUtils::ClosestCRTHit(tpcTrack, crtHitsNoTop, tpc, fTrackDirectionFrac);
+        /*std::pair<crt::CRTHit, double> closestHit = crtT0Alg.ClosestCRTHit(tpcTrack, crtHitsNoTop, tpc);
         nuTrack.closestCrtHit = closestHit.first;
-        nuTrack.closestCrtHitDistance = closestHit.second;
+        nuTrack.closestCrtHitDistance = closestHit.second;*/
+        nuTrack.crtHitTime = crtT0Alg.T0FromCRTHits(tpcTrack, crtHitsNoTop, tpc);
 
         //----------------- APA CROSS MATCHING FOR THROUGH GOING PARTICLES -------------------------
         // Match APA crossers with times from CRT tracks that cross the APA
-        nuTrack.crossesApa = false;
-        if(tpc == 0){
-          double crossTimeThrough = CosmicRemovalUtils::T0FromApaCross(tpcTrack, fakeTpc0Flashes, tpc, fFiducial, 2.);
-          if(crossTimeThrough != -99999 && (crossTimeThrough<0 || crossTimeThrough>fBeamTimeLimit)) nuTrack.crossesApa = true;
-        }
-        if(tpc == 1){
-          double crossTimeThrough = CosmicRemovalUtils::T0FromApaCross(tpcTrack, fakeTpc1Flashes, tpc, fFiducial, 2.);
-          if(crossTimeThrough != -99999 && (crossTimeThrough<0 || crossTimeThrough>fBeamTimeLimit)) nuTrack.crossesApa = true;
-        }
+        nuTrack.crossesApa = acTag.ApaCrossCosmicTag(tpcTrack, hits, fakeTpc0Flashes, fakeTpc1Flashes);
 
         nuTracks.push_back(nuTrack);
        
@@ -974,16 +816,16 @@ namespace sbnd {
           }
 
           // Do crt hit cut for both tracks
-          double crtHitTime = ((double)(int)nuTrack.closestCrtHit.ts1_ns) * 1e-3; //us
-          double crtHitTime2 = ((double)(int)nuTrack2.closestCrtHit.ts1_ns) * 1e-3; //us
-          if((nuTrack.closestCrtHitDistance < fDistanceLimit && (crtHitTime<0 || crtHitTime>fBeamTimeLimit))
-              || (nuTrack2.track.Length()>20 && nuTrack2.closestCrtHitDistance < fDistanceLimit && (crtHitTime2<0 || crtHitTime2>fBeamTimeLimit))){
+          double crtHitTime = nuTrack.crtHitTime;
+          double crtHitTime2 = nuTrack2.crtHitTime;
+          if((crtHitTime != -99999 && (crtHitTime < 0 || crtHitTime > fBeamTimeLimit))
+             || (crtHitTime2 != -99999 && (crtHitTime2 < 0 || crtHitTime2 > fBeamTimeLimit))){
             if(fVerbose) std::cout<<"Matches CRT hit outside of beam\n";
             continue;
           }
 
           // Do apa cross cut for both tracks
-          if(nuTrack.crossesApa || (nuTrack2.track.Length()>10 && nuTrack2.crossesApa)){
+          if(nuTrack.crossesApa || (/*nuTrack2.track.Length()>10 && */nuTrack2.crossesApa)){
             if(fVerbose) std::cout<<"Crosses APA\n";
             continue;
           }
@@ -1008,8 +850,8 @@ namespace sbnd {
         }
 
         // Apply CRT hit matching cut
-        double crtHitTime = ((double)(int)nuTrack.closestCrtHit.ts1_ns) * 1e-3; //us
-        if(nuTrack.closestCrtHitDistance < fDistanceLimit && std::abs(crtHitTime) > fBeamTimeLimit){
+        double crtHitTime = nuTrack.crtHitTime;
+        if(crtHitTime != -99999 && (crtHitTime < 0 || crtHitTime > fBeamTimeLimit)){
           if(fVerbose) std::cout<<"Matches CRT hit outside of beam\n";
           continue;
         }

@@ -29,6 +29,9 @@ CRTTrackMatchAlg::~CRTTrackMatchAlg(){
 
 void CRTTrackMatchAlg::reconfigure(const Config& config){
 
+  fMaxAngleDiff = config.MaxAngleDiff();
+  fMaxDistance = config.MaxDistance();
+
   return;
 
 }
@@ -104,7 +107,7 @@ std::vector<RecoCRTTrack> CRTTrackMatchAlg::CrtToRecoTrack(crt::CRTTrack track, 
 
   return recoCrtTracks;
 
-} // CRTTrackMatchAlg::CRTToRecoTrack()
+}// CRTTrackMatchAlg::CRTToRecoTrack()
 
 
 // Function to shift CRTTrack in X and work out how much is reconstructed
@@ -293,5 +296,87 @@ bool CRTTrackMatchAlg::CrossesAPA(crt::CRTTrack track){
   return crosses;
 
 } // CRTTrackMatchAlg::CrossesAPA()
+
+int CRTTrackMatchAlg::GetMatchedCRTTrackId(recob::Track tpcTrack, std::vector<crt::CRTTrack> crtTracks, int tpc){
+
+  // Get the length, angle and start and end position of the TPC track
+  TVector3 tpcStart = tpcTrack.Vertex<TVector3>();
+  TVector3 tpcEnd = tpcTrack.End<TVector3>();
+  double tpcTheta = (tpcStart - tpcEnd).Theta();
+  double tpcPhi = (tpcStart - tpcEnd).Phi();
+
+  int crtIndex = 0;
+  std::vector<sbnd::RecoCRTTrack> recoCrtTracks;
+
+  // Transform CRT tracks to expected TPC reconstructed tracks
+  for (auto& crtTrack : crtTracks){
+
+    //Check that crt track crosses tpc volume, if not skip it
+    if(!CrossesTPC(crtTrack)){ crtIndex++; continue; }
+ 
+    std::vector<sbnd::RecoCRTTrack> tempTracks = CrtToRecoTrack(crtTrack, crtIndex);
+    recoCrtTracks.insert(recoCrtTracks.end(), tempTracks.begin(), tempTracks.end());
+ 
+    crtIndex++;
+  }
+ 
+  std::vector<std::pair<int, double>> crtTpcMatchCandidates;
+  // Loop over the reco crt tracks
+  for (auto const& recoCrtTrack : recoCrtTracks){
+ 
+    // Get the length, angle and start and end position of the TPC track
+    TVector3 crtStart = recoCrtTrack.start;
+    TVector3 crtEnd = recoCrtTrack.end;
+    double crtTheta = (crtStart - crtEnd).Theta();
+    double crtPhi = (crtStart - crtEnd).Phi();
+ 
+    // Find the difference with the CRT track
+    double dDist1 = (crtStart-tpcStart).Mag();
+    double dDist2 = (crtEnd-tpcEnd).Mag();
+    if(std::max((crtStart-tpcStart).Mag(), (crtEnd-tpcEnd).Mag()) > 
+       std::max((crtStart-tpcEnd).Mag(), (crtEnd-tpcStart).Mag())){
+      crtTheta = (crtEnd - crtStart).Theta();
+      crtPhi = (crtEnd - crtStart).Phi();
+      dDist1 = (crtEnd-tpcStart).Mag();
+      dDist2 = (crtStart-tpcEnd).Mag();
+    }
+    double dTheta = atan2(sin(tpcTheta - crtTheta), cos(tpcTheta - crtTheta));
+    double dPhi = atan2(sin(tpcPhi - crtPhi), cos(tpcPhi - crtPhi));
+ 
+    // Do the actual matching
+    if(std::abs(dTheta) < fMaxAngleDiff && std::abs(dPhi) < fMaxAngleDiff && 
+       tpc == recoCrtTrack.tpc && (dDist1<fMaxDistance||dDist2<fMaxDistance)){
+      crtTpcMatchCandidates.push_back(std::make_pair(recoCrtTrack.crtID, std::abs(dTheta)));
+    }
+ 
+  }
+
+  // Choose the track which matches the closest
+  double bestID = -99999;
+  if(crtTpcMatchCandidates.size() > 0){
+    std::sort(crtTpcMatchCandidates.begin(), crtTpcMatchCandidates.end(), [](auto& left, auto& right){
+              return left.second < right.second;});
+    bestID = crtTpcMatchCandidates[0].first;
+  }
+  
+  return bestID;
+}
+
+double CRTTrackMatchAlg::T0FromCRTTracks(recob::Track tpcTrack, std::vector<crt::CRTTrack> crtTracks, int tpc){
+
+  int crtID = GetMatchedCRTTrackId(tpcTrack, crtTracks, tpc);
+
+  if(crtID == -99999) return -99999;
+
+  try{
+    double crtTime = ((double)(int)crtTracks.at(crtID).ts1_ns) * 1e-3; // [us]
+    return crtTime;
+  } 
+  catch(...){
+    return -99999;
+  }
+  return -99999;
+
+}
 
 }

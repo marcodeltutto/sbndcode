@@ -1,0 +1,10 @@
+BEGIN_PROLOG
+
+standard_pandorat0cosmictagalg:
+{
+    PandoraLabel:        "pandora"
+    TpcTrackModuleLabel: "pandoraTrack"
+    BeamTimeLimit:       4. # Limit from t = 0 to remove non-beam tracks [us]
+}
+
+END_PROLOG

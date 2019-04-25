@@ -27,6 +27,10 @@ CRTT0MatchAlg::~CRTT0MatchAlg(){
 
 void CRTT0MatchAlg::reconfigure(const Config& config){
 
+  fMinTrackLength = config.MinTrackLength();
+  fTrackDirectionFrac = config.TrackDirectionFrac();
+  fDistanceLimit = config.DistanceLimit();
+
   return;
 
 }
@@ -159,5 +163,65 @@ std::pair<TVector3, TVector3> CRTT0MatchAlg::TrackDirectionAverage(recob::Track 
 
 } // CRTT0MatchAlg::TrackDirectionAverage()
 
+std::pair<crt::CRTHit, double> CRTT0MatchAlg::ClosestCRTHit(recob::Track tpcTrack, std::vector<sbnd::crt::CRTHit> crtHits, int tpc){
+
+  // Calculate direction as an average over directions
+  std::pair<TVector3, TVector3> startEndDir = TrackDirectionAverage(tpcTrack, fTrackDirectionFrac);
+  TVector3 startDir = startEndDir.first;
+  TVector3 endDir = startEndDir.second;
+
+  auto start = tpcTrack.Vertex<TVector3>();
+  auto end = tpcTrack.End<TVector3>();
+
+  // ====================== Matching Algorithm ========================== //
+  // Get the allowed t0 range
+  std::pair<double, double> t0MinMax = TrackT0Range(start.X(), end.X(), tpc);
+  std::vector<std::pair<crt::CRTHit, double>> t0Candidates;
+
+  // Loop over all the CRT hits
+  for(auto &crtHit : crtHits){
+    // Check if hit is within the allowed t0 range
+    double crtTime = ((double)(int)crtHit.ts1_ns) * 1e-3;
+    if (!(crtTime >= t0MinMax.first - 10. && crtTime <= t0MinMax.second + 10.)) continue;
+    TVector3 crtPoint(crtHit.x_pos, crtHit.y_pos, crtHit.z_pos);
+  
+    // Calculate the distance between the crossing point and the CRT hit
+    double startDist = DistOfClosestApproach(start, startDir, crtHit, tpc, crtTime);
+    double endDist = DistOfClosestApproach(end, endDir, crtHit, tpc, crtTime);
+    // If the distance is less than some limit record the time
+    if ((crtPoint-start).Mag() < (crtPoint-end).Mag()){ 
+      t0Candidates.push_back(std::make_pair(crtHit, startDist));
+    }
+    else{
+      t0Candidates.push_back(std::make_pair(crtHit, endDist));
+    }
+  
+  }
+
+  // Sort the candidates by distance
+  std::sort(t0Candidates.begin(), t0Candidates.end(), [](auto& left, auto& right){
+            return left.second < right.second;});
+
+  if(t0Candidates.size() > 0){
+    return t0Candidates[0];
+  }
+  crt::CRTHit hit;
+  return std::make_pair(hit, -99999);
+
+}
+
+double CRTT0MatchAlg::T0FromCRTHits(recob::Track tpcTrack, std::vector<sbnd::crt::CRTHit> crtHits, int tpc){
+
+  if (tpcTrack.Length() < fMinTrackLength) return -99999; 
+
+  std::pair<crt::CRTHit, double> closestHit = ClosestCRTHit(tpcTrack, crtHits, tpc);
+  if(closestHit.second == -99999) return -99999;
+
+  double crtTime = ((double)(int)closestHit.first.ts1_ns) * 1e-3;
+  if(closestHit.second < fDistanceLimit) return crtTime;
+
+  return -99999;
+
+}
 
 }

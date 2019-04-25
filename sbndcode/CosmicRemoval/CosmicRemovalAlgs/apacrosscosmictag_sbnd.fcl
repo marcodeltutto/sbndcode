@@ -1,0 +1,10 @@
+BEGIN_PROLOG
+
+standard_apacrosscosmictagalg:
+{
+    ApaDistance:    2. # Max distance between track end and APA [cm]
+    Fiducial:       10. # Distance from Apa to not try to shift track [cm]
+    BeamTimeLimit:  4. # Limit from t = 0 to remove non-beam tracks [us]
+}
+
+END_PROLOG

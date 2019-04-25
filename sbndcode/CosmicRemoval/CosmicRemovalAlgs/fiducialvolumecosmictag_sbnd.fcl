@@ -1,0 +1,9 @@
+BEGIN_PROLOG
+
+standard_fiducialvolumecosmictagalg:
+{
+    Fiducial:       10.0  # Fiducial volume cut from all sides and bottom [cm]
+    FiducialTop:    10.0  # Fiducial volume cut from top [cm]
+}
+
+END_PROLOG

@@ -1,0 +1,11 @@
+#include "crtt0matchingalg_sbnd.fcl"
+
+BEGIN_PROLOG
+
+standard_crthitcosmictagalg:
+{
+    T0Alg:              @local::standard_crtt0matchingalg
+    BeamTimeLimit:      4. # Limit from t = 0 to remove non-beam tracks [us]
+}
+
+END_PROLOG

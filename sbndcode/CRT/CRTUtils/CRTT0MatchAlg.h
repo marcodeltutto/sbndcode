@@ -64,6 +64,22 @@ namespace sbnd{
     struct Config {
       using Name = fhicl::Name;
       using Comment = fhicl::Comment;
+
+      fhicl::Atom<double> MinTrackLength {
+        Name("MinTrackLength"),
+        Comment("")
+      };
+
+      fhicl::Atom<double> TrackDirectionFrac {
+        Name("TrackDirectionFrac"),
+        Comment("")
+      };
+
+      fhicl::Atom<double> DistanceLimit {
+        Name("DistanceLimit"),
+        Comment("")
+      };
+
     };
 
     CRTT0MatchAlg(const Config& config);
@@ -85,10 +101,18 @@ namespace sbnd{
 
     std::pair<TVector3, TVector3> TrackDirectionAverage(recob::Track track, double frac);
 
+    std::pair<crt::CRTHit, double> ClosestCRTHit(recob::Track tpcTrack, std::vector<sbnd::crt::CRTHit> crtHits, int tpc);
+
+    double T0FromCRTHits(recob::Track tpcTrack, std::vector<sbnd::crt::CRTHit> crtHits, int tpc);
+
   private:
 
     geo::GeometryCore const* fGeometryService;
     detinfo::DetectorProperties const* fDetectorProperties;
+
+    double fMinTrackLength;
+    double fTrackDirectionFrac;
+    double fDistanceLimit;
 
   };
 

@@ -1,23 +1,18 @@
-# A script to run an analysis module: PandoraSelection
+# A script to run an analysis module: CosmicIdAna
 
 #include "simulationservices_sbnd.fcl"
 #include "messages_sbnd.fcl"
 #include "backtrackerservice.fcl"
 #include "particleinventoryservice.fcl"
+#include "cosmicidalg.fcl"
 #include "mcsfitter_sbnd.fcl"
-#include "fiducialvolumecosmictag_sbnd.fcl"
-#include "stoppingparticlecosmictag_sbnd.fcl"
-#include "cpacrosscosmictag_sbnd.fcl"
-#include "apacrosscosmictag_sbnd.fcl"
-#include "crtt0matchingalg_sbnd.fcl"
-#include "crttrackcosmictag_sbnd.fcl"
 
-process_name: PandoraSelection
+process_name: CosmicIdAna
 
 services:
 {
   # Load the service that manages root files for histograms.
-  TFileService:           { fileName: "pandoraselection.root" }
+  TFileService:           { fileName: "cosmicidana.root" }
   ParticleInventoryService: @local::standard_particleinventoryservice
   BackTrackerService: @local::standard_backtrackerservice
 
@@ -53,41 +48,24 @@ physics:
   analyzers:
   {
     # This name defines a job step below, and will appear as a directory  in the output histogram file. 
-    PandoraSelection: 
+    CosmicIdAna: 
     {
       # The "module_type" tells us which module to run. The name here
       # must match the name supplied to DEFINE_ART_MODULE
-      module_type:     "sbndcode/CosmicRemoval/PandoraSelection"
+      module_type:     "sbndcode/CosmicRemoval/CosmicIdAna"
 
       # The input parameters
       SimModuleLabel:      "largeant"        # Simulation producer module label
-      CrtHitModuleLabel:   "crthit"          # CRT hit producer module label
-      CrtTrackModuleLabel: "crttrack"          # CRT track producer module label
       TpcTrackModuleLabel: "pandoraTrack" # TPC track producer module label
-      CaloModuleLabel:     "pandoraCalo" # TPC track producer module label
-      ShowerModuleLabel:   "pandoraShower" 
       PandoraLabel:        "pandora"
       Verbose:             false             # Print extra information about what's going on
-      # Fiducial volume cuts
-      Fiducial:            10.
-      FiducialTop:         10.
-      FiducialStop:        5.
-      # CRT hit matching
-      DistanceLimit:       30.
-      # Beam time cut around t=0
-      BeamTimeLimit:       4.
-      FVTagAlg: @local::standard_fiducialvolumecosmictagalg
-      SPTagAlg: @local::standard_stoppingparticlecosmictagalg
-      CCTagAlg: @local::standard_cpacrosscosmictagalg
-      ACTagAlg: @local::standard_apacrosscosmictagalg
-      CRTT0Alg: @local::standard_crtt0matchingalg
-      CTTagAlg: @local::standard_crttrackcosmictagalg
-      fitter: @local::sbnd_mcsfitter
+      CosIdAlg:            @local::standard_cosmicidalg
+      fitter:              @local::sbnd_mcsfitter
     }
   }
 
   # Schedule job step(s) for execution by defining the analysis module for this job.
-  analysis: [ PandoraSelection ]
+  analysis: [ CosmicIdAna ]
 
   # "end_paths" is a keyword and contains the modules that do not modify the art::Event;
   # i.e., analyzers and output streams.

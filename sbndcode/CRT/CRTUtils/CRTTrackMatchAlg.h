@@ -73,6 +73,17 @@ namespace sbnd{
     struct Config {
       using Name = fhicl::Name;
       using Comment = fhicl::Comment;
+
+      fhicl::Atom<double> MaxAngleDiff {
+        Name("MaxAngleDiff"),
+        Comment("")
+      };
+
+      fhicl::Atom<double> MaxDistance {
+        Name("MaxDistance"),
+        Comment("")
+      };
+
     };
 
     CRTTrackMatchAlg(const Config& config);
@@ -99,11 +110,18 @@ namespace sbnd{
     // Function to calculate if a CRTTrack crosses the TPC volume
     bool CrossesAPA(crt::CRTTrack track);
 
+    int GetMatchedCRTTrackId(recob::Track tpcTrack, std::vector<crt::CRTTrack> crtTracks, int tpc);
+
+    double T0FromCRTTracks(recob::Track tpcTrack, std::vector<crt::CRTTrack> crtTracks, int tpc);
+
   private:
 
     geo::GeometryCore const* fGeometryService;
     detinfo::DetectorProperties const* fDetectorProperties;
     detinfo::DetectorClocks const* fDetectorClocks;
+
+    double fMaxAngleDiff;
+    double fMaxDistance;
 
   };
 

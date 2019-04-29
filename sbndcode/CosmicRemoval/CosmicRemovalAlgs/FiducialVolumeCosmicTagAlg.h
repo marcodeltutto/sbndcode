@@ -41,18 +41,25 @@ namespace sbnd{
   class FiducialVolumeCosmicTagAlg {
   public:
 
+    struct Fiducial {
+      using Name = fhicl::Name;
+
+      fhicl::Atom<double> MinX { Name("MinX") };
+      fhicl::Atom<double> MinY { Name("MinY") };
+      fhicl::Atom<double> MinZ { Name("MinZ") };
+      fhicl::Atom<double> MaxX { Name("MaxX") };
+      fhicl::Atom<double> MaxY { Name("MaxY") };
+      fhicl::Atom<double> MaxZ { Name("MaxZ") };
+
+    };
+
     struct Config {
       using Name = fhicl::Name;
       using Comment = fhicl::Comment;
 
-      fhicl::Atom<double> Fiducial {
-        Name("Fiducial"),
-        Comment("Fiducial volume cut (cm) from all sides and bottom")
-      };
-
-      fhicl::Atom<double> FiducialTop {
-        Name("FiducialTop"),
-        Comment("Fiducial volume cut from top plane")
+      fhicl::Table<Fiducial> FiducialCuts {
+        Name("FiducialCuts"),
+        Comment("Fiducial volume cuts (cm)")
       };
 
     };
@@ -74,8 +81,12 @@ namespace sbnd{
 
   private:
 
-    double fFiducial;
-    double fFiducialTop;
+    double fMinX;
+    double fMinY;
+    double fMinZ;
+    double fMaxX;
+    double fMaxY;
+    double fMaxZ;
 
   };
 

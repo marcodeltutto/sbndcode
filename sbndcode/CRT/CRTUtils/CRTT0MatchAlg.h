@@ -40,6 +40,7 @@
 #include "cetlib/pow.h" // cet::sum_of_squares()
 
 #include "sbndcode/CRT/CRTProducts/CRTHit.hh"
+#include "sbndcode/CRT/CRTUtils/GeoAlg.h"
 
 // c++
 #include <iostream>
@@ -107,8 +108,8 @@ namespace sbnd{
 
   private:
 
-    geo::GeometryCore const* fGeometryService;
     detinfo::DetectorProperties const* fDetectorProperties;
+    GeoAlg const* fGeo;
 
     double fMinTrackLength;
     double fTrackDirectionFrac;

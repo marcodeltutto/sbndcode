@@ -169,40 +169,13 @@ namespace sbnd {
     bool          fVerbose;             ///< print information about what's going on
 
     // histograms
-    TH1D *hTrueMuLength;
-    TH1D *hTrueMuMom;
-    TH1D *hTrueMuTheta;
-    TH1D *hTrueMuPhi;
+    std::vector<std::string> trueCategories{"","NuTrack","NuShower","CrTrack","Mix","NoReco"};
+    size_t nTC = trueCategories.size();
 
-    TH1D *hTrueMuLengthNuTrack;
-    TH1D *hTrueMuMomNuTrack;
-    TH1D *hTrueMuThetaNuTrack;
-    TH1D *hTrueMuPhiNuTrack;
-
-    TH1D *hTrueMuLengthNuShower;
-    TH1D *hTrueMuMomNuShower;
-    TH1D *hTrueMuThetaNuShower;
-    TH1D *hTrueMuPhiNuShower;
-
-    TH1D *hTrueMuLengthCrTrack;
-    TH1D *hTrueMuMomCrTrack;
-    TH1D *hTrueMuThetaCrTrack;
-    TH1D *hTrueMuPhiCrTrack;
-
-    TH1D *hTrueMuLengthCrShower;
-    TH1D *hTrueMuMomCrShower;
-    TH1D *hTrueMuThetaCrShower;
-    TH1D *hTrueMuPhiCrShower;
-
-    TH1D *hTrueMuLengthMix;
-    TH1D *hTrueMuMomMix;
-    TH1D *hTrueMuThetaMix;
-    TH1D *hTrueMuPhiMix;
-
-    TH1D *hTrueMuLengthNoReco;
-    TH1D *hTrueMuMomNoReco;
-    TH1D *hTrueMuThetaNoReco;
-    TH1D *hTrueMuPhiNoReco;
+    TH1D *hTrueMuLength[6];
+    TH1D *hTrueMuMom[6];
+    TH1D *hTrueMuTheta[6];
+    TH1D *hTrueMuPhi[6];
 
     TH1D *hMuCompletenessEdep;
     TH1D *hMuCompletenessHitN;
@@ -264,7 +237,6 @@ namespace sbnd {
     int nMuIsNuTrack = 0;
     int nMuIsNuShower = 0;
     int nMuIsCrTrack = 0;
-    int nMuIsCrShower = 0;
     int nMuNoReco = 0;
     int nMuIsMix = 0;
 
@@ -297,40 +269,16 @@ namespace sbnd {
     // Access tfileservice to handle creating and writing histograms
     art::ServiceHandle<art::TFileService> tfs;
 
-    hTrueMuLength         = tfs->make<TH1D>("hTrueMuLength",          "", 20, 0,    500);
-    hTrueMuMom            = tfs->make<TH1D>("hTrueMuMom",             "", 20, 0,    2);
-    hTrueMuTheta          = tfs->make<TH1D>("hTrueMuTheta",           "", 20, 0,    3.2);
-    hTrueMuPhi            = tfs->make<TH1D>("hTrueMuPhi",             "", 20, -3.2, 3.2);
-
-    hTrueMuLengthNuTrack  = tfs->make<TH1D>("hTrueMuLengthNuTrack",   "", 20, 0,    500);
-    hTrueMuMomNuTrack     = tfs->make<TH1D>("hTrueMuMomNuTrack",      "", 20, 0,    2);
-    hTrueMuThetaNuTrack   = tfs->make<TH1D>("hTrueMuThetaNuTrack",    "", 20, 0,    3.2);
-    hTrueMuPhiNuTrack     = tfs->make<TH1D>("hTrueMuPhiNuTrack",      "", 20, -3.2, 3.2);
-
-    hTrueMuLengthNuShower = tfs->make<TH1D>("hTrueMuLengthNuShower",  "", 20, 0,    500);
-    hTrueMuMomNuShower    = tfs->make<TH1D>("hTrueMuMomNuShower",     "", 20, 0,    2);
-    hTrueMuThetaNuShower  = tfs->make<TH1D>("hTrueMuThetaNuShower",   "", 20, 0,    3.2);
-    hTrueMuPhiNuShower    = tfs->make<TH1D>("hTrueMuPhiNuShower",     "", 20, -3.2, 3.2);
-
-    hTrueMuLengthCrTrack  = tfs->make<TH1D>("hTrueMuLengthCrTrack",   "", 20, 0,    500);
-    hTrueMuMomCrTrack     = tfs->make<TH1D>("hTrueMuMomCrTrack",      "", 20, 0,    2);
-    hTrueMuThetaCrTrack   = tfs->make<TH1D>("hTrueMuThetaCrTrack",    "", 20, 0,    3.2);
-    hTrueMuPhiCrTrack     = tfs->make<TH1D>("hTrueMuPhiCrTrack",      "", 20, -3.2, 3.2);
-
-    hTrueMuLengthCrShower = tfs->make<TH1D>("hTrueMuLengthCrShower",  "", 20, 0,    500);
-    hTrueMuMomCrShower    = tfs->make<TH1D>("hTrueMuMomCrShower",     "", 20, 0,    2);
-    hTrueMuThetaCrShower  = tfs->make<TH1D>("hTrueMuThetaCrShower",   "", 20, 0,    3.2);
-    hTrueMuPhiCrShower    = tfs->make<TH1D>("hTrueMuPhiCrShower",     "", 20, -3.2, 3.2);
-
-    hTrueMuLengthMix      = tfs->make<TH1D>("hTrueMuLengthMix",       "", 20, 0,    500);
-    hTrueMuMomMix         = tfs->make<TH1D>("hTrueMuMomMix",          "", 20, 0,    2);
-    hTrueMuThetaMix       = tfs->make<TH1D>("hTrueMuThetaMix",        "", 20, 0,    3.2);
-    hTrueMuPhiMix         = tfs->make<TH1D>("hTrueMuPhiMix",          "", 20, -3.2, 3.2);
-
-    hTrueMuLengthNoReco   = tfs->make<TH1D>("hTrueMuLengthNoReco",    "", 20, 0,    500);
-    hTrueMuMomNoReco      = tfs->make<TH1D>("hTrueMuMomNoReco",       "", 20, 0,    2);
-    hTrueMuThetaNoReco    = tfs->make<TH1D>("hTrueMuThetaNoReco",     "", 20, 0,    3.2);
-    hTrueMuPhiNoReco      = tfs->make<TH1D>("hTrueMuPhiNoReco",       "", 20, -3.2, 3.2);
+    for(size_t i = 0; i < nTC; i++){
+      TString hLength_name  = Form("hTrueMuLength%s", trueCategories[i].c_str());
+      hTrueMuLength[i]      = tfs->make<TH1D>(hLength_name,     "", 20, 0,    500);
+      TString hMom_name     = Form("hTrueMuMom%s", trueCategories[i].c_str());
+      hTrueMuMom[i]         = tfs->make<TH1D>(hMom_name,        "", 20, 0,    2);
+      TString hTheta_name   = Form("hTrueMuTheta%s", trueCategories[i].c_str());
+      hTrueMuTheta[i]       = tfs->make<TH1D>(hTheta_name,      "", 20, 0,    3.2);
+      TString hPhi_name     = Form("hTrueMuPhi%s", trueCategories[i].c_str());
+      hTrueMuPhi[i]         = tfs->make<TH1D>(hPhi_name,        "", 20, -3.2, 3.2);
+    }
 
     hMuCompletenessEdep   = tfs->make<TH1D>("hMuCompletenessEdep",    "", 24, 0, 1.2);
     hMuCompletenessHitN   = tfs->make<TH1D>("hMuCompletenessHitN",    "", 24, 0, 1.2);
@@ -458,13 +406,13 @@ namespace sbnd {
         if(std::abs(particle.PdgCode())==13 && particle.Mother()==0){ 
           lepParticleIds.push_back(partId);
           nMu++;
-          hTrueMuLength->Fill(truthAlg.TpcLength(particle));
-          hTrueMuMom->Fill(particle.P());
+          hTrueMuLength[0]->Fill(truthAlg.TpcLength(particle));
+          hTrueMuMom[0]->Fill(particle.P());
           std::pair<TVector3, TVector3> se = truthAlg.TpcCrossPoints(particle);
           double theta = (se.second-se.first).Theta();
           double phi = (se.second-se.first).Phi();
-          hTrueMuTheta->Fill(theta);
-          hTrueMuPhi->Fill(phi);
+          hTrueMuTheta[0]->Fill(theta);
+          hTrueMuPhi[0]->Fill(phi);
         }
 
       }
@@ -636,13 +584,6 @@ namespace sbnd {
       nuRecoShowerIds.push_back(trueId);
     }
 
-    for(unsigned int shower_iter = 0; shower_iter < crShowers.size(); ++shower_iter){
-      art::Ptr<recob::Shower>& shower = crShowers.at(shower_iter);
-      std::vector<art::Ptr<recob::Hit>> hits = findManyHitsShower.at(shower.key());
-      int trueId = RecoUtils::TrueParticleIDFromTotalRecoHits(hits, false);
-      crRecoShowerIds.push_back(trueId);
-    }
-
     for(auto const& crTrack : crTracks){
       std::vector<art::Ptr<recob::Hit>> hits = findManyHits.at(crTrack->ID());
       int trueId = RecoUtils::TrueParticleIDFromTotalRecoHits(hits, false);
@@ -659,69 +600,33 @@ namespace sbnd {
       double theta = (se.second-se.first).Theta();
       double phi = (se.second-se.first).Phi();
 
-      bool nuTrack = false;
+      int trueType = 5;
       if(std::find(nuRecoTrackIds.begin(), nuRecoTrackIds.end(), lepId) != nuRecoTrackIds.end()){
         if(fVerbose) std::cout<<"ID AS NU TRACK\n";
-        nuTrack = true;
+        if(trueType == 5) trueType = 1;
+        else trueType = 4;
       }
-      bool nuShower = false;
       if(std::find(nuRecoShowerIds.begin(), nuRecoShowerIds.end(), lepId) != nuRecoShowerIds.end()){
         if(fVerbose) std::cout<<"ID AS NU SHOWER\n";
-        nuShower = true;
+        if(trueType == 5) trueType = 2;
+        else trueType = 4;
       }
-      bool crTrack = false;
       if(std::find(crRecoTrackIds.begin(), crRecoTrackIds.end(), lepId) != crRecoTrackIds.end()){
         if(fVerbose) std::cout<<"ID AS CR TRACK\n";
-        crTrack = true;
-      }
-      bool crShower = false;
-      if(std::find(crRecoShowerIds.begin(), crRecoShowerIds.end(), lepId) != crRecoShowerIds.end()){
-        if(fVerbose) std::cout<<"ID AS CR SHOWER\n";
-        crShower = true;
+        if(trueType == 5) trueType = 3;
+        else trueType = 4;
       }
 
-      if(!(nuTrack||nuShower||crTrack||crShower)){ 
-        nMuNoReco++;
-        hTrueMuLengthNoReco->Fill(length);
-        hTrueMuMomNoReco->Fill(mom);
-        hTrueMuThetaNoReco->Fill(theta);
-        hTrueMuPhiNoReco->Fill(phi);
-      }
-      else if(nuTrack && !(nuShower||crTrack||crShower)){ 
-        nMuIsNuTrack++;
-        hTrueMuLengthNuTrack->Fill(length);
-        hTrueMuMomNuTrack->Fill(mom);
-        hTrueMuThetaNuTrack->Fill(theta);
-        hTrueMuPhiNuTrack->Fill(phi);
-      }
-      else if(nuShower && !(nuTrack||crTrack||crShower)){ 
-        nMuIsNuShower++;
-        hTrueMuLengthNuShower->Fill(length);
-        hTrueMuMomNuShower->Fill(mom);
-        hTrueMuThetaNuShower->Fill(theta);
-        hTrueMuPhiNuShower->Fill(phi);
-      }
-      else if(crTrack && !(nuShower||nuTrack||crShower)){ 
-        nMuIsCrTrack++;
-        hTrueMuLengthCrTrack->Fill(length);
-        hTrueMuMomCrTrack->Fill(mom);
-        hTrueMuThetaCrTrack->Fill(theta);
-        hTrueMuPhiCrTrack->Fill(phi);
-      }
-      else if(crShower && !(nuShower||crTrack||nuTrack)){ 
-        nMuIsCrShower++;
-        hTrueMuLengthCrShower->Fill(length);
-        hTrueMuMomCrShower->Fill(mom);
-        hTrueMuThetaCrShower->Fill(theta);
-        hTrueMuPhiCrShower->Fill(phi);
-      }
-      else{ 
-        nMuIsMix++;
-        hTrueMuLengthMix->Fill(length);
-        hTrueMuMomMix->Fill(mom);
-        hTrueMuThetaMix->Fill(theta);
-        hTrueMuPhiMix->Fill(phi);
-      }
+      hTrueMuLength[trueType]->Fill(length);
+      hTrueMuMom[trueType]->Fill(mom);
+      hTrueMuTheta[trueType]->Fill(theta);
+      hTrueMuPhi[trueType]->Fill(phi);
+
+      if(trueType == 5) nMuNoReco++;
+      else if(trueType == 1) nMuIsNuTrack++;
+      else if(trueType == 2) nMuIsNuShower++;
+      else if(trueType == 3) nMuIsCrTrack++;
+      else if(trueType == 4) nMuIsMix++;
     }
 
   } // PandoraNuMuRecoAna::analyze()
@@ -734,7 +639,6 @@ namespace sbnd {
              <<"Reco as nu track            = "<<nMuIsNuTrack<<"\n"
              <<"Reco as nu shower           = "<<nMuIsNuShower<<"\n"
              <<"Reco as cr track            = "<<nMuIsCrTrack<<"\n"
-             <<"Reco as cr shower           = "<<nMuIsCrShower<<"\n"
              <<"Reco as mix                 = "<<nMuIsMix<<"\n"
              <<"Not reconstructed           = "<<nMuNoReco<<"\n";
 

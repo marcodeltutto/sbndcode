@@ -21,7 +21,12 @@ StoppingParticleCosmicTagAlg::~StoppingParticleCosmicTagAlg(){
 
 void StoppingParticleCosmicTagAlg::reconfigure(const Config& config){
 
-  fFiducial = config.Fiducial(); 
+  fMinX = config.ContainmentCuts().MinX(); 
+  fMinY = config.ContainmentCuts().MinY(); 
+  fMinZ = config.ContainmentCuts().MinZ(); 
+  fMaxX = config.ContainmentCuts().MaxX(); 
+  fMaxY = config.ContainmentCuts().MaxY(); 
+  fMaxZ = config.ContainmentCuts().MaxZ(); 
   fResRangeMin = config.ResRangeMin();
   fResRangeMax = config.ResRangeMax();
   fDEdxMax = config.DEdxMax();
@@ -96,8 +101,8 @@ bool StoppingParticleCosmicTagAlg::StoppingEnd(geo::Point_t end, std::vector<art
 
 bool StoppingParticleCosmicTagAlg::StoppingParticleCosmicTag(recob::Track track, std::vector<art::Ptr<anab::Calorimetry>> calos){
 
-  bool startInFiducial =  CosmicRemovalUtils::InFiducial(track.Vertex(), fFiducial, fFiducial);
-  bool endInFiducial = CosmicRemovalUtils::InFiducial(track.End(), fFiducial, fFiducial);
+  bool startInFiducial = CosmicRemovalUtils::InFiducial(track.Vertex(), fMinX, fMinY, fMinZ, fMaxX, fMaxY, fMaxZ);
+  bool endInFiducial = CosmicRemovalUtils::InFiducial(track.End(), fMinX, fMinY, fMinZ, fMaxX, fMaxY, fMaxZ);
 
   bool startStops = StoppingEnd(track.Vertex(), calos);
   bool endStops = StoppingEnd(track.End(), calos);
@@ -113,8 +118,8 @@ bool StoppingParticleCosmicTagAlg::StoppingParticleCosmicTag(recob::Track track,
 
 bool StoppingParticleCosmicTagAlg::StoppingParticleCosmicTag(recob::Track track, recob::Track track2, std::vector<art::Ptr<anab::Calorimetry>> calos, std::vector<art::Ptr<anab::Calorimetry>> calos2){
 
-  bool startInFiducial =  CosmicRemovalUtils::InFiducial(track.End(), fFiducial, fFiducial);
-  bool endInFiducial = CosmicRemovalUtils::InFiducial(track2.End(), fFiducial, fFiducial);
+  bool startInFiducial = CosmicRemovalUtils::InFiducial(track.End(), fMinX, fMinY, fMinZ, fMaxX, fMaxY, fMaxZ);
+  bool endInFiducial = CosmicRemovalUtils::InFiducial(track.End(), fMinX, fMinY, fMinZ, fMaxX, fMaxY, fMaxZ);
 
   bool startStops = StoppingEnd(track.End(), calos);
   bool endStops = StoppingEnd(track2.End(), calos2);

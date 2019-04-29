@@ -1,10 +1,12 @@
+#include "cosmicidconfigs_sbnd.fcl"
+
 BEGIN_PROLOG
 
 standard_apacrosscosmictagalg:
 {
-    ApaDistance:    2. # Max distance between track end and APA [cm]
-    Fiducial:       10. # Distance from Apa to not try to shift track [cm]
-    BeamTimeLimit:  4. # Limit from t = 0 to remove non-beam tracks [us]
+    DistanceLimit:  2. # Max distance between track end and APA for successful match[cm]
+    MaxApaDistance: 10. # Distance from Apa to not try to shift track [cm]
+    BeamTimeLimits: @local::sbnd_beamtime
 }
 
 END_PROLOG

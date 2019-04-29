@@ -5,11 +5,12 @@
 ///////////////////////////////////////////////
 // ApaCrossCosmicTagAlg.h
 //
-// Functions for fiducial volume cosmic tagger
+// Functions for APA crossing cosmic tagger
 // T Brooks (tbrooks@fnal.gov), November 2018
 ///////////////////////////////////////////////
 
 #include "sbndcode/CosmicRemoval/CosmicRemovalUtils/CosmicRemovalUtils.h"
+#include "sbndcode/CRT/CRTUtils/GeoAlg.h"
 
 // framework
 #include "art/Framework/Principal/Event.h"
@@ -46,22 +47,38 @@ namespace sbnd{
   class ApaCrossCosmicTagAlg {
   public:
 
+    struct BeamTime {
+      using Name = fhicl::Name;
+      using Comment = fhicl::Comment;
+
+      fhicl::Atom<double> BeamTimeMin {
+        Name("BeamTimeMin"),
+        Comment("")
+      };
+
+      fhicl::Atom<double> BeamTimeMax {
+        Name("BeamTimeMax"),
+        Comment("")
+      };
+
+    };
+
     struct Config {
       using Name = fhicl::Name;
       using Comment = fhicl::Comment;
 
-      fhicl::Atom<double> ApaDistance {
-        Name("ApaDistance"),
+      fhicl::Atom<double> DistanceLimit {
+        Name("DistanceLimit"),
         Comment("")
       };
 
-      fhicl::Atom<double> Fiducial {
-        Name("Fiducial"),
+      fhicl::Atom<double> MaxApaDistance {
+        Name("MaxApaDistance"),
         Comment("")
       };
 
-      fhicl::Atom<double> BeamTimeLimit {
-        Name("BeamTimeLimit"),
+      fhicl::Table<BeamTime> BeamTimeLimits {
+        Name("BeamTimeLimits"),
         Comment("")
       };
 
@@ -78,18 +95,21 @@ namespace sbnd{
 
     void reconfigure(const Config& config);
 
+    // Get time by matching tracks which cross the APA
     double T0FromApaCross(recob::Track track, std::vector<double> t0List, int tpc);
 
+    // Tag tracks with times outside the beam
     bool ApaCrossCosmicTag(recob::Track track, std::vector<art::Ptr<recob::Hit>> hits, std::vector<double> t0Tpc0, std::vector<double> t0Tpc1);
 
   private:
 
-    double fApaDistance;
-    double fFiducial;
-    double fBeamTimeLimit;
+    double fDistanceLimit;
+    double fMaxApaDistance;
+    double fBeamTimeMin;
+    double fBeamTimeMax;
 
     detinfo::DetectorProperties const* fDetectorProperties;
-    geo::GeometryCore const* fGeometryService;
+    GeoAlg const* fGeo;
 
   };
 

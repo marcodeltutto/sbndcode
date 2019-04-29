@@ -7,7 +7,6 @@ ApaCrossCosmicTagAlg::ApaCrossCosmicTagAlg(const Config& config){
   this->reconfigure(config);
 
   fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>();
-  fGeometryService = lar::providerFrom<geo::Geometry>();
 
 }
 
@@ -15,7 +14,6 @@ ApaCrossCosmicTagAlg::ApaCrossCosmicTagAlg(const Config& config){
 ApaCrossCosmicTagAlg::ApaCrossCosmicTagAlg(){
 
   fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>();
-  fGeometryService = lar::providerFrom<geo::Geometry>();
 
 }
 
@@ -27,9 +25,10 @@ ApaCrossCosmicTagAlg::~ApaCrossCosmicTagAlg(){
 
 void ApaCrossCosmicTagAlg::reconfigure(const Config& config){
 
-  fApaDistance = config.ApaDistance(); 
-  fFiducial = config.Fiducial();
-  fBeamTimeLimit = config.BeamTimeLimit();
+  fDistanceLimit = config.DistanceLimit(); 
+  fMaxApaDistance = config.MaxApaDistance();
+  fBeamTimeMin = config.BeamTimeLimits().BeamTimeMin();
+  fBeamTimeMax = config.BeamTimeLimits().BeamTimeMax();
 
   return;
 }
@@ -37,7 +36,7 @@ void ApaCrossCosmicTagAlg::reconfigure(const Config& config){
 double ApaCrossCosmicTagAlg::T0FromApaCross(recob::Track track, std::vector<double> t0List, int tpc){
 
   double crossTime = -99999;
-  double xmax = 2.0 * fGeometryService->DetHalfWidth();
+  double xmax = fGeo->MaxX();
 
   double minDist = 99999;
   double startX = track.Vertex().X();
@@ -45,7 +44,8 @@ double ApaCrossCosmicTagAlg::T0FromApaCross(recob::Track track, std::vector<doub
   geo::Point_t point = track.Vertex();
 
   // Don't try to shift tracks near the Apa
-  if(std::abs(startX) > xmax-fFiducial || std::abs(endX) > xmax-fFiducial) return crossTime;
+  if(std::abs(startX) > xmax - fMaxApaDistance 
+     || std::abs(endX) > xmax - fMaxApaDistance) return crossTime;
 
   // If in tpc 0 use start/end with lowest X
   if(tpc == 0 && endX < startX) point = track.End();
@@ -63,16 +63,16 @@ double ApaCrossCosmicTagAlg::T0FromApaCross(recob::Track track, std::vector<doub
     if(tpc == 1) shiftedX = point.X() + shift;
 
     //Check track still in TPC
-    if(std::abs(shiftedX) > 201.) continue; //FIXME
+    if(std::abs(shiftedX) > (xmax + fDistanceLimit)) continue;
     //Calculate distance between start/end and APA
-    double dist = std::abs(std::abs(shiftedX)-199.6);//FIXME
+    double dist = std::abs(std::abs(shiftedX) - xmax);
     if(dist < minDist) {
       minDist = dist;
       crossTime = t0;
     }
   }
 
-  if(minDist < fApaDistance) return crossTime;
+  if(minDist < fDistanceLimit) return crossTime;
 
   return -99999;
 
@@ -84,11 +84,11 @@ bool ApaCrossCosmicTagAlg::ApaCrossCosmicTag(recob::Track track, std::vector<art
 
   if(tpc == 0){
     double crossTimeThrough = T0FromApaCross(track, t0Tpc0, tpc);
-    if(crossTimeThrough != -99999 && (crossTimeThrough < 0 || crossTimeThrough > fBeamTimeLimit)) return true;
+    if(crossTimeThrough != -99999 && (crossTimeThrough < fBeamTimeMin || crossTimeThrough > fBeamTimeMax)) return true;
   }
   if(tpc == 1){
     double crossTimeThrough = T0FromApaCross(track, t0Tpc1, tpc);
-    if(crossTimeThrough != -99999 && (crossTimeThrough < 0 || crossTimeThrough > fBeamTimeLimit)) return true;
+    if(crossTimeThrough != -99999 && (crossTimeThrough < fBeamTimeMin || crossTimeThrough > fBeamTimeMax)) return true;
   }
 
   return false;

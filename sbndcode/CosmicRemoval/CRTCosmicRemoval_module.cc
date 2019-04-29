@@ -12,6 +12,7 @@
 #include "sbndcode/CRT/CRTUtils/CRTT0MatchAlg.h"
 #include "sbndcode/CRT/CRTProducts/CRTTrack.hh"
 #include "sbndcode/CRT/CRTUtils/CRTTruthRecoAlg.h"
+#include "sbndcode/CRT/CRTUtils/GeoAlg.h"
 
 // LArSoft includes
 #include "lardataobj/AnalysisBase/T0.h"
@@ -203,9 +204,9 @@ namespace sbnd {
     TH1D* hRemovedCosmicChargeComp;
 
     // Other variables shared between different methods.
-    geo::GeometryCore const* fGeometryService;                 ///< pointer to Geometry provider
     detinfo::DetectorProperties const* fDetectorProperties;    ///< pointer to detector properties provider
     detinfo::DetectorClocks const* fDetectorClocks;            ///< pointer to detector clocks provider
+    GeoAlg const* fGeo;
 
     CRTTruthRecoAlg truthAlg;
 
@@ -236,7 +237,6 @@ namespace sbnd {
   {
 
     // Get a pointer to the geometry service provider
-    fGeometryService    = lar::providerFrom<geo::Geometry>();
     fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>(); 
     fDetectorClocks     = lar::providerFrom<detinfo::DetectorClocksService>(); 
 
@@ -340,7 +340,7 @@ namespace sbnd {
     if(fVerbose) std::cout<<"Number of CRTTracks = "<<crtTracks.size()<<std::endl;
 
     double readoutWindowMuS  = fDetectorClocks->TPCTick2Time((double)fDetectorProperties->ReadOutWindowSize()); // [us]
-    double driftTimeMuS = (2.*fGeometryService->DetHalfWidth()+3.)/fDetectorProperties->DriftVelocity(); // [us]
+    double driftTimeMuS = fGeo->MaxX()/fDetectorProperties->DriftVelocity(); // [us]
 
     // Loop over true particles in readout window
     std::map<int, simb::MCParticle> particles;

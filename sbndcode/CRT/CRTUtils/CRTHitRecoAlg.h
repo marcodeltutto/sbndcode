@@ -41,6 +41,7 @@
 
 #include "sbndcode/CRT/CRTProducts/CRTHit.hh"
 #include "sbndcode/CRT/CRTProducts/CRTData.hh"
+#include "sbndcode/CRT/CRTUtils/GeoAlg.h"
 
 // c++
 #include <iostream>
@@ -142,6 +143,8 @@ namespace sbnd{
     art::ServiceHandle<geo::AuxDetGeometry> fAuxDetGeoService;
     const geo::AuxDetGeometry* fAuxDetGeo;
     const geo::AuxDetGeometryCore* fAuxDetGeoCore;
+    
+    GeoAlg const* fGeo;
 
     bool fUseReadoutWindow;
     double fQPed;

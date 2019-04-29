@@ -6,7 +6,6 @@ CRTTruthRecoAlg::CRTTruthRecoAlg(const Config& config){
 
   this->reconfigure(config);
   
-  fGeometryService = lar::providerFrom<geo::Geometry>();
   fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>(); 
   fAuxDetGeo = &(*fAuxDetGeoService);
   fAuxDetGeoCore = fAuxDetGeo->GetProviderPtr();
@@ -24,7 +23,6 @@ CRTTruthRecoAlg::CRTTruthRecoAlg(const Config& config){
 
 CRTTruthRecoAlg::CRTTruthRecoAlg(){
 
-  fGeometryService = lar::providerFrom<geo::Geometry>();
   fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>(); 
   fAuxDetGeo = &(*fAuxDetGeoService);
   fAuxDetGeoCore = fAuxDetGeo->GetProviderPtr();
@@ -152,18 +150,12 @@ bool CRTTruthRecoAlg::IsThroughGoing(const simb::MCParticle& particle){
 
   // Check if particle enters the TPC
   bool enters = false;
-  /*double xmin = -2.0 * fGeometryService->DetHalfWidth();
-  double xmax = 2.0 * fGeometryService->DetHalfWidth();
-  double ymin = -fGeometryService->DetHalfHeight();
-  double ymax = fGeometryService->DetHalfHeight();
-  double zmin = 0.;
-  double zmax = fGeometryService->DetLength();*/
+
   // Loop over trajectory points
   int nTrajPoints = particle.NumberTrajectoryPoints();
   for (int traj_i = 0; traj_i < nTrajPoints; traj_i++){
     TVector3 trajPoint(particle.Vx(traj_i), particle.Vy(traj_i), particle.Vz(traj_i));
     // Check if point is within reconstructable volume
-    //if (trajPoint[0] >= xmin && trajPoint[0] <= xmax && trajPoint[1] >= ymin && trajPoint[1] <= ymax && trajPoint[2] >= zmin && trajPoint[2] <= zmax){
     if (trajPoint[0] >= crtPlanes[0] && trajPoint[0] <= crtPlanes[3] && trajPoint[1] >= crtPlanes[4] && trajPoint[1] <= -crtPlanes[4] && trajPoint[2] >= crtPlanes[10] && trajPoint[2] <= crtPlanes[13]){
       enters = true;
     }
@@ -202,12 +194,12 @@ void CRTTruthRecoAlg::DrawCube(TCanvas *c1, double *rmin, double *rmax, int col)
 // Function to calculate the CRT crossing points of a true particle
 std::pair<TVector3, TVector3> CRTTruthRecoAlg::TpcCrossPoints(simb::MCParticle const& particle){
 
-  double xmin = -2.0 * fGeometryService->DetHalfWidth();
-  double xmax = 2.0 * fGeometryService->DetHalfWidth();
-  double ymin = -fGeometryService->DetHalfHeight();
-  double ymax = fGeometryService->DetHalfHeight();
-  double zmin = 0.;
-  double zmax = fGeometryService->DetLength();
+  double xmin = fGeo->MinX();
+  double xmax = fGeo->MaxX();
+  double ymin = fGeo->MinY();
+  double ymax = fGeo->MaxY();
+  double zmin = fGeo->MinZ();
+  double zmax = fGeo->MaxZ();
   TVector3 start, end;
 
   bool first = true;
@@ -234,12 +226,12 @@ std::pair<TVector3, TVector3> CRTTruthRecoAlg::TpcCrossPoints(simb::MCParticle c
 // Function to calculate the CRT crossing points of a true particle
 double CRTTruthRecoAlg::TpcLength(simb::MCParticle const& particle){
 
-  double xmin = -200.;//-2.0 * fGeometryService->DetHalfWidth();
-  double xmax = 200.;//2.0 * fGeometryService->DetHalfWidth();
-  double ymin = -fGeometryService->DetHalfHeight();
-  double ymax = fGeometryService->DetHalfHeight();
-  double zmin = 0.;
-  double zmax = fGeometryService->DetLength();
+  double xmin = fGeo->MinX();
+  double xmax = fGeo->MaxX();
+  double ymin = fGeo->MinY();
+  double ymax = fGeo->MaxY();
+  double zmin = fGeo->MinZ();
+  double zmax = fGeo->MaxZ();
   
   TVector3 start, end;
   TVector3 disp;

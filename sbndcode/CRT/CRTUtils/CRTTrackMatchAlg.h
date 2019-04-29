@@ -40,6 +40,7 @@
 #include "cetlib/pow.h" // cet::sum_of_squares()
 
 #include "sbndcode/CRT/CRTProducts/CRTTrack.hh"
+#include "sbndcode/CRT/CRTUtils/GeoAlg.h"
 
 // c++
 #include <iostream>
@@ -116,9 +117,10 @@ namespace sbnd{
 
   private:
 
-    geo::GeometryCore const* fGeometryService;
     detinfo::DetectorProperties const* fDetectorProperties;
     detinfo::DetectorClocks const* fDetectorClocks;
+
+    GeoAlg const* fGeo;
 
     double fMaxAngleDiff;
     double fMaxDistance;

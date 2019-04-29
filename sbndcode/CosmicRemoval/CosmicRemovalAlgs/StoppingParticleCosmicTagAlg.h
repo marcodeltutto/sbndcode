@@ -5,7 +5,7 @@
 ///////////////////////////////////////////////
 // StoppingParticleCosmicTagAlg.h
 //
-// Functions for fiducial volume cosmic tagger
+// Functions for stopping particle cosmic tagger
 // T Brooks (tbrooks@fnal.gov), November 2018
 ///////////////////////////////////////////////
 
@@ -44,12 +44,24 @@ namespace sbnd{
   class StoppingParticleCosmicTagAlg {
   public:
 
+    struct Containment {
+      using Name = fhicl::Name;
+
+      fhicl::Atom<double> MinX { Name("MinX") };
+      fhicl::Atom<double> MinY { Name("MinY") };
+      fhicl::Atom<double> MinZ { Name("MinZ") };
+      fhicl::Atom<double> MaxX { Name("MaxX") };
+      fhicl::Atom<double> MaxY { Name("MaxY") };
+      fhicl::Atom<double> MaxZ { Name("MaxZ") };
+
+    };
+
     struct Config {
       using Name = fhicl::Name;
       using Comment = fhicl::Comment;
 
-      fhicl::Atom<double> Fiducial {
-        Name("Fiducial"),
+      fhicl::Table<Containment> ContainmentCuts {
+        Name("ContainmentCuts"),
         Comment("Fiducial volume cut (cm) to decide if track exits")
       };
 
@@ -94,7 +106,12 @@ namespace sbnd{
 
   private:
 
-    double fFiducial;
+    double fMinX;
+    double fMinY;
+    double fMinZ;
+    double fMaxX;
+    double fMaxY;
+    double fMaxZ;
     double fResRangeMin;
     double fResRangeMax;
     double fDEdxMax;

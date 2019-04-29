@@ -30,6 +30,7 @@ art_make(    LIBRARY_NAME sbndcode_CosmicRemovalUtils
                            ${Boost_SYSTEM_LIBRARY}
                            sbndcode_CRT
                            sbndcode_CRTProducts
+                           sbndcode_CRTUtils
         )
 
 install_headers()

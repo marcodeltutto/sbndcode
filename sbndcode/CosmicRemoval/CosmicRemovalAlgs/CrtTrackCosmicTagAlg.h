@@ -5,7 +5,7 @@
 ///////////////////////////////////////////////
 // CrtTrackCosmicTagAlg.h
 //
-// Functions for fiducial volume cosmic tagger
+// Functions for CRTTrack match cosmic tagger
 // T Brooks (tbrooks@fnal.gov), November 2018
 ///////////////////////////////////////////////
 
@@ -43,6 +43,22 @@ namespace sbnd{
   class CrtTrackCosmicTagAlg {
   public:
 
+    struct BeamTime {
+      using Name = fhicl::Name;
+      using Comment = fhicl::Comment;
+
+      fhicl::Atom<double> BeamTimeMin {
+        Name("BeamTimeMin"),
+        Comment("")
+      };
+
+      fhicl::Atom<double> BeamTimeMax {
+        Name("BeamTimeMax"),
+        Comment("")
+      };
+
+    };
+
     struct Config {
       using Name = fhicl::Name;
       using Comment = fhicl::Comment;
@@ -52,8 +68,8 @@ namespace sbnd{
         Comment("")
       };
 
-      fhicl::Atom<double> BeamTimeLimit {
-        Name("BeamTimeLimit"),
+      fhicl::Table<BeamTime> BeamTimeLimits {
+        Name("BeamTimeLimits"),
         Comment("")
       };
 
@@ -70,12 +86,14 @@ namespace sbnd{
 
     void reconfigure(const Config& config);
 
+    // Tags track as cosmic if it matches a CRTTrack
     bool CrtTrackCosmicTag(recob::Track track, std::vector<crt::CRTTrack> crtTracks, int tpc);
 
   private:
 
     CRTTrackMatchAlg trackMatchAlg;
-    double fBeamTimeLimit;
+    double fBeamTimeMin;
+    double fBeamTimeMax;
 
   };
 

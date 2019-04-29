@@ -6,7 +6,6 @@ CRTTrackMatchAlg::CRTTrackMatchAlg(const Config& config){
 
   this->reconfigure(config);
   
-  fGeometryService = lar::providerFrom<geo::Geometry>();
   fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>(); 
   fDetectorClocks = lar::providerFrom<detinfo::DetectorClocksService>(); 
 
@@ -15,7 +14,6 @@ CRTTrackMatchAlg::CRTTrackMatchAlg(const Config& config){
 
 CRTTrackMatchAlg::CRTTrackMatchAlg(){
 
-  fGeometryService = lar::providerFrom<geo::Geometry>();
   fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>(); 
   fDetectorClocks = lar::providerFrom<detinfo::DetectorClocksService>(); 
 
@@ -117,12 +115,12 @@ std::vector<RecoCRTTrack> CRTTrackMatchAlg::CreateRecoCRTTrack(TVector3 start, T
   std::vector<RecoCRTTrack> recoCrtTracks;
 
   // Get the true entry and exit points in the TPC
-  double xmin = -2.0 * fGeometryService->DetHalfWidth();
-  double xmax = 2.0 * fGeometryService->DetHalfWidth();
-  double ymin = -fGeometryService->DetHalfHeight();
-  double ymax = fGeometryService->DetHalfHeight();
-  double zmin = 0.;
-  double zmax = fGeometryService->DetLength();
+  double xmin = fGeo->MinX();
+  double xmax = fGeo->MaxX();
+  double ymin = fGeo->MinY();
+  double ymax = fGeo->MaxY();
+  double zmin = fGeo->MinZ();
+  double zmax = fGeo->MaxZ();
 
   // Get track info
   TVector3 diff = end - start;
@@ -163,7 +161,7 @@ std::vector<RecoCRTTrack> CRTTrackMatchAlg::CreateRecoCRTTrack(TVector3 start, T
   }
   
   double readoutWindowMuS  = fDetectorClocks->TPCTick2Time((double)fDetectorProperties->ReadOutWindowSize()); // [us]
-  double driftTimeMuS = (2.*fGeometryService->DetHalfWidth())/fDetectorProperties->DriftVelocity(); // [us]
+  double driftTimeMuS = fGeo->MaxX()/fDetectorProperties->DriftVelocity(); // [us]
   double deltaX = (readoutWindowMuS - driftTimeMuS) * fDetectorProperties->DriftVelocity(); // [cm]
 
   if(tpc == 0) xmax = deltaX;
@@ -203,12 +201,12 @@ bool CRTTrackMatchAlg::CrossesTPC(crt::CRTTrack track){
 
   // Check if particle enters the TPC
   bool enters = false;
-  double xmin = -2.0 * fGeometryService->DetHalfWidth();
-  double xmax = 2.0 * fGeometryService->DetHalfWidth();
-  double ymin = -fGeometryService->DetHalfHeight();
-  double ymax = fGeometryService->DetHalfHeight();
-  double zmin = 0.;
-  double zmax = fGeometryService->DetLength();
+  double xmin = fGeo->MinX();
+  double xmax = fGeo->MaxX();
+  double ymin = fGeo->MinY();
+  double ymax = fGeo->MaxY();
+  double zmin = fGeo->MinZ();
+  double zmax = fGeo->MaxZ();
 
   if(track.complete){
     // Get track info
@@ -254,10 +252,10 @@ bool CRTTrackMatchAlg::CrossesAPA(crt::CRTTrack track){
 
   // Check if particle enters the TPC
   bool crosses = false;
-  double xmax = 2.0 * fGeometryService->DetHalfWidth();
-  double ymax = fGeometryService->DetHalfHeight();
-  double zmin = 0.;
-  double zmax = fGeometryService->DetLength();
+  double xmax = fGeo->MaxX();
+  double ymax = fGeo->MaxY();
+  double zmin = fGeo->MinZ();
+  double zmax = fGeo->MaxZ();
 
   if(track.complete){
     // Get track info

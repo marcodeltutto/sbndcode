@@ -11,6 +11,7 @@
 #include "sbndcode/CosmicRemoval/CosmicRemovalUtils/CosmicRemovalUtils.h"
 #include "sbndcode/CRT/CRTUtils/CRTAnaUtils.h"
 #include "sbndcode/CRT/CRTUtils/CRTT0MatchAlg.h"
+#include "sbndcode/CRT/CRTUtils/GeoAlg.h"
 #include "sbndcode/CRT/CRTProducts/CRTTrack.hh"
 #include "sbndcode/CRT/CRTUtils/CRTTruthRecoAlg.h"
 #include "sbndcode/CRT/CRTUtils/CRTTrackMatchAlg.h"
@@ -299,9 +300,9 @@ namespace sbnd {
     TH1D* hRemovedRecoLenNu;
 
     // Other variables shared between different methods.
-    geo::GeometryCore const* fGeometryService;                 ///< pointer to Geometry provider
     detinfo::DetectorProperties const* fDetectorProperties;    ///< pointer to detector properties provider
     detinfo::DetectorClocks const* fDetectorClocks;            ///< pointer to detector clocks provider
+    GeoAlg const* fGeo;
 
     CRTTruthRecoAlg truthAlg;
     CRTTrackMatchAlg trackAlg;
@@ -377,7 +378,6 @@ namespace sbnd {
   {
 
     // Get a pointer to the geometry service provider
-    fGeometryService    = lar::providerFrom<geo::Geometry>();
     fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>(); 
     fDetectorClocks     = lar::providerFrom<detinfo::DetectorClocksService>(); 
 
@@ -1197,24 +1197,7 @@ namespace sbnd {
     fHitLengthCos->Draw("ap");
 
   } // TPCCosmicRemoval::endJob()
-/*
-  bool TPCCosmicRemoval::InFiducial(geo::Point_t point, double fiducial, double fiducialTop){
-    //
-    double xmin = -200 + fiducial; //-2.0 * fGeometryService->DetHalfWidth() + fiducial;
-    double xmax = 200 - fiducial; //2.0 * fGeometryService->DetHalfWidth() - fiducial;
-    double ymin = -fGeometryService->DetHalfHeight() + fiducial;
-    double ymax = fGeometryService->DetHalfHeight() - fiducialTop;
-    double zmin = 0. + fiducial;
-    double zmax = fGeometryService->DetLength() - fiducial;
 
-    double x = point.X();
-    double y = point.Y();
-    double z = point.Z();
-    if(x>xmin && x<xmax && y>ymin && y<ymax && z>zmin && z<zmax) return true;
-
-    return false;
-  }
-*/
   int TPCCosmicRemoval::DetectedInTPC(std::vector<art::Ptr<recob::Hit>> hits){
     //
     int tpc = hits[0]->WireID().TPC;
@@ -1230,12 +1213,12 @@ namespace sbnd {
     // Create a canvas 
     TCanvas *c1 = new TCanvas("c2","",700,700);
     
-    double xmin = -200; //-2.0 * fGeometryService->DetHalfWidth();
-    double xmax = 200; //2.0 * fGeometryService->DetHalfWidth();
-    double ymin = -fGeometryService->DetHalfHeight();
-    double ymax = fGeometryService->DetHalfHeight();
-    double zmin = 0.;
-    double zmax = fGeometryService->DetLength();
+    double xmin = fGeo->MinX();
+    double xmax = fGeo->MaxX();
+    double ymin = fGeo->MinY();
+    double ymax = fGeo->MaxY();
+    double zmin = fGeo->MinZ();
+    double zmax = fGeo->MaxZ();
     double rmin[3] = {xmin, ymin, zmin};
     double rmax[3] = {0, ymax, zmax};
     truthAlg.DrawCube(c1, rmin, rmax, 1);
@@ -1387,8 +1370,7 @@ namespace sbnd {
     //if(track.ID() == 1) print = true;
 
     double crossTime = -99999;
-    //double xmin = -2.0 * fGeometryService->DetHalfWidth();
-    double xmax = 2.0 * fGeometryService->DetHalfWidth();
+    double xmax = fGeo->MaxX();
 
     double minDist = 99999;
     double startX = track.Vertex().X();

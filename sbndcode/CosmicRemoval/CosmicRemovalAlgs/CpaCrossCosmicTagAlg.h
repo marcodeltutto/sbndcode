@@ -5,11 +5,12 @@
 ///////////////////////////////////////////////
 // CpaCrossCosmicTagAlg.h
 //
-// Functions for fiducial volume cosmic tagger
+// Functions for CPA stitching cosmic tagger
 // T Brooks (tbrooks@fnal.gov), November 2018
 ///////////////////////////////////////////////
 
 #include "sbndcode/CosmicRemoval/CosmicRemovalUtils/CosmicRemovalUtils.h"
+#include "sbndcode/CRT/CRTUtils/GeoAlg.h"
 
 // framework
 #include "art/Framework/Principal/Event.h"
@@ -44,6 +45,34 @@ namespace sbnd{
   class CpaCrossCosmicTagAlg {
   public:
 
+    struct Fiducial {
+      using Name = fhicl::Name;
+
+      fhicl::Atom<double> MinX { Name("MinX") };
+      fhicl::Atom<double> MinY { Name("MinY") };
+      fhicl::Atom<double> MinZ { Name("MinZ") };
+      fhicl::Atom<double> MaxX { Name("MaxX") };
+      fhicl::Atom<double> MaxY { Name("MaxY") };
+      fhicl::Atom<double> MaxZ { Name("MaxZ") };
+
+    };
+
+    struct BeamTime {
+      using Name = fhicl::Name;
+      using Comment = fhicl::Comment;
+
+      fhicl::Atom<double> BeamTimeMin {
+        Name("BeamTimeMin"),
+        Comment("")
+      };
+
+      fhicl::Atom<double> BeamTimeMax {
+        Name("BeamTimeMax"),
+        Comment("")
+      };
+
+    };
+
     struct Config {
       using Name = fhicl::Name;
       using Comment = fhicl::Comment;
@@ -63,18 +92,13 @@ namespace sbnd{
         Comment("")
       };
 
-      fhicl::Atom<double> Fiducial {
-        Name("Fiducial"),
+      fhicl::Table<Fiducial> FiducialCuts {
+        Name("FiducialCuts"),
         Comment("")
       };
 
-      fhicl::Atom<double> FiducialTop {
-        Name("FiducialTop"),
-        Comment("")
-      };
-
-      fhicl::Atom<double> BeamTimeLimit {
-        Name("BeamTimeLimit"),
+      fhicl::Table<BeamTime> BeamTimeLimits {
+        Name("BeamTimeLimits"),
         Comment("")
       };
 
@@ -91,8 +115,10 @@ namespace sbnd{
 
     void reconfigure(const Config& config);
 
+    // Calculate the time by stitching tracks across the CPA
     std::pair<double, bool> T0FromCpaStitching(recob::Track t1, std::vector<recob::Track> tracks);
 
+    // Tag tracks as cosmics from CPA stitching t0
     bool CpaCrossCosmicTag(recob::Track track, std::vector<recob::Track> tracks, art::FindManyP<recob::Hit> hitAssoc);
 
   private:
@@ -100,11 +126,17 @@ namespace sbnd{
     double fCpaStitchDistance;
     double fCpaStitchAngle;
     double fCpaXDifference;
-    double fFiducial;
-    double fFiducialTop;
-    double fBeamTimeLimit;
+    double fMinX;
+    double fMinY;
+    double fMinZ;
+    double fMaxX;
+    double fMaxY;
+    double fMaxZ;
+    double fBeamTimeMin;
+    double fBeamTimeMax;
 
     detinfo::DetectorProperties const* fDetectorProperties;
+    GeoAlg const* fGeo;
 
   };
 

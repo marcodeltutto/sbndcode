@@ -13,6 +13,7 @@
 #include "sbndcode/CRT/CRTProducts/CRTTrack.hh"
 #include "sbndcode/CRT/CRTUtils/CRTTruthRecoAlg.h"
 #include "sbndcode/CRT/CRTUtils/CRTT0MatchAlg.h"
+#include "sbndcode/CRT/CRTUtils/GeoAlg.h"
 #include "sbndcode/CosmicRemoval/CosmicRemovalAlgs/FiducialVolumeCosmicTagAlg.h"
 #include "sbndcode/CosmicRemoval/CosmicRemovalAlgs/StoppingParticleCosmicTagAlg.h"
 #include "sbndcode/CosmicRemoval/CosmicRemovalAlgs/GeometryCosmicTagAlg.h"
@@ -250,9 +251,9 @@ namespace sbnd {
     double        fDistanceLimit;
     double        fBeamTimeLimit;
 
-    geo::GeometryCore const* fGeometryService;                 ///< pointer to Geometry provider
     detinfo::DetectorProperties const* fDetectorProperties;    ///< pointer to detector properties provider
     detinfo::DetectorClocks const* fDetectorClocks;            ///< pointer to detector clocks provider
+    GeoAlg const* fGeo;
     CRTTruthRecoAlg truthAlg;
     FiducialVolumeCosmicTagAlg fvTag;
     StoppingParticleCosmicTagAlg spTag;
@@ -363,7 +364,6 @@ namespace sbnd {
     , ctTag                 (config().CTTagAlg())
     , fMcsFitter            (config().fitter)
   {
-    fGeometryService    = lar::providerFrom<geo::Geometry>();
     fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>(); 
     fDetectorClocks = lar::providerFrom<detinfo::DetectorClocksService>(); 
 
@@ -1062,12 +1062,12 @@ namespace sbnd {
     // Create a canvas 
     TCanvas *c1 = new TCanvas("c2","",700,700);
     
-    double xmin = -200; //-2.0 * fGeometryService->DetHalfWidth();
-    double xmax = 200; //2.0 * fGeometryService->DetHalfWidth();
-    double ymin = -fGeometryService->DetHalfHeight();
-    double ymax = fGeometryService->DetHalfHeight();
-    double zmin = 0.;
-    double zmax = fGeometryService->DetLength();
+    double xmin = fGeo->MinX();
+    double xmax = fGeo->MaxX();
+    double ymin = fGeo->MinY();
+    double ymax = fGeo->MaxY();
+    double zmin = fGeo->MinZ();
+    double zmax = fGeo->MaxZ();
     double rmin[3] = {xmin, ymin, zmin};
     double rmax[3] = {0, ymax, zmax};
     truthAlg.DrawCube(c1, rmin, rmax, 1);

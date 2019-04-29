@@ -7,7 +7,6 @@ CRTTrackRecoAlg::CRTTrackRecoAlg(const Config& config)
 
   this->reconfigure(config);
   
-  fGeometryService = lar::providerFrom<geo::Geometry>();
   fAuxDetGeo = &(*fAuxDetGeoService);
   fAuxDetGeoCore = fAuxDetGeo->GetProviderPtr();
 
@@ -19,7 +18,6 @@ CRTTrackRecoAlg::CRTTrackRecoAlg(double aveHitDist, double distLim)
   fAverageHitDistance = aveHitDist;
   fDistanceLimit = distLim;
 
-  fGeometryService = lar::providerFrom<geo::Geometry>();
   fAuxDetGeo = &(*fAuxDetGeoService);
   fAuxDetGeoCore = fAuxDetGeo->GetProviderPtr();
 

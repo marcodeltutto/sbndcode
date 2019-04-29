@@ -35,7 +35,7 @@
 #include "sbndcode/CRT/CRTUtils/CRTTrackRecoAlg.h"
 #include "sbndcode/CRT/CRTUtils/CRTT0MatchAlg.h"
 #include "sbndcode/CRT/CRTUtils/CRTTrackMatchAlg.h"
-
+#include "sbndcode/CRT/CRTUtils/GeoAlg.h"
 
 // c++
 #include <iostream>

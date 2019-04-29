@@ -1,8 +1,10 @@
+#include "cosmicidconfigs_sbnd.fcl"
+
 BEGIN_PROLOG
 
 standard_stoppingparticlecosmictagalg:
 {
-    Fiducial:           10.0  # Fiducial volume cut to determine if track exits [cm]
+    ContainmentCuts:    @local::sbnd_containmentvolume  # Fiducial volume cut to determine if track exits [cm]
     ResRangeMin:        10.0  # Minimum residual range for fit [cm]
     ResRangeMax:        20.0  # Maximum residual range for fit [cm]
     DEdxMax:            30.0  # Maximum dE/dx for fit [MeV/cm]

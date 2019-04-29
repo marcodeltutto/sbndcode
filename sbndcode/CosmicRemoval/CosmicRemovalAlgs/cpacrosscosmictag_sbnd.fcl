@@ -1,3 +1,5 @@
+#include "cosmicidconfigs_sbnd.fcl"
+
 BEGIN_PROLOG
 
 standard_cpacrosscosmictagalg:
@@ -5,9 +7,8 @@ standard_cpacrosscosmictagalg:
     CpaStitchDistance:  50. # Max distance between tracks to stitch across CPA [cm]
     CpaStitchAngle:     30. # Max angle between tracks to stitch across CPA [deg]
     CpaXDifference:     10. # Max difference in |X| between ends of track nearest CPA [cm]
-    Fiducial:           10.0  # Fiducial volume cut from all sides and bottom [cm]
-    FiducialTop:        10.0  # Fiducial volume cut from top [cm]
-    BeamTimeLimit:      4. # Limit from t = 0 to remove non-beam tracks [us]
+    FiducialCuts:       @local::sbnd_fiducialvolume
+    BeamTimeLimits:     @local::sbnd_beamtime
 }
 
 END_PROLOG

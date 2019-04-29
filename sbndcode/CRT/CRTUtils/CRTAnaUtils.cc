@@ -258,7 +258,7 @@ double CRTAnaUtils::T0FromCRTTracks(recob::Track tpcTrack, std::vector<sbnd::crt
 
 std::vector<double> CRTAnaUtils::ApaT0sFromCRTHits(std::vector<art::Ptr<crt::CRTHit>> crtHits, double fTimeLimit){
 
-  geo::GeometryCore const* fGeometryService = lar::providerFrom<geo::Geometry>();
+  GeoAlg fGeo;
 
   std::vector<std::vector<art::Ptr<crt::CRTHit>>> crtT0Ptr = CreateCRTTzeros(crtHits, fTimeLimit);
   std::vector<double> stopT0;
@@ -271,9 +271,9 @@ std::vector<double> CRTAnaUtils::ApaT0sFromCRTHits(std::vector<art::Ptr<crt::CRT
 
       if(crtT0Ptr[i][j]->tagger == "volTaggerBot_0") continue;
 
-      if(crtT0Ptr[i][j]->y_pos < -fGeometryService->DetHalfHeight()) continue;
+      if(crtT0Ptr[i][j]->y_pos < fGeo.MinY()) continue;
 
-      if(std::abs(crtT0Ptr[i][j]->x_pos) < 2.*fGeometryService->DetHalfWidth()) continue;
+      if(std::abs(crtT0Ptr[i][j]->x_pos) < fGeo.MaxX()) continue;
 
       t0 += (double)(int)crtT0Ptr[i][0]->ts1_ns*1e-3; //FIXME
       npts++;

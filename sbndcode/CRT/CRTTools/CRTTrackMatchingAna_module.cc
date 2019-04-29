@@ -11,6 +11,7 @@
 #include "sbndcode/CRT/CRTProducts/CRTTrack.hh"
 #include "sbndcode/CRT/CRTUtils/CRTTrackMatchAlg.h"
 #include "sbndcode/CRT/CRTUtils/CRTTruthRecoAlg.h"
+#include "sbndcode/CRT/CRTUtils/GeoAlg.h"
 
 // LArSoft includes
 #include "lardataobj/RecoBase/Hit.h"
@@ -185,9 +186,9 @@ namespace sbnd {
     TH1D* fDCARecoTrue;
 
     // Other variables shared between different methods.
-    geo::GeometryCore const* fGeometryService;                 ///< pointer to Geometry provider
     detinfo::DetectorProperties const* fDetectorProperties;    ///< pointer to detector properties provider
     detinfo::DetectorClocks const* fDetectorClocks;            ///< pointer to detector clocks provider
+    GeoAlg const* fGeo;
 
     CRTTrackMatchAlg trackAlg;
     CRTTruthRecoAlg truthAlg;
@@ -219,7 +220,6 @@ namespace sbnd {
   {
 
     // Get a pointer to the geometry service provider
-    fGeometryService    = lar::providerFrom<geo::Geometry>();
     fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>(); 
     fDetectorClocks     = lar::providerFrom<detinfo::DetectorClocksService>(); 
 
@@ -646,12 +646,12 @@ namespace sbnd {
       truthAlg.DrawCube(c1, rmin, rmax, 1);
     }
 
-    double xmin = -2.0 * fGeometryService->DetHalfWidth();
-    double xmax = 2.0 * fGeometryService->DetHalfWidth();
-    double ymin = -fGeometryService->DetHalfHeight();
-    double ymax = fGeometryService->DetHalfHeight();
-    double zmin = 0.;
-    double zmax = fGeometryService->DetLength();
+    double xmin = fGeo->MinX(); 
+    double xmax = fGeo->MaxX();
+    double ymin = fGeo->MinY();
+    double ymax = fGeo->MaxY();
+    double zmin = fGeo->MinZ();
+    double zmax = fGeo->MaxZ();
     double rmin[3] = {xmin, ymin, zmin};
     double rmax[3] = {0, ymax, zmax};
     truthAlg.DrawCube(c1, rmin, rmax, 1);
@@ -833,12 +833,12 @@ namespace sbnd {
 
     double denominator = (end - start).Mag();
 
-    double xmin = -2.0 * fGeometryService->DetHalfWidth();
-    double xmax = 2.0 * fGeometryService->DetHalfWidth();
-    double ymin = -fGeometryService->DetHalfHeight();
-    double ymax = fGeometryService->DetHalfHeight();
-    double zmin = 0.;
-    double zmax = fGeometryService->DetLength();
+    double xmin = fGeo->MinX(); 
+    double xmax = fGeo->MaxX();
+    double ymin = fGeo->MinY();
+    double ymax = fGeo->MaxY();
+    double zmin = fGeo->MinZ();
+    double zmax = fGeo->MaxZ();
 
     // Get the trajectory of the true particle
     size_t npts = particle.NumberTrajectoryPoints();

@@ -6,7 +6,6 @@ CRTT0MatchAlg::CRTT0MatchAlg(const Config& config){
 
   this->reconfigure(config);
   
-  fGeometryService = lar::providerFrom<geo::Geometry>();
   fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>(); 
 
 }
@@ -14,7 +13,6 @@ CRTT0MatchAlg::CRTT0MatchAlg(const Config& config){
 
 CRTT0MatchAlg::CRTT0MatchAlg(){
 
-  fGeometryService = lar::providerFrom<geo::Geometry>();
   fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>(); 
 
 }
@@ -52,7 +50,7 @@ std::pair<double, double> CRTT0MatchAlg::TrackT0Range(double startX, double endX
     // Highest |X| is closest to APA
     double highX = std::min(startX, endX);
     // xmax is shift from closest to APA
-    double xmin = -(2.0*fGeometryService->DetHalfWidth()+3.) - highX;
+    double xmin = fGeo->MinX() - highX;
     double t0max = -(xmin/Vd);
     double t0min = -(xmax/Vd);
     result = std::make_pair(t0min, t0max);
@@ -66,7 +64,7 @@ std::pair<double, double> CRTT0MatchAlg::TrackT0Range(double startX, double endX
     // Highest |X| is closest to APA
     double highX = std::max(startX, endX);
     // xmax is shift from closest to APA
-    double xmax = (2.0*fGeometryService->DetHalfWidth()+3.) - highX;
+    double xmax = fGeo->MaxX() - highX;
     double t0min = xmin/Vd; 
     double t0max = xmax/Vd; 
     result = std::make_pair(t0min, t0max);

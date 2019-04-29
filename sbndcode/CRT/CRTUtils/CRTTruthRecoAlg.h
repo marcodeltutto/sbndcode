@@ -41,6 +41,7 @@
 #include "cetlib/pow.h" // cet::sum_of_squares()
 
 #include "sbndcode/CRT/CRTProducts/CRTHit.hh"
+#include "sbndcode/CRT/CRTUtils/GeoAlg.h"
 
 // c++
 #include <iostream>
@@ -97,11 +98,12 @@ namespace sbnd{
 
   private:
 
-    geo::GeometryCore const* fGeometryService;
     detinfo::DetectorProperties const* fDetectorProperties;
     art::ServiceHandle<geo::AuxDetGeometry> fAuxDetGeoService;
     const geo::AuxDetGeometry* fAuxDetGeo;
     const geo::AuxDetGeometryCore* fAuxDetGeoCore;
+
+    GeoAlg const* fGeo;
 
     // Positions of the CRT planes
     std::vector<double> crtPlanes = {-359.1, -357.3, 357.3, 359.1, -358.9, -357.1, 661.52, 663.32, 865.52, 867.32, -240.65, -238.85, 655.35, 657.15};

@@ -5,7 +5,7 @@
 ///////////////////////////////////////////////
 // PandoraT0CosmicTagAlg.h
 //
-// Functions for fiducial volume cosmic tagger
+// Functions for pandora t0 cosmic tagger
 // T Brooks (tbrooks@fnal.gov), November 2018
 ///////////////////////////////////////////////
 
@@ -46,6 +46,22 @@ namespace sbnd{
   class PandoraT0CosmicTagAlg {
   public:
 
+    struct BeamTime {
+      using Name = fhicl::Name;
+      using Comment = fhicl::Comment;
+
+      fhicl::Atom<double> BeamTimeMin {
+        Name("BeamTimeMin"),
+        Comment("")
+      };
+
+      fhicl::Atom<double> BeamTimeMax {
+        Name("BeamTimeMax"),
+        Comment("")
+      };
+
+    };
+
     struct Config {
       using Name = fhicl::Name;
       using Comment = fhicl::Comment;
@@ -60,8 +76,8 @@ namespace sbnd{
         Comment("")
       };
 
-      fhicl::Atom<double> BeamTimeLimit {
-        Name("BeamTimeLimit"),
+      fhicl::Table<BeamTime> BeamTimeLimits {
+        Name("BeamTimeLimits"),
         Comment("")
       };
 
@@ -78,15 +94,18 @@ namespace sbnd{
 
     void reconfigure(const Config& config);
 
+    // Finds any t0s associated with track by pandora, tags if outside beam
     bool PandoraT0CosmicTag(recob::Track track, const art::Event& event);
 
+    // Finds any t0s associated with pfparticle by pandora, tags if outside beam
     bool PandoraT0CosmicTag(recob::PFParticle pfparticle, std::map< size_t, art::Ptr<recob::PFParticle> > pfParticleMap, const art::Event& event);
 
   private:
 
     art::InputTag fPandoraLabel;
     art::InputTag fTpcTrackModuleLabel;
-    double fBeamTimeLimit;
+    double fBeamTimeMin;
+    double fBeamTimeMax;
 
   };
 

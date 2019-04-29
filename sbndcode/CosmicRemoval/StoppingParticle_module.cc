@@ -21,10 +21,6 @@
 #include "lardataobj/RecoBase/Track.h"
 #include "lardataobj/AnalysisBase/Calorimetry.h"
 #include "lardataobj/AnalysisBase/ParticleID.h"
-#include "lardata/DetectorInfoServices/DetectorPropertiesService.h"
-#include "lardata/DetectorInfoServices/DetectorClocksService.h"
-#include "larcore/Geometry/Geometry.h"
-#include "larcorealg/Geometry/GeometryCore.h"
 #include "larcoreobj/SimpleTypesAndConstants/geo_types.h"
 #include "nusimdata/SimulationBase/MCParticle.h"
 #include "nusimdata/SimulationBase/MCTruth.h"
@@ -164,10 +160,6 @@ namespace sbnd {
     //2d hist of slope and chi2
 
     // Other variables shared between different methods.
-    geo::GeometryCore const* fGeometryService;                 ///< pointer to Geometry provider
-    detinfo::DetectorProperties const* fDetectorProperties;    ///< pointer to detector properties provider
-    detinfo::DetectorClocks const* fDetectorClocks;            ///< pointer to detector clocks provider
-
     CRTTruthRecoAlg truthAlg;
     CRTTrackMatchAlg trackAlg;
 
@@ -201,10 +193,6 @@ namespace sbnd {
     , fTrackID              (config().TrackID())
   {
 
-    // Get a pointer to the geometry service provider
-    fGeometryService    = lar::providerFrom<geo::Geometry>();
-    fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>(); 
-    fDetectorClocks     = lar::providerFrom<detinfo::DetectorClocksService>(); 
 
   } // StoppingParticle()
 

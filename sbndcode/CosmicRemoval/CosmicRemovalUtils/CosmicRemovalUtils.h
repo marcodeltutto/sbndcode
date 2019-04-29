@@ -34,6 +34,7 @@
 
 #include "sbndcode/CRT/CRTProducts/CRTHit.hh"
 #include "sbndcode/CRT/CRTProducts/CRTTrack.hh"
+#include "sbndcode/CRT/CRTUtils/GeoAlg.h"
 
 // c++
 #include <iostream>
@@ -55,15 +56,13 @@
 namespace sbnd{
 namespace CosmicRemovalUtils{
 
+  bool InFiducial(geo::Point_t point, double fiducial);
+
   bool InFiducial(geo::Point_t point, double fiducial, double fiducialTop);
 
+  bool InFiducial(geo::Point_t point, double minXCut, double minYCut, double minZCut, double maxXCut, double maxYCut, double maxZCut);
+
   int DetectedInTPC(std::vector<art::Ptr<recob::Hit>> hits);
-
-  std::pair<double, bool> T0FromCpaStitching(recob::Track track, std::vector<recob::Track> tracks, double stitchDist, double stitchAngle, double xDiff, double fiducial, double fiducialTop);
-
-  double T0FromApaCross(recob::Track track, std::vector<double> t0s, int tpc, double fiducial, double distLimit);
-
-  double StoppingEnd(std::vector<art::Ptr<anab::Calorimetry>> calo, geo::Point_t end, double rangeMin, double rangeMax, double dedxMax, double chi2Lim);
 
   std::pair<std::vector<double>, std::vector<double>> FakeTpcFlashes(std::vector<simb::MCParticle> particles);
 

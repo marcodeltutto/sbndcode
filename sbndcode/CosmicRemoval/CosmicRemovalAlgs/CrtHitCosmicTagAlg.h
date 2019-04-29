@@ -5,7 +5,7 @@
 ///////////////////////////////////////////////
 // CrtHitCosmicTagAlg.h
 //
-// Functions for fiducial volume cosmic tagger
+// Functions for CRTHit match cosmic tagger
 // T Brooks (tbrooks@fnal.gov), November 2018
 ///////////////////////////////////////////////
 
@@ -44,6 +44,22 @@ namespace sbnd{
 
   class CrtHitCosmicTagAlg {
   public:
+  
+    struct BeamTime {
+      using Name = fhicl::Name;
+      using Comment = fhicl::Comment;
+
+      fhicl::Atom<double> BeamTimeMin {
+        Name("BeamTimeMin"),
+        Comment("Minimum t0 tagged time cut")
+      };
+
+      fhicl::Atom<double> BeamTimeMax {
+        Name("BeamTimeMax"),
+        Comment("Maximum t0 tagged time cut")
+      };
+
+    };
 
     struct Config {
       using Name = fhicl::Name;
@@ -51,12 +67,12 @@ namespace sbnd{
 
       fhicl::Table<CRTT0MatchAlg::Config> T0Alg {
         Name("T0Alg"),
-        Comment("")
+        Comment("Configuration for CRTHit matching")
       };
 
-      fhicl::Atom<double> BeamTimeLimit {
-        Name("BeamTimeLimit"),
-        Comment("")
+      fhicl::Table<BeamTime> BeamTimeLimits {
+        Name("BeamTimeLimits"),
+        Comment("Configuration for t0 cut limits")
       };
 
     };
@@ -72,12 +88,14 @@ namespace sbnd{
 
     void reconfigure(const Config& config);
 
+    // Returns true if matched to CRTHit outside beam time
     bool CrtHitCosmicTag(recob::Track track, std::vector<crt::CRTHit> crtHits, int tpc);
 
   private:
 
     CRTT0MatchAlg t0Alg;
-    double fBeamTimeLimit;
+    double fBeamTimeMin;
+    double fBeamTimeMax;
 
   };
 

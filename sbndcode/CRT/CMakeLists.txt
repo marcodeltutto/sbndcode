@@ -258,7 +258,6 @@ simple_plugin(CRTFullRecoAna module
         sbndcode_CRTProducts
         sbndcode_RecoUtils
         sbndcode_CRTUtils
-        sbndcode_CosmicRemovalUtils
         ${ART_FRAMEWORK_CORE}
         ${ART_FRAMEWORK_IO_SOURCES}
         ${ART_FRAMEWORK_PRINCIPAL}

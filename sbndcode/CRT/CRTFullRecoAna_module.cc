@@ -21,7 +21,6 @@
 #include "sbndcode/CRT/CRTUtils/GeoAlg.h"
 #include "sbndcode/CRT/CRTUtils/CRTT0MatchAlg.h"
 #include "sbndcode/CRT/CRTUtils/CRTTrackMatchAlg.h"
-#include "sbndcode/CosmicRemoval/CosmicRemovalUtils/CosmicRemovalUtils.h"
 
 // LArSoft includes
 #include "lardataobj/Simulation/SimChannel.h"
@@ -347,7 +346,7 @@ namespace sbnd {
         geo::Point_t vtx;
         vtx.SetX(mcNu.Nu().Vx()); vtx.SetY(mcNu.Nu().Vy()); vtx.SetZ(mcNu.Nu().Vz());
 
-        if(CosmicRemovalUtils::InFiducial(vtx, 0, 0) && std::abs(pdg) == 13 && particle.Mother() == 0){
+        if(tpcGeo.InFiducial(vtx, 0, 0) && std::abs(pdg) == 13 && particle.Mother() == 0){
           lepParticleIds.push_back(partID);
         }
       }
@@ -430,7 +429,7 @@ namespace sbnd {
       truthMatching[partID].hasTpcTrack = true;
 
       // Calculate t0 from CRT Hit matching
-      int tpc = CosmicRemovalUtils::DetectedInTPC(hits);
+      int tpc = tpcGeo.DetectedInTPC(hits);
       double hitT0 = crtT0Alg.T0FromCRTHits(tpcTrack, crtHits, tpc);
       if(hitT0 != -99999) truthMatching[partID].hitT0s.push_back(hitT0);
 

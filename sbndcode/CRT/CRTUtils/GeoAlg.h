@@ -25,6 +25,7 @@
 #include "larcore/Geometry/Geometry.h"
 #include "larcorealg/Geometry/GeometryCore.h"
 #include "nusimdata/SimulationBase/MCParticle.h"
+#include "lardataobj/RecoBase/Hit.h"
 
 // c++
 #include <vector>
@@ -46,6 +47,12 @@ namespace sbnd{
     double MaxY() const;
     double MaxZ() const;
     double CpaWidth() const;
+
+    bool InFiducial(geo::Point_t point, double fiducial);
+    bool InFiducial(geo::Point_t point, double fiducial, double fiducialTop);
+    bool InFiducial(geo::Point_t point, double minXCut, double minYCut, double minZCut, double maxXCut, double maxYCut, double maxZCut);
+
+    int DetectedInTPC(std::vector<art::Ptr<recob::Hit>> hits);
 
     bool EntersVolume(simb::MCParticle particle);
     bool CrossesVolume(simb::MCParticle particle);

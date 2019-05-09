@@ -65,6 +65,41 @@ double GeoAlg::CpaWidth() const{
   return fCpaWidth;
 }
 
+bool GeoAlg::InFiducial(geo::Point_t point, double fiducial){
+  return InFiducial(point, fiducial, fiducial);
+}
+
+bool GeoAlg::InFiducial(geo::Point_t point, double fiducial, double fiducialTop){
+  return InFiducial(point, fiducial, fiducial, fiducial, fiducial, fiducialTop, fiducial);
+}
+
+bool GeoAlg::InFiducial(geo::Point_t point, double minXCut, double minYCut, double minZCut, double maxXCut, double maxYCut, double maxZCut){
+  
+  double xmin = fMinX + minXCut;
+  double xmax = fMaxX - maxXCut;
+  double ymin = fMinY + minYCut;
+  double ymax = fMaxY - maxYCut;
+  double zmin = fMinZ + minZCut;
+  double zmax = fMaxZ - maxZCut;
+
+  double x = point.X();
+  double y = point.Y();
+  double z = point.Z();
+  if(x>xmin && x<xmax && y>ymin && y<ymax && z>zmin && z<zmax) return true;
+
+  return false;
+}
+
+int GeoAlg::DetectedInTPC(std::vector<art::Ptr<recob::Hit>> hits){
+  // Return tpc of hit collection or -1 if in multiple
+  int tpc = hits[0]->WireID().TPC;
+  for(size_t i = 0; i < hits.size(); i++){
+    if((int)hits[i]->WireID().TPC != tpc) return -1;
+  }
+  return tpc;
+}
+
+
 bool GeoAlg::EntersVolume(simb::MCParticle particle){
   for(size_t i = 0; i < particle.NumberTrajectoryPoints(); i++){
     double x = particle.Vx(i); 

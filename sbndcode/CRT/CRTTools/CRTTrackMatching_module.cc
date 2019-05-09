@@ -11,7 +11,7 @@
 // sbndcode includes
 #include "sbndcode/CRT/CRTProducts/CRTTrack.hh"
 #include "sbndcode/CRT/CRTUtils/CRTTrackMatchAlg.h"
-#include "sbndcode/CosmicRemoval/CosmicRemovalUtils/CosmicRemovalUtils.h"
+#include "sbndcode/CRT/CRTUtils/GeoAlg.h"
 
 // Framework includes
 #include "art/Framework/Core/EDProducer.h"
@@ -90,6 +90,7 @@ namespace sbnd {
     art::InputTag fCrtTrackModuleLabel; ///< name of crt producer
 
     CRTTrackMatchAlg trackAlg;
+    GeoAlg fGeo;
 
   }; // class CRTTrackMatching
 
@@ -163,7 +164,7 @@ namespace sbnd {
       for (size_t tpc_i = 0; tpc_i < tpcTrackList.size(); tpc_i++){
 
         std::vector<art::Ptr<recob::Hit>> hits = findManyHits.at(tpcTrackList[tpc_i]->ID());
-        int tpc = CosmicRemovalUtils::DetectedInTPC(hits);
+        int tpc = fGeo.DetectedInTPC(hits);
 
         int matchedID = trackAlg.GetMatchedCRTTrackId(*tpcTrackList[tpc_i], crtTracks, tpc);
         

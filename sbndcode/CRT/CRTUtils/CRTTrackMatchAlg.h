@@ -85,6 +85,11 @@ namespace sbnd{
         Comment("")
       };
 
+      fhicl::Atom<bool> StitchAcrossCPA {
+        Name("StitchAcrossCPA"),
+        Comment("")
+      };
+
     };
 
     CRTTrackMatchAlg(const Config& config);
@@ -124,6 +129,7 @@ namespace sbnd{
 
     double fMaxAngleDiff;
     double fMaxDistance;
+    bool fStitchAcrossCPA;
 
   };
 

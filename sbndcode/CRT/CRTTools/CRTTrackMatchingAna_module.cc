@@ -12,6 +12,7 @@
 #include "sbndcode/CRT/CRTUtils/CRTTrackMatchAlg.h"
 #include "sbndcode/CRT/CRTUtils/CRTTruthRecoAlg.h"
 #include "sbndcode/CRT/CRTUtils/GeoAlg.h"
+#include "sbndcode/CosmicRemoval/CosmicRemovalUtils/CosmicRemovalUtils.h"
 
 // LArSoft includes
 #include "lardataobj/RecoBase/Hit.h"
@@ -311,7 +312,7 @@ namespace sbnd {
 
       // Get the associated hits
       std::vector<art::Ptr<recob::Hit>> hits = findManyHits.at(tpcTrack.ID());
-      int tpc = hits[0]->WireID().TPC;
+      int tpc = CosmicRemovalUtils::DetectedInTPC(hits);
       trackMatch.tpc = tpc;
 
       // Find the true particle ID and check it exists

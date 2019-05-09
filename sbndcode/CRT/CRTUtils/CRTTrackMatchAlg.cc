@@ -29,6 +29,7 @@ void CRTTrackMatchAlg::reconfigure(const Config& config){
 
   fMaxAngleDiff = config.MaxAngleDiff();
   fMaxDistance = config.MaxDistance();
+  fStitchAcrossCPA = config.StitchAcrossCPA();
 
   return;
 
@@ -71,6 +72,12 @@ std::vector<RecoCRTTrack> CRTTrackMatchAlg::CrtToRecoTrack(crt::CRTTrack track, 
 
     // Track in TPC 1
     std::vector<RecoCRTTrack> tempTracks = CreateRecoCRTTrack(crtStart, crtEnd, xShift, 1, 
+                                                              id, crtTime, track.complete);
+    recoCrtTracks.insert(recoCrtTracks.end(), tempTracks.begin(), tempTracks.end());
+  }
+  else if(fStitchAcrossCPA){
+    // Track in both TPCs and will be stitched
+    std::vector<RecoCRTTrack> tempTracks = CreateRecoCRTTrack(crtStart, crtEnd, 0, -1, 
                                                               id, crtTime, track.complete);
     recoCrtTracks.insert(recoCrtTracks.end(), tempTracks.begin(), tempTracks.end());
   }

@@ -11,6 +11,7 @@
 // sbndcode includes
 #include "sbndcode/CRT/CRTProducts/CRTTrack.hh"
 #include "sbndcode/CRT/CRTUtils/CRTTrackMatchAlg.h"
+#include "sbndcode/CosmicRemoval/CosmicRemovalUtils/CosmicRemovalUtils.h"
 
 // Framework includes
 #include "art/Framework/Core/EDProducer.h"
@@ -162,7 +163,7 @@ namespace sbnd {
       for (size_t tpc_i = 0; tpc_i < tpcTrackList.size(); tpc_i++){
 
         std::vector<art::Ptr<recob::Hit>> hits = findManyHits.at(tpcTrackList[tpc_i]->ID());
-        int tpc = hits[0]->WireID().TPC;
+        int tpc = CosmicRemovalUtils::DetectedInTPC(hits);
 
         int matchedID = trackAlg.GetMatchedCRTTrackId(*tpcTrackList[tpc_i], crtTracks, tpc);
         

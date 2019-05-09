@@ -35,6 +35,7 @@ art_make(
                            sbndcode_CRT
                            sbndcode_CRTProducts
                            sbndcode_CRTUtils
+                           sbndcode_CosmicRemovalUtils
         )
 
 install_headers()

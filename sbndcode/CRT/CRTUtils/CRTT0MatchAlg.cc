@@ -45,7 +45,7 @@ std::pair<double, double> CRTT0MatchAlg::TrackT0Range(double startX, double endX
   if(tpc == 0){
     // Lowest |X| is furthest from APA
     double lowX = std::max(startX, endX);
-    // xmin is shift from furthest to 0 (the CPA)
+    // xmin is shift from furthest to 0 (the CPA) //FIXME CPA width
     double xmax = 0 - lowX;
     // Highest |X| is closest to APA
     double highX = std::min(startX, endX);

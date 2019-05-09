@@ -253,7 +253,7 @@ namespace sbnd {
 
     detinfo::DetectorProperties const* fDetectorProperties;    ///< pointer to detector properties provider
     detinfo::DetectorClocks const* fDetectorClocks;            ///< pointer to detector clocks provider
-    GeoAlg const* fGeo;
+    GeoAlg fGeo;
     CRTTruthRecoAlg truthAlg;
     FiducialVolumeCosmicTagAlg fvTag;
     StoppingParticleCosmicTagAlg spTag;
@@ -1062,12 +1062,12 @@ namespace sbnd {
     // Create a canvas 
     TCanvas *c1 = new TCanvas("c2","",700,700);
     
-    double xmin = fGeo->MinX();
-    double xmax = fGeo->MaxX();
-    double ymin = fGeo->MinY();
-    double ymax = fGeo->MaxY();
-    double zmin = fGeo->MinZ();
-    double zmax = fGeo->MaxZ();
+    double xmin = fGeo.MinX();
+    double xmax = fGeo.MaxX();
+    double ymin = fGeo.MinY();
+    double ymax = fGeo.MaxY();
+    double zmin = fGeo.MinZ();
+    double zmax = fGeo.MaxZ();
     double rmin[3] = {xmin, ymin, zmin};
     double rmax[3] = {0, ymax, zmax};
     truthAlg.DrawCube(c1, rmin, rmax, 1);

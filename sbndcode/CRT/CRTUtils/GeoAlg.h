@@ -24,6 +24,7 @@
 // LArSoft
 #include "larcore/Geometry/Geometry.h"
 #include "larcorealg/Geometry/GeometryCore.h"
+#include "nusimdata/SimulationBase/MCParticle.h"
 
 // c++
 #include <vector>
@@ -45,6 +46,9 @@ namespace sbnd{
     double MaxY() const;
     double MaxZ() const;
     double CpaWidth() const;
+
+    bool EntersVolume(simb::MCParticle particle);
+    bool CrossesVolume(simb::MCParticle particle);
 
   private:
 

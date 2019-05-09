@@ -109,7 +109,7 @@ namespace sbnd{
   private:
 
     detinfo::DetectorProperties const* fDetectorProperties;
-    GeoAlg const* fGeo;
+    GeoAlg fGeo;
 
     double fMinTrackLength;
     double fTrackDirectionFrac;

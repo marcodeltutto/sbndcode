@@ -1,16 +1,19 @@
-# A script to run an analysis module: NuMuSelection
+# A script to run an analysis module: CRTFullRecoAna
 
 #include "simulationservices_sbnd.fcl"
 #include "messages_sbnd.fcl"
 #include "backtrackerservice.fcl"
 #include "particleinventoryservice.fcl"
+#include "crtsimhitproducer_sbnd.fcl"
+#include "crtt0matchingalg_sbnd.fcl"
+#include "crttrackmatchingalg_sbnd.fcl"
 
-process_name: NuMuSelection
+process_name: CRTFullRecoAna
 
 services:
 {
   # Load the service that manages root files for histograms.
-  TFileService:           { fileName: "numuselection.root" }
+  TFileService:           { fileName: "crtfullrecoana.root" }
   ParticleInventoryService: @local::standard_particleinventoryservice
   BackTrackerService: @local::standard_backtrackerservice
 
@@ -46,47 +49,26 @@ physics:
   analyzers:
   {
     # This name defines a job step below, and will appear as a directory  in the output histogram file. 
-    NuMuSelection: 
+    CRTFullRecoAna: 
     {
       # The "module_type" tells us which module to run. The name here
       # must match the name supplied to DEFINE_ART_MODULE
-      module_type:     "sbndcode/CosmicRemoval/NuMuSelection"
+      module_type:     "sbndcode/CRT/CRTFullRecoAna"
 
       # The input parameters
-      SimModuleLabel:      "largeant"        # Simulation producer module label
-      CrtHitModuleLabel:   "crthit"          # CRT hit producer module label
-      TpcTrackModuleLabel: "pmalgtrackmaker" # TPC track producer module label
-      CaloModuleLabel:     "pmatrackcalo" # TPC track producer module label
-      Verbose:             false             # Print extra information about what's going on
-      # Fiducial volume cuts
-      Fiducial:            10.
-      FiducialTop:         10.
-      FiducialStop:        5.
-      # CPA stitching
-      CpaStitchDistance:   50.
-      CpaStitchAngle:      25.
-      CpaXDifference:      10.
-      # APA time matching
-      ApaDistance:         2.
-      # Stopping particle finder
-      ResRgMin:            10.
-      ResRgMax:            20.
-      DEdxMax:             30.
-      StoppingChi2Limit:   1.2
-      # CRT hit matching
-      MinTrackLength:      20.
-      TrackDirectionFrac:  0.5
-      DistanceLimit:       15.
-      # CRT track matching
-      MaxAngleDiff:        0.2
-      MaxDistance:         80.
-      # Beam time cut around t=0
-      BeamTimeLimit:       20.
+      SimModuleLabel:       "largeant"  # Simulation producer module label
+      CRTSimLabel:          "crt"       # CRT producer module label
+      CRTHitLabel:          "crthit"       # CRT producer module label
+      CRTTrackLabel:        "crttrack"       # CRT producer module label
+      TPCTrackLabel:        "pandoraTrack"       # CRT producer module label
+      Verbose:              false        # Print extra information about what's going on
+      CRTT0Alg:             @local::standard_crtt0matchingalg
+      CRTTrackAlg:          @local::standard_crttrackmatchingalg
     }
   }
 
   # Schedule job step(s) for execution by defining the analysis module for this job.
-  analysis: [ NuMuSelection ]
+  analysis: [ CRTFullRecoAna ]
 
   # "end_paths" is a keyword and contains the modules that do not modify the art::Event;
   # i.e., analyzers and output streams.

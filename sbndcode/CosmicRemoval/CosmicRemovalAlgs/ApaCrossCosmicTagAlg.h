@@ -109,7 +109,7 @@ namespace sbnd{
     double fBeamTimeMax;
 
     detinfo::DetectorProperties const* fDetectorProperties;
-    GeoAlg const* fGeo;
+    GeoAlg fGeo;
 
   };
 

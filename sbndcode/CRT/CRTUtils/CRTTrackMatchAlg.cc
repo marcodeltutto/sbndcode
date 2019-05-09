@@ -115,12 +115,12 @@ std::vector<RecoCRTTrack> CRTTrackMatchAlg::CreateRecoCRTTrack(TVector3 start, T
   std::vector<RecoCRTTrack> recoCrtTracks;
 
   // Get the true entry and exit points in the TPC
-  double xmin = fGeo->MinX();
-  double xmax = fGeo->MaxX();
-  double ymin = fGeo->MinY();
-  double ymax = fGeo->MaxY();
-  double zmin = fGeo->MinZ();
-  double zmax = fGeo->MaxZ();
+  double xmin = fGeo.MinX();
+  double xmax = fGeo.MaxX();
+  double ymin = fGeo.MinY();
+  double ymax = fGeo.MaxY();
+  double zmin = fGeo.MinZ();
+  double zmax = fGeo.MaxZ();
 
   // Get track info
   TVector3 diff = end - start;
@@ -161,7 +161,7 @@ std::vector<RecoCRTTrack> CRTTrackMatchAlg::CreateRecoCRTTrack(TVector3 start, T
   }
   
   double readoutWindowMuS  = fDetectorClocks->TPCTick2Time((double)fDetectorProperties->ReadOutWindowSize()); // [us]
-  double driftTimeMuS = fGeo->MaxX()/fDetectorProperties->DriftVelocity(); // [us]
+  double driftTimeMuS = fGeo.MaxX()/fDetectorProperties->DriftVelocity(); // [us]
   double deltaX = (readoutWindowMuS - driftTimeMuS) * fDetectorProperties->DriftVelocity(); // [cm]
 
   if(tpc == 0) xmax = deltaX;
@@ -201,12 +201,12 @@ bool CRTTrackMatchAlg::CrossesTPC(crt::CRTTrack track){
 
   // Check if particle enters the TPC
   bool enters = false;
-  double xmin = fGeo->MinX();
-  double xmax = fGeo->MaxX();
-  double ymin = fGeo->MinY();
-  double ymax = fGeo->MaxY();
-  double zmin = fGeo->MinZ();
-  double zmax = fGeo->MaxZ();
+  double xmin = fGeo.MinX();
+  double xmax = fGeo.MaxX();
+  double ymin = fGeo.MinY();
+  double ymax = fGeo.MaxY();
+  double zmin = fGeo.MinZ();
+  double zmax = fGeo.MaxZ();
 
   if(track.complete){
     // Get track info
@@ -252,10 +252,10 @@ bool CRTTrackMatchAlg::CrossesAPA(crt::CRTTrack track){
 
   // Check if particle enters the TPC
   bool crosses = false;
-  double xmax = fGeo->MaxX();
-  double ymax = fGeo->MaxY();
-  double zmin = fGeo->MinZ();
-  double zmax = fGeo->MaxZ();
+  double xmax = fGeo.MaxX();
+  double ymax = fGeo.MaxY();
+  double zmin = fGeo.MinZ();
+  double zmax = fGeo.MaxZ();
 
   if(track.complete){
     // Get track info

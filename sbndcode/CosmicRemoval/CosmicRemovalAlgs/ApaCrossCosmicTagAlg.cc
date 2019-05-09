@@ -36,7 +36,7 @@ void ApaCrossCosmicTagAlg::reconfigure(const Config& config){
 double ApaCrossCosmicTagAlg::T0FromApaCross(recob::Track track, std::vector<double> t0List, int tpc){
 
   double crossTime = -99999;
-  double xmax = fGeo->MaxX();
+  double xmax = fGeo.MaxX();
 
   double minDist = 99999;
   double startX = track.Vertex().X();

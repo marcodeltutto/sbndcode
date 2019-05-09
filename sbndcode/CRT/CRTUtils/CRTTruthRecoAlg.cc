@@ -194,12 +194,12 @@ void CRTTruthRecoAlg::DrawCube(TCanvas *c1, double *rmin, double *rmax, int col)
 // Function to calculate the CRT crossing points of a true particle
 std::pair<TVector3, TVector3> CRTTruthRecoAlg::TpcCrossPoints(simb::MCParticle const& particle){
 
-  double xmin = fGeo->MinX();
-  double xmax = fGeo->MaxX();
-  double ymin = fGeo->MinY();
-  double ymax = fGeo->MaxY();
-  double zmin = fGeo->MinZ();
-  double zmax = fGeo->MaxZ();
+  double xmin = fGeo.MinX();
+  double xmax = fGeo.MaxX();
+  double ymin = fGeo.MinY();
+  double ymax = fGeo.MaxY();
+  double zmin = fGeo.MinZ();
+  double zmax = fGeo.MaxZ();
   TVector3 start, end;
 
   bool first = true;
@@ -226,12 +226,12 @@ std::pair<TVector3, TVector3> CRTTruthRecoAlg::TpcCrossPoints(simb::MCParticle c
 // Function to calculate the CRT crossing points of a true particle
 double CRTTruthRecoAlg::TpcLength(simb::MCParticle const& particle){
 
-  double xmin = fGeo->MinX();
-  double xmax = fGeo->MaxX();
-  double ymin = fGeo->MinY();
-  double ymax = fGeo->MaxY();
-  double zmin = fGeo->MinZ();
-  double zmax = fGeo->MaxZ();
+  double xmin = fGeo.MinX();
+  double xmax = fGeo.MaxX();
+  double ymin = fGeo.MinY();
+  double ymax = fGeo.MaxY();
+  double zmin = fGeo.MinZ();
+  double zmax = fGeo.MaxZ();
   
   TVector3 start, end;
   TVector3 disp;

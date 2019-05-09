@@ -65,4 +65,34 @@ double GeoAlg::CpaWidth() const{
   return fCpaWidth;
 }
 
+bool GeoAlg::EntersVolume(simb::MCParticle particle){
+  for(size_t i = 0; i < particle.NumberTrajectoryPoints(); i++){
+    double x = particle.Vx(i); 
+    double y = particle.Vy(i);
+    double z = particle.Vz(i);
+    if(x > fMinX && y > fMinY && z > fMinZ && x < fMaxX && y < fMaxY && z < fMaxZ){
+      return true;
+    }
+  }
+  return false;
+}
+
+bool GeoAlg::CrossesVolume(simb::MCParticle particle){
+  bool enters = false;
+  bool startOutside = false;
+  bool endOutside = false;
+  for(size_t i = 0; i < particle.NumberTrajectoryPoints(); i++){
+    double x = particle.Vx(i); 
+    double y = particle.Vy(i);
+    double z = particle.Vz(i);
+    if(x > fMinX && y > fMinY && z > fMinZ && x < fMaxX && y < fMaxY && z < fMaxZ){
+      enters = true;
+    }
+    else if(i == 0) startOutside = true;
+    else if(i == particle.NumberTrajectoryPoints()-1) endOutside = true;
+  }
+  if(startOutside && enters && endOutside) return true;
+  return false;
+}
+
 }

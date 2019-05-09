@@ -188,7 +188,7 @@ namespace sbnd {
     detinfo::DetectorClocks const* fDetectorClocks;            ///< pointer to detector clocks provider
     detinfo::ElecClock fTrigClock;
 
-    GeoAlg const* fGeo;
+    GeoAlg fGeo;
 
     CRTTruthRecoAlg truthAlg;
     CRTHitRecoAlg hitAlg;
@@ -312,7 +312,7 @@ namespace sbnd {
 
     // Detector properties
     double readoutWindowMuS  = fDetectorClocks->TPCTick2Time((double)fDetectorProperties->ReadOutWindowSize()); // [us]
-    double driftTimeMuS = fGeo->MaxX()/fDetectorProperties->DriftVelocity(); // [us]
+    double driftTimeMuS = fGeo.MaxX()/fDetectorProperties->DriftVelocity(); // [us]
 
     // Store the true x (CRT width direction) and y (CRT length direction) crossing points
     std::vector<TVector3> *taggerXYZ = new std::vector<TVector3>[nTaggers];
@@ -548,12 +548,12 @@ namespace sbnd {
     }
 
     if(tpc){
-      double xmin = fGeo->MinX(); 
-      double xmax = fGeo->MaxX();
-      double ymin = fGeo->MinY();
-      double ymax = fGeo->MaxY();
-      double zmin = fGeo->MinZ();
-      double zmax = fGeo->MaxZ();
+      double xmin = fGeo.MinX(); 
+      double xmax = fGeo.MaxX();
+      double ymin = fGeo.MinY();
+      double ymax = fGeo.MaxY();
+      double zmin = fGeo.MinZ();
+      double zmax = fGeo.MaxZ();
       double rmin[3] = {xmin, ymin, zmin};
       double rmax[3] = {xmax, ymax, zmax};
       truthAlg.DrawCube(c1, rmin, rmax, 2);

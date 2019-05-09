@@ -302,7 +302,7 @@ namespace sbnd {
     // Other variables shared between different methods.
     detinfo::DetectorProperties const* fDetectorProperties;    ///< pointer to detector properties provider
     detinfo::DetectorClocks const* fDetectorClocks;            ///< pointer to detector clocks provider
-    GeoAlg const* fGeo;
+    GeoAlg fGeo;
 
     CRTTruthRecoAlg truthAlg;
     CRTTrackMatchAlg trackAlg;
@@ -1213,12 +1213,12 @@ namespace sbnd {
     // Create a canvas 
     TCanvas *c1 = new TCanvas("c2","",700,700);
     
-    double xmin = fGeo->MinX();
-    double xmax = fGeo->MaxX();
-    double ymin = fGeo->MinY();
-    double ymax = fGeo->MaxY();
-    double zmin = fGeo->MinZ();
-    double zmax = fGeo->MaxZ();
+    double xmin = fGeo.MinX();
+    double xmax = fGeo.MaxX();
+    double ymin = fGeo.MinY();
+    double ymax = fGeo.MaxY();
+    double zmin = fGeo.MinZ();
+    double zmax = fGeo.MaxZ();
     double rmin[3] = {xmin, ymin, zmin};
     double rmax[3] = {0, ymax, zmax};
     truthAlg.DrawCube(c1, rmin, rmax, 1);
@@ -1370,7 +1370,7 @@ namespace sbnd {
     //if(track.ID() == 1) print = true;
 
     double crossTime = -99999;
-    double xmax = fGeo->MaxX();
+    double xmax = fGeo.MaxX();
 
     double minDist = 99999;
     double startX = track.Vertex().X();

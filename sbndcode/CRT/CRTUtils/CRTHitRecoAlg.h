@@ -144,7 +144,7 @@ namespace sbnd{
     const geo::AuxDetGeometry* fAuxDetGeo;
     const geo::AuxDetGeometryCore* fAuxDetGeoCore;
     
-    GeoAlg const* fGeo;
+    GeoAlg fGeo;
 
     bool fUseReadoutWindow;
     double fQPed;

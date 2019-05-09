@@ -120,7 +120,7 @@ namespace sbnd{
     detinfo::DetectorProperties const* fDetectorProperties;
     detinfo::DetectorClocks const* fDetectorClocks;
 
-    GeoAlg const* fGeo;
+    GeoAlg fGeo;
 
     double fMaxAngleDiff;
     double fMaxDistance;

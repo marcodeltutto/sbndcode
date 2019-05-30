@@ -133,6 +133,7 @@ namespace sbnd{
 
   private:
 
+    geo::GeometryCore const* fGeometryService;
     detinfo::DetectorProperties const* fDetectorProperties;
     detinfo::DetectorClocks const* fDetectorClocks;
 

@@ -82,6 +82,11 @@ namespace sbnd{
         Comment("")
       };
 
+      fhicl::Atom<art::InputTag> TPCTrackLabel {
+        Name("TPCTrackLabel"),
+        Comment("")
+      };
+
     };
 
     CRTT0MatchAlg(const Config& config);
@@ -106,12 +111,6 @@ namespace sbnd{
     std::pair<crt::CRTHit, double> ClosestCRTHit(recob::Track tpcTrack, std::vector<sbnd::crt::CRTHit> crtHits, const art::Event& event);
 
     double T0FromCRTHits(recob::Track tpcTrack, std::vector<sbnd::crt::CRTHit> crtHits, const art::Event& event);
-
-    std::pair<TVector3, TVector3> TrackDirectionAverage(recob::Track track, double frac);
-
-    std::pair<crt::CRTHit, double> ClosestCRTHit(recob::Track tpcTrack, std::vector<sbnd::crt::CRTHit> crtHits, int tpc);
-
-    double T0FromCRTHits(recob::Track tpcTrack, std::vector<sbnd::crt::CRTHit> crtHits, int tpc);
 
   private:
 

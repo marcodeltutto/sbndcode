@@ -158,7 +158,6 @@ simple_plugin(CRTTzeroProducer module
         ${CETLIB}
 )
 
-
 install_headers()
 install_fhicl()
 install_source()

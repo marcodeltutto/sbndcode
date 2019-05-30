@@ -6,6 +6,7 @@ CRTTrackMatchAlg::CRTTrackMatchAlg(const Config& config){
 
   this->reconfigure(config);
   
+  fGeometryService = lar::providerFrom<geo::Geometry>();
   fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>(); 
   fDetectorClocks = lar::providerFrom<detinfo::DetectorClocksService>(); 
 
@@ -14,6 +15,7 @@ CRTTrackMatchAlg::CRTTrackMatchAlg(const Config& config){
 
 CRTTrackMatchAlg::CRTTrackMatchAlg(){
 
+  fGeometryService = lar::providerFrom<geo::Geometry>();
   fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>(); 
   fDetectorClocks = lar::providerFrom<detinfo::DetectorClocksService>(); 
 
@@ -101,7 +103,7 @@ double CRTTrackMatchAlg::T0FromCRTTracks(recob::Track tpcTrack, std::vector<crt:
 
   std::pair<crt::CRTTrack, double> closestDCA = ClosestCRTTrackByDCA(tpcTrack, crtTracks, event);
 
-  if(closestDCA.second == -99999 || closestDCA > fMaxDistance) return -99999;
+  if(closestDCA.second == -99999 || closestDCA.second > fMaxDistance) return -99999;
 
   double crtTime = ((double)(int)closestDCA.first.ts1_ns) * 1e-3; // [us]
 
@@ -115,7 +117,7 @@ int CRTTrackMatchAlg::GetMatchedCRTTrackId(recob::Track tpcTrack, std::vector<cr
 
   std::pair<crt::CRTTrack, double> closestDCA = ClosestCRTTrackByDCA(tpcTrack, crtTracks, event);
 
-  if(closestDCA.second == -99999 || closestDCA.second > fMaxAngleDiff) return -99999;
+  if(closestDCA.second == -99999 || closestDCA.second > fMaxDistance) return -99999;
 
   int crt_i = 0;
   for(auto const& track : crtTracks){
@@ -207,7 +209,6 @@ std::pair<crt::CRTTrack, double> CRTTrackMatchAlg::ClosestCRTTrackByAngle(recob:
   if(candidates.size() > 0){
     return candidates[0];
   }
-
   crt::CRTTrack track;
   return std::make_pair(track, -99999);
 }
@@ -336,135 +337,5 @@ double CRTTrackMatchAlg::AveDCABetweenTracks(recob::Track tpcTrack, crt::CRTTrac
 
 }
 
-
-// Function to calculate if a CRTTrack crosses the wire planes
-bool CRTTrackMatchAlg::CrossesAPA(crt::CRTTrack track){
-
-  // Check if particle enters the TPC
-  bool crosses = false;
-  double xmax = fGeo.MaxX();
-  double ymax = fGeo.MaxY();
-  double zmin = fGeo.MinZ();
-  double zmax = fGeo.MaxZ();
-
-  if(track.complete){
-    // Get track info
-    TVector3 start(track.x1_pos, track.y1_pos, track.z1_pos);
-    TVector3 end(track.x2_pos, track.y2_pos, track.z2_pos);
-    TVector3 diff = end - start;
-    // Loop over trajectory points
-    int npts = 100;
-    for (int traj_i = 0; traj_i < npts; traj_i++){
-      TVector3 trajPoint = start + ((traj_i+1)/100.)*diff;
-      // Check if point is within reconstructable volume
-      if (std::abs(trajPoint[0]) > xmax-10 && std::abs(trajPoint[0]) < xmax + 10 && std::abs(trajPoint[1]) <= ymax && trajPoint[2] >= zmin && trajPoint[2] <= zmax){
-        crosses = true;
-      }
-    }
-  }
-
-  // If track just between top two planes
-  else{
-    //
-    TVector3 start(track.x1_pos, track.y1_pos, track.z1_pos);
-    TVector3 end(track.x2_pos, track.y2_pos, track.z2_pos);
-    if(start.Y() < end.Y()) std::swap(start, end);
-    TVector3 diff = (end - start).Unit();
-    int npts = 100;
-    for (int traj_i = 0; traj_i < npts; traj_i++){
-      // TODO: length of track needs to be more detector agnostic
-      TVector3 trajPoint = start + (100.*(traj_i+1))*diff;
-      // Check if point is within reconstructable volume
-      if (std::abs(trajPoint[0]) > xmax-10 && std::abs(trajPoint[0]) < xmax+10 && std::abs(trajPoint[1]) <= ymax && trajPoint[2] >= zmin && trajPoint[2] <= zmax){
-        crosses = true;
-      }
-    }
-  }
-
-  return crosses;
-
-} // CRTTrackMatchAlg::CrossesAPA()
-
-int CRTTrackMatchAlg::GetMatchedCRTTrackId(recob::Track tpcTrack, std::vector<crt::CRTTrack> crtTracks, int tpc){
-
-  // Get the length, angle and start and end position of the TPC track
-  TVector3 tpcStart = tpcTrack.Vertex<TVector3>();
-  TVector3 tpcEnd = tpcTrack.End<TVector3>();
-  double tpcTheta = (tpcStart - tpcEnd).Theta();
-  double tpcPhi = (tpcStart - tpcEnd).Phi();
-
-  int crtIndex = 0;
-  std::vector<sbnd::RecoCRTTrack> recoCrtTracks;
-
-  // Transform CRT tracks to expected TPC reconstructed tracks
-  for (auto& crtTrack : crtTracks){
-
-    //Check that crt track crosses tpc volume, if not skip it
-    if(!CrossesTPC(crtTrack)){ crtIndex++; continue; }
- 
-    std::vector<sbnd::RecoCRTTrack> tempTracks = CrtToRecoTrack(crtTrack, crtIndex);
-    recoCrtTracks.insert(recoCrtTracks.end(), tempTracks.begin(), tempTracks.end());
- 
-    crtIndex++;
-  }
- 
-  std::vector<std::pair<int, double>> crtTpcMatchCandidates;
-  // Loop over the reco crt tracks
-  for (auto const& recoCrtTrack : recoCrtTracks){
- 
-    // Get the length, angle and start and end position of the TPC track
-    TVector3 crtStart = recoCrtTrack.start;
-    TVector3 crtEnd = recoCrtTrack.end;
-    double crtTheta = (crtStart - crtEnd).Theta();
-    double crtPhi = (crtStart - crtEnd).Phi();
- 
-    // Find the difference with the CRT track
-    double dDist1 = (crtStart-tpcStart).Mag();
-    double dDist2 = (crtEnd-tpcEnd).Mag();
-    if(std::max((crtStart-tpcStart).Mag(), (crtEnd-tpcEnd).Mag()) > 
-       std::max((crtStart-tpcEnd).Mag(), (crtEnd-tpcStart).Mag())){
-      crtTheta = (crtEnd - crtStart).Theta();
-      crtPhi = (crtEnd - crtStart).Phi();
-      dDist1 = (crtEnd-tpcStart).Mag();
-      dDist2 = (crtStart-tpcEnd).Mag();
-    }
-    double dTheta = atan2(sin(tpcTheta - crtTheta), cos(tpcTheta - crtTheta));
-    double dPhi = atan2(sin(tpcPhi - crtPhi), cos(tpcPhi - crtPhi));
- 
-    // Do the actual matching
-    if(std::abs(dTheta) < fMaxAngleDiff && std::abs(dPhi) < fMaxAngleDiff && 
-       tpc == recoCrtTrack.tpc && (dDist1<fMaxDistance||dDist2<fMaxDistance)){
-      crtTpcMatchCandidates.push_back(std::make_pair(recoCrtTrack.crtID, std::abs(dTheta)));
-    }
- 
-  }
-
-  // Choose the track which matches the closest
-  double bestID = -99999;
-  if(crtTpcMatchCandidates.size() > 0){
-    std::sort(crtTpcMatchCandidates.begin(), crtTpcMatchCandidates.end(), [](auto& left, auto& right){
-              return left.second < right.second;});
-    bestID = crtTpcMatchCandidates[0].first;
-  }
-  
-  return bestID;
-}
-
-double CRTTrackMatchAlg::T0FromCRTTracks(recob::Track tpcTrack, std::vector<crt::CRTTrack> crtTracks, int tpc){
-
-  int crtID = GetMatchedCRTTrackId(tpcTrack, crtTracks, tpc);
-
-  if(crtID == -99999) return -99999;
-
-  try{
-    double crtTime = ((double)(int)crtTracks.at(crtID).ts1_ns) * 1e-3; // [us]
-    return crtTime;
-  } 
-  catch(...){
-    return -99999;
-  }
-  return -99999;
-
-}
 
 }

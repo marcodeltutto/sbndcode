@@ -48,7 +48,7 @@ std::vector<std::vector<art::Ptr<crt::CRTHit>>> CRTTrackRecoAlg::CreateCRTTzeros
   for(size_t i = 0; i<hits.size(); i++){
     if(iflag[i] == 0){
       std::vector<art::Ptr<crt::CRTHit>> crtTzero;
-      double time_ns_A = hits[i]->ts1_ns; //FIXME
+      double time_ns_A = hits[i]->ts1_ns;
       iflag[i]=1;
       crtTzero.push_back(hits[i]);
 
@@ -247,7 +247,7 @@ crt::CRTHit CRTTrackRecoAlg::DoAverage(std::vector<art::Ptr<crt::CRTHit>> hits)
     xpos += hit->x_pos;
     ypos += hit->y_pos;
     zpos += hit->z_pos;
-    ts1_ns += (double)(int)hit->ts1_ns; //FIXME
+    ts1_ns += (double)(int)hit->ts1_ns;
     // For the errors get the maximum limits
     if(hit->x_pos + hit->x_err > xmax) xmax = hit->x_pos + hit->x_err;
     if(hit->x_pos - hit->x_err < xmin) xmin = hit->x_pos - hit->x_err;

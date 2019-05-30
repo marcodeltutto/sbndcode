@@ -163,6 +163,9 @@ namespace sbnd {
         <<"Number of CRT tracks = "<<crtTrackList.size();
       for (size_t tpc_i = 0; tpc_i < tpcTrackList.size(); tpc_i++){
 
+        //std::vector<art::Ptr<recob::Hit>> hits = findManyHits.at(tpcTrackList[tpc_i]->ID());
+        //int tpc = fTpcGeo.DetectedInTPC(hits);
+
         int matchedID = trackAlg.GetMatchedCRTTrackId(*tpcTrackList[tpc_i], crtTracks, event);
         
         if(matchedID != -99999){

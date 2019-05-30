@@ -10,7 +10,7 @@
 ///////////////////////////////////////////////
 
 #include "sbndcode/CosmicRemoval/CosmicRemovalUtils/CosmicRemovalUtils.h"
-#include "sbndcode/CRT/CRTUtils/GeoAlg.h"
+#include "sbndcode/Geometry/GeometryWrappers/TPCGeoAlg.h"
 
 // framework
 #include "art/Framework/Principal/Event.h"
@@ -136,7 +136,7 @@ namespace sbnd{
     double fBeamTimeMax;
 
     detinfo::DetectorProperties const* fDetectorProperties;
-    GeoAlg fGeo;
+    TPCGeoAlg fTpcGeo;
 
   };
 

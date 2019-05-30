@@ -11,7 +11,7 @@
 #include "sbndcode/CosmicRemoval/CosmicRemovalUtils/CosmicRemovalUtils.h"
 #include "sbndcode/CRT/CRTUtils/CRTAnaUtils.h"
 #include "sbndcode/CRT/CRTUtils/CRTT0MatchAlg.h"
-#include "sbndcode/CRT/CRTUtils/GeoAlg.h"
+#include "sbndcode/Geometry/GeometryWrappers/TPCGeoAlg.h"
 #include "sbndcode/CRT/CRTProducts/CRTTrack.hh"
 #include "sbndcode/CRT/CRTUtils/CRTTruthRecoAlg.h"
 #include "sbndcode/CRT/CRTUtils/CRTTrackMatchAlg.h"
@@ -302,7 +302,7 @@ namespace sbnd {
     // Other variables shared between different methods.
     detinfo::DetectorProperties const* fDetectorProperties;    ///< pointer to detector properties provider
     detinfo::DetectorClocks const* fDetectorClocks;            ///< pointer to detector clocks provider
-    GeoAlg fGeo;
+    TPCGeoAlg fGeo;
 
     CRTTruthRecoAlg truthAlg;
     CRTTrackMatchAlg trackAlg;

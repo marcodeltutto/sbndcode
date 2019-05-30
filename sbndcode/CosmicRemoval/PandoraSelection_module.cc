@@ -13,7 +13,7 @@
 #include "sbndcode/CRT/CRTProducts/CRTTrack.hh"
 #include "sbndcode/CRT/CRTUtils/CRTTruthRecoAlg.h"
 #include "sbndcode/CRT/CRTUtils/CRTT0MatchAlg.h"
-#include "sbndcode/CRT/CRTUtils/GeoAlg.h"
+#include "sbndcode/Geometry/GeometryWrappers/TPCGeoAlg.h"
 #include "sbndcode/CosmicRemoval/CosmicRemovalAlgs/FiducialVolumeCosmicTagAlg.h"
 #include "sbndcode/CosmicRemoval/CosmicRemovalAlgs/StoppingParticleCosmicTagAlg.h"
 #include "sbndcode/CosmicRemoval/CosmicRemovalAlgs/GeometryCosmicTagAlg.h"
@@ -253,7 +253,7 @@ namespace sbnd {
 
     detinfo::DetectorProperties const* fDetectorProperties;    ///< pointer to detector properties provider
     detinfo::DetectorClocks const* fDetectorClocks;            ///< pointer to detector clocks provider
-    GeoAlg fGeo;
+    TPCGeoAlg fGeo;
     CRTTruthRecoAlg truthAlg;
     FiducialVolumeCosmicTagAlg fvTag;
     StoppingParticleCosmicTagAlg spTag;

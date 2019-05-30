@@ -18,7 +18,7 @@ namespace sbnd{
 
   bool CosmicRemovalUtils::InFiducial(geo::Point_t point, double minXCut, double minYCut, double minZCut, double maxXCut, double maxYCut, double maxZCut){
     
-    GeoAlg geo;
+    TPCGeoAlg geo;
     double xmin = geo.MinX() + minXCut;
     double xmax = geo.MaxX() - maxXCut;
     double ymin = geo.MinY() + minYCut;
@@ -45,7 +45,7 @@ namespace sbnd{
 
   std::pair<std::vector<double>, std::vector<double>> CosmicRemovalUtils::FakeTpcFlashes(std::vector<simb::MCParticle> particles){
     //
-    GeoAlg geo;
+    TPCGeoAlg geo;
     detinfo::DetectorProperties const* fDetectorProperties = lar::providerFrom<detinfo::DetectorPropertiesService>(); 
     detinfo::DetectorClocks const* fDetectorClocks = lar::providerFrom<detinfo::DetectorClocksService>(); 
 

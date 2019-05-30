@@ -104,7 +104,7 @@ std::pair<double, bool> CpaCrossCosmicTagAlg::T0FromCpaStitching(recob::Track t1
     std::sort(matchCandidates.begin(), matchCandidates.end(), [](auto& left, auto& right){
               return left.first < right.first;});
     double shiftX = matchCandidates[0].second.first;
-    matchedTime = -((shiftX - fGeo.CpaWidth())/fDetectorProperties->DriftVelocity()); //subtract CPA width
+    matchedTime = -((shiftX - fTpcGeo.CpaWidth())/fDetectorProperties->DriftVelocity()); //subtract CPA width
     returnVal = std::make_pair(matchedTime, matchCandidates[0].second.second);
   }
 

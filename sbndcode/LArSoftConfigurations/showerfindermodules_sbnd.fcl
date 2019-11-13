@@ -46,18 +46,14 @@ sbnd_showerslidingstandardcalodedx.MinAngleToWire: 0.1745
 sbnd_showerslidingstandardcalodedx.MaxDist: 2.7277
 sbnd_showerslidingstandardcalodedx.CutStartPosition: true
 
+sbnd_showerdedxfinder.CalorimetryAlg:  @local::sbnd_calorimetryalgmc
 
-sbnd_showerdedxfinder.CalorimetryAlg:    @local::sbnd_calorimetryalgmc
-sbnd_showerlmadedxfinder.CalorimetryAlg: @local::sbnd_calorimetryalgmc
-sbnd_showerslidingdedxfinder.CalorimetryAlg: @local::sbnd_calorimetryalgmc
-
-sbnd_tracs.ShowerFinderTools: [
+sbnd_tracs.showerFinderTools: [
   @local::sbnd_showerstartpositionfinder,
   @local::sbnd_showerdirectionfinder,
   @local::sbnd_showerenergyfinder,
   @local::sbnd_showerresidualtrackhitfinder,
   @local::sbnd_shower3dtrackhitfinder,
-  @local::sbnd_showerpandoratrackfinder,
   @local::sbnd_showerdedxfinder
 ]
 

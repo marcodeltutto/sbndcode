@@ -1,0 +1,130 @@
+#
+# service configuration
+#
+
+#include "services_sbnd.fcl"
+#include "messages_sbnd.fcl"
+#include "sam_sbnd.fcl"
+#include "larfft_sbnd.fcl"
+#include "signalservices_sbnd.fcl"
+#include "wvfana.fcl"
+# from Gray . . .
+## #include "3drift_services_sbnd.fcl"
+#
+# module configuration
+#
+
+#include "caldata_sbnd.fcl"
+#include "hitfindermodules_sbnd.fcl"
+#include "cluster_sbnd.fcl"
+#include "trackfindermodules_sbnd.fcl"
+#include "calorimetry_sbnd.fcl"
+#include "showerfindermodules.fcl"
+#include "databaseutil_sbnd.fcl"
+#include "vertexfindermodules.fcl"
+#include "ophitfinder_sbnd.fcl"
+
+
+process_name: FlP
+
+services:
+{
+  # Load the service that manages root files for histograms.
+  TFileService:              { fileName: "test.root" }
+  RandomNumberGenerator:     {}                                 # required by fuzzyCluster
+  message:                   @local::sbnd_message_services_prod # from messages_sbnd.fcl
+  FileCatalogMetadata:       @local::sbnd_file_catalog_mc       # from sam_sbnd.fcl
+                             @table::sbnd_services              # from services_sbnd.fcl
+  LArFFT:                    @local::sbnd_larfft
+  SignalShapingServiceSBND: @local::sbnd_signalshapingservice  # from signalservices_sbnd.fcl
+}
+
+
+# services.Geometry.GDML: "sbnd_v01_03.gdml"
+# services.AuxDetGeometry.GDML: "sbnd_v01_03.gdml"
+
+#source is now a root file
+source:
+{
+  module_type: RootInput
+  maxEvents:  -1        # Number of events to create
+}
+
+
+#block to define where the output goes.  if you defined a filter in the physics
+#block and put it in the trigger_paths then you need to put a SelectEvents: {SelectEvents: [XXX]}
+#entry in the output stream you want those to go to, where XXX is the label of the filter module(s)
+outputs:
+{
+ out1:
+ {
+   module_type: RootOutput
+   fileName:   "test2.root"
+   dataTier:    "reconstructed"
+#   compressionLevel: 1
+   SelectEvents:  ["reco"]
+
+ }
+}
+
+# Define and configure some modules to do work on each event.
+# First modules are defined; they are scheduled later.
+# Modules are grouped by type.
+physics:
+{
+
+  producers:
+  {
+    ### random number saver
+    rns:                 { module_type: RandomNumberSaver }
+
+    ### flash predicter
+   # fpred:     {module_type: FlashPredict }
+    ophit:      @local::sbnd_hit_finder 
+
+  }
+  analyzers:
+  {
+    #    hitdumper: @local::hitdumper
+    wfana: @local::wvf_ana
+  }
+
+  #define the producer and filter modules for this path, order matters, 
+  #filters reject all following items.  see lines starting physics.producers below
+  # reco: [ fpred ]
+  reco: [ ophit ]
+  #         caldata,
+  #         gaushit,         
+
+
+  #   ana:[ hitdumper]
+  ana: [ wfana]
+  #define the output stream, there could be more than one if using filters 
+  stream1:  [  ]
+  # stream1:  [ out1]
+
+  #trigger_paths is a keyword and contains the paths that modify the art::event,
+  #  ie filters and producers
+  # trigger_paths: [] 
+  trigger_paths: [reco] 
+
+  # end_paths is a keyword and contains the paths that do not modify the art::Event, 
+  # ie analyzers and output streams.  these all run simultaneously
+  #
+   end_paths:     [ana, stream1]  
+  #end_paths:     [stream1]  
+
+}
+
+
+### Here, we overwrite ALL module labels with the ones defined above.
+
+physics.producers.fpred.OpHitProducer: "ophit"
+physics.producers.fpred.BeamWindowStart: -0.2       # in us
+physics.producers.fpred.BeamWindowEnd: 2.0   # in us
+physics.producers.fpred.ChargeToNPhotonsShower: 1.0
+physics.producers.fpred.ChargeToNPhotonsTrack: 1.0
+#physics.producers.ophit.Area1pePMT:  1.3266    #in ADC*ns
+
+
+

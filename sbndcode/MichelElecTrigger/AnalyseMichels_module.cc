@@ -30,7 +30,9 @@ namespace sbnd {
 }
 
 
-// THe class AnalyseMichels is a derived class that inherits publicly from the base class art::EDAnalyzer
+// The class AnalyseMichels is a derived class that inherits publicly from the base class art::EDAnalyzer
+// * The AnalyseMichels class is a subclass of art::EDAnalyzer. Includes required functions we must write and define variables that will persist across events
+
 class sbnd::AnalyseMichels : public art::EDAnalyzer {
 public:
   explicit AnalyseMichels(fhicl::ParameterSet const& p);
@@ -58,6 +60,8 @@ private:
 
   // Variables to fill output tree
   unsigned int fEventID;
+
+  // Variables to access and analyse
   unsigned int fNPFParticles;
   unsigned int fNPrimaries;
   int fNPrimaryDaughters;
@@ -95,6 +99,20 @@ void sbnd::AnalyseMichels::analyze(art::Event const& e)
   if(!pfparticleVect.size()) return;    // If there are no reconstructed particles, skip the event
   fNPFParticles = pfparticleVect.size();
 
+  // Initiate muon ID to be non-physical so we can check we've found it later
+  size_t muonID = 99999;
+
+  // if we aren't looking at a primary muon particle, move on to next particle in list
+  for(const art::Ptr<recob::PFParticle> &pfp : pfparticleVect){
+    if(!(pfp->IsPrimary() && std::abs()pfp->PdgCode() == 13)) continue;
+    
+    muonID = pfp->Self();
+    fNPrimaryDaughters = pfp->NumDaughters();
+    fNPrimaries++;
+  }
+
+  if(muonID == 99999) return; //If we haven't found a muon, skip event
+
   // Fill the output TTree with all the relevant variables
   fTree->Fill();
 
@@ -109,6 +127,7 @@ void sbnd::AnalyseMichels::beginJob()
 
   // Add branches to TTree
   fTree->Branch("eventID", &fEventID, "eventID/i");
+  fTree->Branch("nPFParticles", &fNPFParticles, "nPFParticles/i");
   fTree->Branch("nPrimaries", &fNPrimaries, "nPrimaries/i");
   fTree->Branch("nPrimaryDaughters", &fNPrimaryDaughters, "nPrimaryDaughters/I");
 }

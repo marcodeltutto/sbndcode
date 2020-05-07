@@ -30,7 +30,6 @@ sbnd_showerenergyfinder:            @local::showerlinearenergy
 sbnd_shower3dtrackhitfinder:        @local::shower3Dtrackhitfinder
 sbnd_showerpmatrackfinder:          @local::showerpmatrackfinder
 sbnd_showerdedxfinder:              @local::showerstandardcalodedx
-sbnd_shower3Ddedxfinder:            @local::shower3Dstandardcalodedx
 sbnd_showerresidualtrackhitfinder:  @local::showerresidualtrackhitfinder
 sbnd_showerslidingstandardcalodedx: @local::showerslidingstandardcalodedx
 
@@ -51,10 +50,12 @@ sbnd_showerdirectioncheater:     @local::showerdirectioncheater
 sbnd_showertrackfindercheater:   @local::showertrackfindercheater
 
 sbnd_showerdedxfinder.CalorimetryAlg:  @local::sbnd_calorimetryalgmc
-sbnd_shower3Ddedxfinder.CalorimetryAlg:  @local::sbnd_calorimetryalgmc
 sbnd_showerslidingstandardcalodedx.CalorimetryAlg: @local::sbnd_calorimetryalgmc
 
-sbnd_tracs.showerFinderTools: [
+sbnd_showerenergyfinder.Gradients:  [0.00155644, 0.00173915, 0.00153631]
+sbnd_showerenergyfinder.Intercepts: [5.92931, -2.13307, 5.19711]
+
+sbnd_tracs.ShowerFinderTools: [
   @local::sbnd_showerstartpositionfinder,
   @local::sbnd_showerdirectionfinder,
   @local::sbnd_showerenergyfinder,

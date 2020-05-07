@@ -103,19 +103,18 @@ class ana::PFPValidation : public art::EDAnalyzer {
     TTree* eventTree;
 
     // Fill the tree once per particle
-    int truePdg, numTrueHits;
+    int truePdg, motherPdg, numTrueHits;
     float trueEnergy, trueMomentum, trueDepositedEnergy, trueDepositedEnergyInHits;
     std::string trueProcess;
-    std::map<std::string, int> recoPdg, recoHits, recoPFPs, recoPFPTracks, recoPFPShowers;
-    std::map<std::string, float> hitPurity, energyPurity, hitComp, energyComp, hitSPRatio;
+    std::map<std::string, int> recoPdg, recoPFPShowers, recoHits, recoPFPs, recoPFPTracks;
+    std::map<std::string, float> hitPurity, energyPurity, hitComp, energyComp, hitSPRatio, recoTrackScore;
 
     std::string pfpModuleLabel;
     int pfpPdg, pfpTruePdg, pfpNumHits;
-    float pfpTrueEnergy, pfpTrueMomentum, pfpTrueDepositedEnergy;
+    float pfpTrueEnergy, pfpTrueMomentum, pfpTrueDepositedEnergy, pfpTrackScore;
     float pfpHitPurity, pfpHitComp, pfpEnergyPurity, pfpEnergyComp, pfpHitSPRatio;
 
-    std::string eventModuleLabel;
-    int eventNumPFP, eventNumPFPNu, eventNumPFPShower, eventNumPFPTrack;
+    std::map<std::string, int> eventNumPFP, eventNumPFPNu, eventNumPFPShower, eventNumPFPTrack;
 };
 
 
@@ -125,7 +124,7 @@ ana::PFPValidation::PFPValidation(fhicl::ParameterSet const& pset)
   fHitLabel            = pset.get<std::string>("HitLabel");
   fGenieGenModuleLabel = pset.get<std::string>("GenieGenModuleLabel");
   fPFParticleLabels    = pset.get<std::vector<std::string> >("PFParticleLabels");
-  fLArGeantModuleLabel   = pset.get<std::string>("LArGeantModuleLabel");
+  fLArGeantModuleLabel = pset.get<std::string>("LArGeantModuleLabel");
 }
 
 void ana::PFPValidation::beginJob() {
@@ -135,6 +134,7 @@ void ana::PFPValidation::beginJob() {
   eventTree = tfs->make<TTree>("eventTree", "Tree with metrics for each event");
 
   trueTree->Branch("truePdg", &truePdg);
+  trueTree->Branch("motherPdg", &motherPdg);
   trueTree->Branch("numTrueHits", &numTrueHits);
   trueTree->Branch("trueEnergy", &trueEnergy);
   trueTree->Branch("trueMomentum", &trueMomentum);
@@ -143,6 +143,7 @@ void ana::PFPValidation::beginJob() {
   trueTree->Branch("trueProcess", &trueProcess);
 
   initTree(trueTree, "recoPdg", recoPdg, fPFParticleLabels);
+  initTree(trueTree, "recoTrackScore", recoTrackScore, fPFParticleLabels);
   initTree(trueTree, "recoHits", recoHits, fPFParticleLabels);
   initTree(trueTree, "recoPFPs", recoPFPs, fPFParticleLabels);
   initTree(trueTree, "recoPFPTracks", recoPFPTracks, fPFParticleLabels);
@@ -160,17 +161,17 @@ void ana::PFPValidation::beginJob() {
   pfpTree->Branch("pfpTrueEnergy", &pfpTrueEnergy);
   pfpTree->Branch("pfpTrueMomentum", &pfpTrueMomentum);
   pfpTree->Branch("pfpTrueDepositedEnergy", &pfpTrueDepositedEnergy);
+  pfpTree->Branch("pfpTrackScore", &pfpTrackScore);
   pfpTree->Branch("pfpHitPurity", &pfpHitPurity);
   pfpTree->Branch("pfpHitComp", &pfpHitComp);
   pfpTree->Branch("pfpEnergyPurity", &pfpEnergyPurity);
   pfpTree->Branch("pfpEnergyComp", &pfpEnergyComp);
   pfpTree->Branch("pfpHitSPRatio", &pfpHitSPRatio);
 
-  eventTree->Branch("pfpModuleLabel", &eventModuleLabel);
-  eventTree->Branch("numPFP", &eventNumPFP);
-  eventTree->Branch("numPFPNu", &eventNumPFPNu);
-  eventTree->Branch("numPFPShower", &eventNumPFPShower);
-  eventTree->Branch("numPFPTrack", &eventNumPFPTrack);
+  initTree(eventTree,"numPFP", eventNumPFP, fPFParticleLabels);
+  initTree(eventTree,"numPFPNu", eventNumPFPNu, fPFParticleLabels);
+  initTree(eventTree,"numPFPShower", eventNumPFPShower, fPFParticleLabels);
+  initTree(eventTree,"numPFPTrack", eventNumPFPTrack, fPFParticleLabels);
 }
 
 void ana::PFPValidation::analyze(art::Event const& evt)
@@ -233,7 +234,7 @@ void ana::PFPValidation::analyze(art::Event const& evt)
   std::map<std::string, std::map<long unsigned int, art::Ptr<recob::PFParticle> > > pfpMap;
   std::map<std::string, std::map<long unsigned int, int>  > pfpTrueParticleMap, pfpHitMap;
   std::map<std::string, std::map<long unsigned int, float> >  pfpHitCompMap, pfpHitPurityMap,
-    pfpEnergyCompMap, pfpEnergyPurityMap, pfpHitSPRatioMap;
+    pfpEnergyCompMap, pfpEnergyPurityMap, pfpHitSPRatioMap, pfpTrackScoreMap;
 
   for (auto const fPFParticleLabel: fPFParticleLabels){
     // Get all the PFPs
@@ -304,31 +305,31 @@ void ana::PFPValidation::analyze(art::Event const& evt)
     }
 
     // std::map<long unsigned int, float > pfpScoreMap;
-    std::vector<art::Ptr<recob::PFParticle> > pfpNeutrinoVec;
     for (auto const& pfp: pfps){
       long unsigned int pfpId = pfp->Self();
       pfpMap[fPFParticleLabel][pfpId] = pfp;
-      // const std::vector< art::Ptr<larpandoraobj::PFParticleMetadata> > pfpMetaVec = fmpfpmd.at(pfpId);
-      // for (auto const pfpMeta: pfpMetaVec)
-      // {
-      //   larpandoraobj::PFParticleMetadata::PropertiesMap propertiesMap = pfpMeta->GetPropertiesMap();
-      //   pfpScoreMap[pfpId] = propertiesMap.at("NuScore");
-      // }
+      const std::vector< art::Ptr<larpandoraobj::PFParticleMetadata> > pfpMetaVec = fmpfpmd.at(pfpId);
+      for (auto const& pfpMeta: pfpMetaVec)
+      {
+        larpandoraobj::PFParticleMetadata::PropertiesMap propertiesMap = pfpMeta->GetPropertiesMap();
+        auto const pfpTrackScoreIter = propertiesMap.find("TrackScore");
+        pfpTrackScoreMap[fPFParticleLabel][pfpId] =
+          pfpTrackScoreIter == propertiesMap.end() ? -999 : pfpTrackScoreIter->second;
+      }
     }
 
     clearEventTree();
-    eventModuleLabel = fPFParticleLabel;
-    eventNumPFP = pfps.size();
+    eventNumPFP[fPFParticleLabel] = pfps.size();
 
     for (auto const& pfp: pfps){
 
       // Update event wide metrics
       if (pfp->PdgCode()==11) {
-        ++eventNumPFPShower;
+        ++eventNumPFPShower[fPFParticleLabel];
       } else if (pfp->PdgCode()==13) {
-        ++eventNumPFPTrack;
+        ++eventNumPFPTrack[fPFParticleLabel];
       } else {
-        ++eventNumPFPNu;
+        ++eventNumPFPNu[fPFParticleLabel];
       }
 
       // Get the hits from the PFParticle
@@ -345,6 +346,11 @@ void ana::PFPValidation::analyze(art::Event const& evt)
       if (!pfpHits.size())
         continue;
 
+      pfpPdg        = pfp->PdgCode();
+      pfpTrackScore = pfpTrackScoreMap[fPFParticleLabel].at(pfp->Self());
+      pfpNumHits    = pfpHits.size();
+      pfpHitSPRatio = (float)sps.size() / pfpHits.size();
+
       std::pair<int, double> trueId = ShowerUtils::TrueParticleIDFromTrueChain(truePrimaries,
           pfpHits, 2);
       if (trueId.first==-99999){
@@ -358,34 +364,30 @@ void ana::PFPValidation::analyze(art::Event const& evt)
 
       const simb::MCParticle* trueParticle = trueParticles.at(trueId.first);
 
-      pfpModuleLabel = fPFParticleLabel;
-      pfpPdg = pfp->PdgCode();
-      pfpTruePdg = trueParticle->PdgCode();
-      pfpNumHits = pfpHits.size();
-      pfpTrueEnergy = trueParticle->E();
+      pfpTruePdg      = trueParticle->PdgCode();
+      pfpTrueEnergy   = trueParticle->E();
       pfpTrueMomentum = trueParticle->P();
 
-      int pfpHitsTrueHits = pfpTrueHitsMap.at(trueId.first);
-      float pfpHitsTrueEnergy = pfpTrueEnergyMap.at(trueId.first);
+      int pfpHitsTrueHits      = pfpTrueHitsMap.at(trueId.first);
+      float pfpHitsTrueEnergy  = pfpTrueEnergyMap.at(trueId.first);
       float pfpHitsTotalEnergy = GetTotalEnergyInHits(pfpHits);
 
-      pfpHitPurity = (float)pfpHitsTrueHits / pfpHits.size();
-      pfpHitComp = (float)pfpHitsTrueHits / truePrimaryHits.at(trueId.first);
-      pfpEnergyPurity = pfpHitsTrueEnergy / pfpHitsTotalEnergy;
-      pfpEnergyComp= pfpHitsTrueEnergy / truePrimaryHitEnergies.at(trueId.first);
+      pfpHitPurity           = (float)pfpHitsTrueHits / pfpHits.size();
+      pfpHitComp             = (float)pfpHitsTrueHits / truePrimaryHits.at(trueId.first);
+      pfpEnergyPurity        = pfpHitsTrueEnergy / pfpHitsTotalEnergy;
+      pfpEnergyComp          = pfpHitsTrueEnergy / truePrimaryHitEnergies.at(trueId.first);
       // Energy is in all planes, hence divide deposited energy by 3
       pfpTrueDepositedEnergy = truePrimaryHitEnergies.at(trueId.first)/3;
-      pfpHitSPRatio = (float)sps.size() / pfpHits.size();
 
       pfpTree->Fill();
 
       pfpTrueParticleMap[fPFParticleLabel][pfp->Self()] = trueId.first;
-      pfpHitMap[fPFParticleLabel][pfp->Self()] = pfpHits.size();
-      pfpHitPurityMap[fPFParticleLabel][pfp->Self()] = pfpHitPurity;
-      pfpHitCompMap[fPFParticleLabel][pfp->Self()] = pfpHitComp;
-      pfpEnergyPurityMap[fPFParticleLabel][pfp->Self()] =  pfpEnergyPurity;
-      pfpEnergyCompMap[fPFParticleLabel][pfp->Self()] = pfpEnergyComp;
-      pfpHitSPRatioMap[fPFParticleLabel][pfp->Self()] = pfpHitSPRatio;
+      pfpHitMap[fPFParticleLabel][pfp->Self()]          = pfpHits.size();
+      pfpHitPurityMap[fPFParticleLabel][pfp->Self()]    = pfpHitPurity;
+      pfpHitCompMap[fPFParticleLabel][pfp->Self()]      = pfpHitComp;
+      pfpEnergyPurityMap[fPFParticleLabel][pfp->Self()] = pfpEnergyPurity;
+      pfpEnergyCompMap[fPFParticleLabel][pfp->Self()]   = pfpEnergyComp;
+      pfpHitSPRatioMap[fPFParticleLabel][pfp->Self()]   = pfpHitSPRatio;
 
       clearPFPTree();
     }
@@ -408,6 +410,10 @@ void ana::PFPValidation::analyze(art::Event const& evt)
     trueDepositedEnergyInHits = truePrimaryHitEnergies.at(trueId)/3;
     trueProcess = trueParticle->Process();
 
+    auto const trueMother = trueParticles.find(trueParticle->Mother());
+    if (trueMother != trueParticles.end()){
+      motherPdg = trueMother->second->PdgCode();
+    }
 
     for (auto const fPFParticleLabel: fPFParticleLabels){
       std::vector<long unsigned int> pfpMatches;
@@ -437,6 +443,7 @@ void ana::PFPValidation::analyze(art::Event const& evt)
           }
         }
         recoPdg[fPFParticleLabel] = pfpMap[fPFParticleLabel].at(bestMatchPFP)->PdgCode();
+        recoTrackScore[fPFParticleLabel] = pfpTrackScoreMap[fPFParticleLabel].at(bestMatchPFP);
         recoHits[fPFParticleLabel] = pfpHitMap[fPFParticleLabel].at(bestMatchPFP);
         hitPurity[fPFParticleLabel] = pfpHitPurityMap[fPFParticleLabel].at(bestMatchPFP);
         hitComp[fPFParticleLabel] = pfpHitCompMap[fPFParticleLabel].at(bestMatchPFP);
@@ -446,7 +453,6 @@ void ana::PFPValidation::analyze(art::Event const& evt)
       }
     }
 
-    // if (numTrueHits>0)
     trueTree->Fill();
   }
 
@@ -549,47 +555,51 @@ void ana::PFPValidation::initTree(TTree* Tree, std::string branchName,
 }
 
 void ana::PFPValidation::clearPFPTree(){
-  pfpModuleLabel = "";
-  pfpPdg = -999;
-  pfpTruePdg = -999;
-  pfpTrueEnergy = -999;
-  pfpTrueMomentum = -999;
+  pfpModuleLabel         = "";
+  pfpPdg                 = -999;
+  pfpTruePdg             = -999;
+  pfpTrueEnergy          = -999;
+  pfpTrueMomentum        = -999;
   pfpTrueDepositedEnergy = -999;
-  pfpNumHits = -999;
-  pfpHitPurity = -999;
-  pfpHitComp = -999;
-  pfpEnergyPurity = -999;
-  pfpEnergyComp = -999;
-  pfpHitSPRatio = -999;
+  pfpTrackScore          = -999;
+  pfpNumHits             = -999;
+  pfpHitPurity           = -999;
+  pfpHitComp             = -999;
+  pfpEnergyPurity        = -999;
+  pfpEnergyComp          = -999;
+  pfpHitSPRatio          = -999;
 }
 
 void ana::PFPValidation::clearTrueTree(){
-  truePdg = -999;
-  numTrueHits = -999;
-  trueEnergy = -999;
-  trueMomentum = -999;
-  trueDepositedEnergy = -999;
+  truePdg                   = -999;
+  motherPdg                 = -999;
+  numTrueHits               = -999;
+  trueEnergy                = -999;
+  trueMomentum              = -999;
+  trueDepositedEnergy       = -999;
   trueDepositedEnergyInHits = -999;
-  trueProcess = "";
+  trueProcess               = "";
   for (auto const& fPFParticleLabel: fPFParticleLabels){
-    recoPFPs[fPFParticleLabel] = -999;
-    recoPFPTracks[fPFParticleLabel] = -999;
+    recoPFPs[fPFParticleLabel]       = -999;
+    recoPFPTracks[fPFParticleLabel]  = -999;
     recoPFPShowers[fPFParticleLabel] = -999;
-    recoPdg[fPFParticleLabel] = -999;
-    recoHits[fPFParticleLabel] = -999;
-    hitPurity[fPFParticleLabel] = -999;
-    energyPurity[fPFParticleLabel] = -999;
-    hitComp[fPFParticleLabel] = -999;
-    energyComp[fPFParticleLabel] = -999;
-    hitSPRatio[fPFParticleLabel] = -999;
+    recoPdg[fPFParticleLabel]        = -999;
+    recoTrackScore[fPFParticleLabel] = -999;
+    recoHits[fPFParticleLabel]       = -999;
+    hitPurity[fPFParticleLabel]      = -999;
+    energyPurity[fPFParticleLabel]   = -999;
+    hitComp[fPFParticleLabel]        = -999;
+    energyComp[fPFParticleLabel]     = -999;
+    hitSPRatio[fPFParticleLabel]     = -999;
   }
 }
 
 void ana::PFPValidation::clearEventTree(){
-  eventModuleLabel = "";
-  eventNumPFP = 0;
-  eventNumPFPNu = 0;
-  eventNumPFPTrack = 0;
-  eventNumPFPShower = 0;
+  for (auto const& fPFParticleLabel: fPFParticleLabels){
+    eventNumPFP[fPFParticleLabel]       = 0;
+    eventNumPFPNu[fPFParticleLabel]     = 0;
+    eventNumPFPTrack[fPFParticleLabel]  = 0;
+    eventNumPFPShower[fPFParticleLabel] = 0;
+  }
 }
 DEFINE_ART_MODULE(ana::PFPValidation)

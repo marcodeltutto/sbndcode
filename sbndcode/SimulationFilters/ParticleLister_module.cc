@@ -49,6 +49,7 @@ namespace filt{
       geo::GeometryCore   *fGeometry;
       std::string         fSimProducerLabel;
       int                 fMaxEvents;
+      int                 fMaxParticles;
 
       int                 eventCounter;
   };
@@ -68,6 +69,7 @@ namespace filt{
   void ParticleLister::reconfigure(fhicl::ParameterSet const& pset){
     fSimProducerLabel       = pset.get< std::string > ("SimProducer","largeant");
     fMaxEvents              = pset.get< int >         ("MaxEvents",20);
+    fMaxParticles           = pset.get< int >         ("MaxParticles",2000);
     eventCounter            = 0; 
   }
 
@@ -85,39 +87,44 @@ namespace filt{
       // Loop through particles and look for primary muon
       for( auto const& particle : (*particleHandle) ){
         int trackId = particle.TrackId();
-        int pdg     = particle.PdgCode(); 
+        
+        if( trackId < fMaxParticles ) {
+          int pdg     = particle.PdgCode(); 
   
-        // A particle has a trajectory, consisting of a set of
-        // 4-positions and 4-mommenta.
-        size_t  numTrajPoints       = particle.NumberTrajectoryPoints();
-        int	    last	        = numTrajPoints - 1;
-        const TLorentzVector& loc0  = particle.Position(0);
-        const TLorentzVector& loc   = particle.Position(last);
-        double dL                   = (loc0.Vect()-loc.Vect()).Mag();
-        //float P0                    = particle.P(0)*1000.;
-        //float Pf                    = particle.P(last)*1000.;
-        float E0                    = particle.E(0)*1000.;
-        float Ef                    = particle.E(last)*1000.;
-        float K0                    = (particle.E(0)-particle.Mass())*1000.;
-        float Kf                    = (particle.E(last)-particle.Mass())*1000.;
-        //bool isFromPbar = isParticleDescendedFrom(particleHandle,trackId,1);
-        std::string proc            = particle.Process().c_str();
-          
-        printf("  %3i PDG: %10i   dL=%6.1fcm   E0=%9.3f  Ef=%9.3f  KE0=%9.3f  KEf=%9.3f  T=%8.2f-%8.2f   mother=%3i %22s   Ndaught=%i\n",
-            trackId,
-            pdg,
-            dL,
-            E0,
-            Ef,
-            K0,
-            Kf,
-            particle.T(0),
-            particle.T(last),
-            particle.Mother(),
-            particle.Process().c_str(),
-            particle.NumberDaughters()
-            );
-          
+          // A particle has a trajectory, consisting of a set of
+          // 4-positions and 4-mommenta.
+          size_t  numTrajPoints       = particle.NumberTrajectoryPoints();
+          int	    last	        = numTrajPoints - 1;
+          const TLorentzVector& loc0  = particle.Position(0);
+          const TLorentzVector& loc   = particle.Position(last);
+          double dL                   = (loc0.Vect()-loc.Vect()).Mag();
+          //float P0                    = particle.P(0)*1000.;
+          //float Pf                    = particle.P(last)*1000.;
+          float E0                    = particle.E(0)*1000.;
+          float Ef                    = particle.E(last)*1000.;
+          float K0                    = (particle.E(0)-particle.Mass())*1000.;
+          float Kf                    = (particle.E(last)-particle.Mass())*1000.;
+          //bool isFromPbar = isParticleDescendedFrom(particleHandle,trackId,1);
+          std::string proc            = particle.Process().c_str();
+            
+          printf("  %3i PDG: %10i   dL=%6.1fcm   E0=%9.3f  Ef=%9.3f  KE0=%9.3f  KEf=%9.3f  T=%8.2f-%8.2f   mother=%3i %22s   Ndaught=%i\n",
+              trackId,
+              pdg,
+              dL,
+              E0,
+              Ef,
+              K0,
+              Kf,
+              particle.T(0),
+              particle.T(last),
+              particle.Mother(),
+              particle.Process().c_str(),
+              particle.NumberDaughters()
+              );
+        } else {
+          printf("---------- Max particle limit reached ----------------------\n");
+          break;
+        }
       } // end particle loop
     }//endif max events
     

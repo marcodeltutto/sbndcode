@@ -30,7 +30,6 @@ sbnd_showerenergyfinder:            @local::showerlinearenergy
 sbnd_shower3dtrackhitfinder:        @local::shower3Dtrackhitfinder
 sbnd_showerpmatrackfinder:          @local::showerpmatrackfinder
 sbnd_showerdedxfinder:              @local::showerstandardcalodedx
-sbnd_shower3Ddedxfinder:            @local::shower3Dstandardcalodedx
 sbnd_showerresidualtrackhitfinder:  @local::showerresidualtrackhitfinder
 sbnd_showerslidingstandardcalodedx: @local::showerslidingstandardcalodedx
 

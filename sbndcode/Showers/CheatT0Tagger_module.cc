@@ -24,7 +24,7 @@
 #include "lardataobj/RecoBase/Cluster.h"
 #include "lardataobj/RecoBase/PFParticle.h"
 #include "lardataobj/RecoBase/Hit.h"
-#include "larreco/RecoAlg/MCRecoUtils/RecoUtils.h"
+#include "sbndcode/RecoUtils/RecoUtils.h"
 
 #include <memory>
 

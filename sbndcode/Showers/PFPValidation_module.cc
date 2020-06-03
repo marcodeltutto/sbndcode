@@ -33,8 +33,8 @@
 #include "lardataobj/RecoBase/Vertex.h"
 #include "lardataobj/Simulation/SimChannel.h"
 #include "lardataobj/RecoBase/PFParticleMetadata.h"
-#include "larreco/RecoAlg/MCRecoUtils/RecoUtils.h"
-#include "larreco/RecoAlg/MCRecoUtils/ShowerUtils.h"
+#include "sbndcode/RecoUtils/RecoUtils.h"
+#include "sbndcode/RecoUtils/ShowerUtils.h"
 
 //Root Includes
 #include "TMath.h"

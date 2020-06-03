@@ -31,7 +31,7 @@
 #include "lardataobj/RecoBase/PFParticle.h"
 #include "lardataobj/AnalysisBase/T0.h"
 #include "lardataobj/AnalysisBase/Calorimetry.h"
-#include "larreco/RecoAlg/MCRecoUtils/RecoUtils.h"
+#include "sbndcode/RecoUtils/RecoUtils.h"
 
 //Root Includes
 #include "TMath.h"

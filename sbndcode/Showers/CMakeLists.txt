@@ -7,6 +7,7 @@ art_make(
   larevt_Filters
   lardataobj_RawData
   lardataobj_RecoBase
+  lardataobj_AnalysisBase
   lardataobj_MCBase
   larreco_RecoAlg
   lardata_RecoObjects

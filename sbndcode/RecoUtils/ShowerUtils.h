@@ -30,7 +30,7 @@
 #include "larcore/Geometry/Geometry.h"
 #include "larcorealg/Geometry/PlaneGeo.h"
 #include "larcorealg/Geometry/WireGeo.h"
-#include "larreco/RecoAlg/MCRecoUtils/RecoUtils.h"
+#include "sbndcode/RecoUtils/RecoUtils.h"
 // c++
 #include <vector>
 #include <map>

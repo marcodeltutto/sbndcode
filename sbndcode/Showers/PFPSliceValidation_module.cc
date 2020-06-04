@@ -85,6 +85,25 @@ class ana::PFPSliceValidation : public art::EDAnalyzer {
         std::map<std::string, T>& Metric,
         std::vector<std::string> fPFParticleLabels);
 
+    struct SliceMatch {
+
+      // Default constructor initialise all of the things to -999
+      SliceMatch() : mRecoId(-999), mRecoPdg(-999), mComp(-999), mPurity(-999),
+      mNuScore(-999), mVtxX(-999), mVtxY(-999), mVtxZ(-999) {};
+
+      SliceMatch(int recoId, int recoPdg, float comp, float purity, float nuScore,
+          double vtx[3]) : mRecoId(recoId), mRecoPdg(recoPdg), mComp(comp), mPurity(purity),
+          mNuScore(nuScore), mVtxX(vtx[0]), mVtxY(vtx[1]), mVtxZ(vtx[2]) {};
+
+      int mRecoId, mRecoPdg;
+      float mComp, mPurity, mNuScore;
+      float mVtxX, mVtxY, mVtxZ;
+
+      // bool operator<(const SliceMatch& match) const {
+      //   return mComp < match,mComp;
+      // }
+    };
+
   private:
 
     int fVerbose;
@@ -233,14 +252,7 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
   // TODO: make into a strut
   std::map<std::string, std::map<art::Ptr<simb::MCTruth>, unsigned int> > pfpTruthNuCounterMap;
   std::map<std::string, std::map<art::Ptr<simb::MCTruth>, unsigned int> > pfpTruthSliceCounterMap;
-  std::map<std::string, std::map<art::Ptr<simb::MCTruth>, float> > pfpTruthCompMap;
-  std::map<std::string, std::map<art::Ptr<simb::MCTruth>, float> > pfpTruthPurityMap;
-  std::map<std::string, std::map<art::Ptr<simb::MCTruth>, float> > pfpTruthScoreMap;
-  std::map<std::string, std::map<art::Ptr<simb::MCTruth>, int> > pfpTruthPdgMap;
-  std::map<std::string, std::map<art::Ptr<simb::MCTruth>, int> > pfpTruthNuMap;
-  std::map<std::string, std::map<art::Ptr<simb::MCTruth>, double> > pfpTruthVtxMapX;
-  std::map<std::string, std::map<art::Ptr<simb::MCTruth>, double> > pfpTruthVtxMapY;
-  std::map<std::string, std::map<art::Ptr<simb::MCTruth>, double> > pfpTruthVtxMapZ;
+  std::map<std::string, std::map<art::Ptr<simb::MCTruth>, SliceMatch> > pfpTruthSliceMatchMap;
 
   // Initialise the counters in the maps
   for (auto const fPFParticleLabel: fPFParticleLabels){
@@ -364,24 +376,25 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
       } // isNeutrinoSlice
 
       // Choose the best match slice, defined as the slice with the best completeness
-      if (completeness > pfpTruthCompMap[fPFParticleLabel][trueMatch]){
-        pfpTruthCompMap[fPFParticleLabel][trueMatch]   = completeness;
-        pfpTruthPurityMap[fPFParticleLabel][trueMatch] = purity;
-        pfpTruthScoreMap[fPFParticleLabel][trueMatch]  = nuScore;
-        pfpTruthNuMap[fPFParticleLabel][trueMatch]     = pfpNu;
-
+      if (completeness > pfpTruthSliceMatchMap[fPFParticleLabel][trueMatch].mComp){
         if (isNeutrinoSlice) {
+
           art::Ptr<recob::PFParticle> pfpNeutrino = pfpMap.at(pfpNu);;
           art::Ptr<recob::Vertex> pfpVertex = fopfv.at(pfpNeutrino.key());
-
-          pfpTruthPdgMap[fPFParticleLabel][trueMatch] = pfpNeutrino->PdgCode();
-
-          double pfpVtx[3];
+          double pfpVtx[3] = {-999, -999, -999};
           pfpVertex->XYZ(pfpVtx);
-          pfpTruthVtxMapX[fPFParticleLabel][trueMatch] = pfpVtx[0];
-          pfpTruthVtxMapY[fPFParticleLabel][trueMatch] = pfpVtx[1];
-          pfpTruthVtxMapZ[fPFParticleLabel][trueMatch] = pfpVtx[2];
-        } // isNeutrinoSlice
+
+          SliceMatch match(pfpNu, pfpNeutrino->PdgCode(), completeness, purity,
+              nuScore, pfpVtx);
+
+          pfpTruthSliceMatchMap[fPFParticleLabel][trueMatch] = match;
+
+        } else { // isNeutrinoSlice
+          double pfpVtx[3] = {-999, -999, -999};
+          SliceMatch match(pfpNu, -999, completeness, purity,
+              -999, pfpVtx);
+          pfpTruthSliceMatchMap[fPFParticleLabel][trueMatch] = match;
+        } // else isNeutrinoSlice
       } // bestMatch
     } // pfpSlice:pfpSliceVec
   } // auto const fPFParticleLabel: fPFParticleLabels
@@ -447,20 +460,23 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
 
       // Check we actually match a slice to the truth
       if (pfpTruthSliceCounterMap[fPFParticleLabel].at(truth)){
-        nuSlices[fPFParticleLabel] = pfpTruthSliceCounterMap[fPFParticleLabel][truth];
-        nuNeutrinos[fPFParticleLabel] = pfpTruthNuCounterMap[fPFParticleLabel][truth];
-        bestNuComp[fPFParticleLabel] = pfpTruthCompMap[fPFParticleLabel][truth];
-        bestNuPurity[fPFParticleLabel] = pfpTruthPurityMap[fPFParticleLabel][truth];
-        bestNuScore[fPFParticleLabel] = pfpTruthScoreMap[fPFParticleLabel][truth];
-        bestNuPdg[fPFParticleLabel] = pfpTruthPdgMap[fPFParticleLabel][truth];
-        nuMatchNeutrino[fPFParticleLabel] = (pfpTruthNuMap[fPFParticleLabel][truth]!=-999);
+
+        SliceMatch match = pfpTruthSliceMatchMap[fPFParticleLabel][truth];
+
+        nuSlices[fPFParticleLabel]        = pfpTruthSliceCounterMap[fPFParticleLabel][truth];
+        nuNeutrinos[fPFParticleLabel]     = pfpTruthNuCounterMap[fPFParticleLabel][truth];
+        bestNuComp[fPFParticleLabel]      = match.mComp;
+        bestNuPurity[fPFParticleLabel]    = match.mPurity;
+        bestNuScore[fPFParticleLabel]     = match.mNuScore;
+        bestNuPdg[fPFParticleLabel]       = match.mRecoPdg;
+        nuMatchNeutrino[fPFParticleLabel] = (match.mRecoId!=-999);
 
         // If we matched a neutrino slice, get the vertex info
         if (nuMatchNeutrino[fPFParticleLabel]) {
 
-          pfpVertexX[fPFParticleLabel] = pfpTruthVtxMapX[fPFParticleLabel][truth];
-          pfpVertexY[fPFParticleLabel] = pfpTruthVtxMapY[fPFParticleLabel][truth];
-          pfpVertexZ[fPFParticleLabel] = pfpTruthVtxMapZ[fPFParticleLabel][truth];
+          pfpVertexX[fPFParticleLabel] = match.mVtxX;
+          pfpVertexY[fPFParticleLabel] = match.mVtxY;
+          pfpVertexZ[fPFParticleLabel] = match.mVtxZ;
 
           pfpVertexDistX[fPFParticleLabel] = pfpVertexX[fPFParticleLabel] - nu.Vx();
           pfpVertexDistY[fPFParticleLabel] = pfpVertexY[fPFParticleLabel] - nu.Vy();

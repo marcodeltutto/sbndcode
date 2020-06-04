@@ -249,7 +249,6 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
       particleTruthMap, allHits);
 
   // Create maps to store the best matched slice to each truth
-  // TODO: make into a strut
   std::map<std::string, std::map<art::Ptr<simb::MCTruth>, unsigned int> > pfpTruthNuCounterMap;
   std::map<std::string, std::map<art::Ptr<simb::MCTruth>, unsigned int> > pfpTruthSliceCounterMap;
   std::map<std::string, std::map<art::Ptr<simb::MCTruth>, SliceMatch> > pfpTruthSliceMatchMap;
@@ -319,6 +318,7 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
           return;
         } // fmpfpmd.size()
 
+        // Get the pfparticle metadata to get the MVA score for each slice
         const std::vector< art::Ptr<larpandoraobj::PFParticleMetadata> > pfpMetaVec = fmpfpmd.at(pfpID);
         for (auto const pfpMeta: pfpMetaVec)
         {
@@ -391,7 +391,7 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
 
         } else { // isNeutrinoSlice
           double pfpVtx[3] = {-999, -999, -999};
-          SliceMatch match(pfpNu, -999, completeness, purity,
+          SliceMatch match(-999, -999, completeness, purity,
               -999, pfpVtx);
           pfpTruthSliceMatchMap[fPFParticleLabel][trueMatch] = match;
         } // else isNeutrinoSlice

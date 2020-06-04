@@ -1,11 +1,11 @@
-////////////////////////////////////////////////////////////////////////
-// Class:       PFPSliceValidation
-// Plugin Type: analyzer (art v3_02_06)
-// File:        PFPSliceValidation_module.cc
-//
-// Generated at Wed Oct  2 03:27:09 2019 by Edward Tyley using cetskelgen
-// from cetlib version v3_07_02.
-////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+// Class:       PFPSliceValidation                                            //
+// Plugin Type: analyzer (art v3_02_06)                                       //
+// File:        PFPSliceValidation_module.cc                                  //
+//                                                                            //
+// Generated at Wed Oct  2 03:27:09 2019 by Edward Tyley using cetskelgen     //
+// from cetlib version v3_07_02.                                              //
+////////////////////////////////////////////////////////////////////////////////
 
 #include "art/Framework/Core/EDAnalyzer.h"
 #include "art/Framework/Core/ModuleMacros.h"
@@ -44,7 +44,6 @@ namespace ana {
   class PFPSliceValidation;
 }
 
-
 class ana::PFPSliceValidation : public art::EDAnalyzer {
   public:
     explicit PFPSliceValidation(fhicl::ParameterSet const& pset);
@@ -61,20 +60,26 @@ class ana::PFPSliceValidation : public art::EDAnalyzer {
     void analyze(art::Event const& evt) override;
     void beginJob();
 
+    // Function to get a map of MCTruth to number of hits from that truth
     std::map<art::Ptr<simb::MCTruth>, int> GetTruthHitMap(
         const sim::ParticleList& trueParticlesMap,
         const std::map<int, art::Ptr<simb::MCTruth> >& particleTruthMap,
         const std::vector< art::Ptr< recob::Hit> >& allHits);
 
+    // Function to match a slice, really any selection of hits, back to MCTruth
+    // Also calculates purity and completeness of match (by reference)
     art::Ptr<simb::MCTruth> GetSliceTruthMatchHits(
         const std::vector< art::Ptr< recob::Hit> >& sliceHits,
         const std::map<int, art::Ptr<simb::MCTruth> >& particleTruthMap,
         const std::map<art::Ptr<simb::MCTruth>, int>& truthHitMap,
         float& completeness, float& purity);
 
+    // Functions to reset tree variables
     void ClearTrueTree();
     void ClearEventTree();
 
+    // Function to create branches on tree for a list of labels
+    // Branches will have the form branchName_PFParticleLabel
     template <class T>
     void initTree(TTree* Tree, std::string branchName,
         std::map<std::string, T>& Metric,
@@ -83,31 +88,34 @@ class ana::PFPSliceValidation : public art::EDAnalyzer {
   private:
 
     int fVerbose;
+
     std::string fHitLabel, fGenieGenModuleLabel;
     std::vector<std::string> fPFParticleLabels;
+
     art::ServiceHandle<art::TFileService> tfs;
     art::ServiceHandle<cheat::BackTrackerService> bt_serv;
     art::ServiceHandle<cheat::ParticleInventoryService> particleInventory;
-    // Declare member data here.
+
     TTree* eventTree;
     TTree* trueTree;
 
+    // Event wide metrics
     int eventTrueNeutrinos;
     std::map<std::string, int>  eventPFPSlices, eventPFPNeutrinos;
     std::map<std::string, std::vector<float> > eventCosmicScores, eventNeutrinoScores;
 
+    // Truth-by-truth metrics
     std::map<std::string, bool> nuMatchNeutrino;
-    std::map<std::string, int> nuSlices, nuNeutrinos;
+    std::map<std::string, int> nuSlices, nuNeutrinos, bestNuPdg;
     std::map<std::string, float> bestNuPurity, bestNuComp, bestNuScore;
 
-    int intType, CCNC, neutrinoPDG, numProtons, numNeutrons, numPi, numPi0;
+    int intType, CCNC, neutrinoPDG, numProtons, numNeutrons, numPi, numPi0, numTrueHits;
     double W, X, Y, QSqr, Pt, Theta, neutrinoE, leptonP;
     float trueVertexX, trueVertexY, trueVertexZ;
 
     std::map<std::string, float> pfpVertexX, pfpVertexY, pfpVertexZ;
     std::map<std::string, float> pfpVertexDistX, pfpVertexDistY, pfpVertexDistZ, pfpVertexDistMag;
 };
-
 
 ana::PFPSliceValidation::PFPSliceValidation(fhicl::ParameterSet const& pset)
   : EDAnalyzer{pset}
@@ -126,37 +134,42 @@ void ana::PFPSliceValidation::beginJob() {
 
   initTree(eventTree, "pfpNeutrinos", eventPFPNeutrinos, fPFParticleLabels);
   initTree(eventTree, "pfpSlices", eventPFPSlices, fPFParticleLabels);
+  // Vector of scores of all slices that match to a cosmic
   initTree(eventTree, "cosmicScores", eventCosmicScores, fPFParticleLabels);
+  // Vector of socres of all slices that match to a neutrino
   initTree(eventTree, "nuScores", eventNeutrinoScores, fPFParticleLabels);
 
-  trueTree->Branch("intType",&intType);
-  trueTree->Branch("CCNC",&CCNC);
-  trueTree->Branch("neutrinoPDG",&neutrinoPDG);
-  trueTree->Branch("numProtons",&numProtons);
-  trueTree->Branch("numPi",&numPi);
-  trueTree->Branch("numPi0",&numPi0);
+  // Truth variables from GENIE
+  trueTree->Branch("intType", &intType);
+  trueTree->Branch("CCNC", &CCNC);
+  trueTree->Branch("neutrinoPDG", &neutrinoPDG);
+  trueTree->Branch("numProtons", &numProtons); //Note, 21Mev KE cut
+  trueTree->Branch("numPi", &numPi);
+  trueTree->Branch("numPi0", &numPi0);
+  trueTree->Branch("numTrueHits", &numTrueHits);
+  trueTree->Branch("W", &W);
+  trueTree->Branch("X", &X);
+  trueTree->Branch("Y", &Y);
+  trueTree->Branch("QSqr", &QSqr);
+  trueTree->Branch("Pt", &Pt);
+  trueTree->Branch("Theta", &Theta);
+  trueTree->Branch("neutrinoE", &neutrinoE);
+  trueTree->Branch("leptonP", &leptonP);
 
-  trueTree->Branch("W",&W);
-  trueTree->Branch("X",&X);
-  trueTree->Branch("Y",&Y);
-  trueTree->Branch("QSqr",&QSqr);
-  trueTree->Branch("Pt",&Pt);
-  trueTree->Branch("Theta",&Theta);
-  trueTree->Branch("neutrinoE",&neutrinoE);
-  trueTree->Branch("leptonP",&leptonP);
-
-  initTree(trueTree, "bestMatchNeutrino", nuMatchNeutrino, fPFParticleLabels);
+  // Total number of all slices, and only neutrino slices matched to true interaction
   initTree(trueTree, "numSlices", nuSlices, fPFParticleLabels);
   initTree(trueTree, "numNeutrinos", nuNeutrinos, fPFParticleLabels);
+  // Metrics of only best matched slice (Highest completeness)
+  initTree(trueTree, "bestMatchNeutrino", nuMatchNeutrino, fPFParticleLabels);
   initTree(trueTree, "purity", bestNuPurity, fPFParticleLabels);
   initTree(trueTree, "comp", bestNuComp, fPFParticleLabels);
   initTree(trueTree, "score", bestNuScore, fPFParticleLabels);
-
-  // Throw some vertex reco stuff into the tree
-  trueTree->Branch("trueVertexX",&trueVertexX);
-  trueTree->Branch("trueVertexY",&trueVertexY);
-  trueTree->Branch("trueVertexZ",&trueVertexZ);
-
+  initTree(trueTree, "recoPdg", bestNuPdg, fPFParticleLabels);
+  // True vertex, needed for FV cuts
+  trueTree->Branch("trueVertexX", &trueVertexX);
+  trueTree->Branch("trueVertexY", &trueVertexY);
+  trueTree->Branch("trueVertexZ", &trueVertexZ);
+  // reco vertex of best matched slice, only available for neutrino slices
   initTree(trueTree, "pfpVertexX", pfpVertexX, fPFParticleLabels);
   initTree(trueTree, "pfpVertexY", pfpVertexY, fPFParticleLabels);
   initTree(trueTree, "pfpVertexZ", pfpVertexZ, fPFParticleLabels);
@@ -170,21 +183,32 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
 {
   ClearEventTree();
 
+        std::cout << std::setprecision(1) << std::fixed;
   // Get the truths in the event:
   const std::vector<art::Ptr<simb::MCTruth> > truthVec = particleInventory->MCTruthVector_Ps();
-  // for (auto const& truth: truthVec){
-  // }
+  for (auto const& truth: truthVec){
+    if (fVerbose){
+      std::cout << "Truth: " << truth << std::endl;
+      if (truth->NeutrinoSet()){
+        const simb::MCNeutrino neutrino = truth->GetNeutrino();
+        std::cout << "Neutrino: " << neutrino << std::endl;
+
+        const simb::MCParticle nu = neutrino.Nu();
+        std::cout << "X: " << nu.Vx() << " Y: " << nu.Vy() << " Z " << nu.Vz() <<std::endl;
+      } // truth->NeutrinoSet
+    } // fVerbose
+  } // truth: truthVec
+  std::cout << std::setprecision(2) << std::fixed;
 
   // Get a map of each true particle to the MC Truth
   std::map<int, art::Ptr<simb::MCTruth> > particleTruthMap;
   const sim::ParticleList& trueParticlesMap= particleInventory->ParticleList();
   for (auto const& [trackId, particle]: trueParticlesMap){
     particleTruthMap[trackId] = particleInventory->ParticleToMCTruth_P(particle);
-  }
+  } // [trackId, particle]: trueParticlesMap
   eventTrueNeutrinos = truthVec.size();
 
-  // Get reco
-  // Initialse some stuff???
+  // Get reco stuff initialised
   std::vector<art::Handle<std::vector<recob::Hit> > > hitHandles;
   evt.getManyByType(hitHandles);
   std::vector<art::Handle<std::vector<recob::Vertex> > > vertexHandles;
@@ -205,28 +229,32 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
   std::map<art::Ptr<simb::MCTruth>, int> truthHitMap = GetTruthHitMap(trueParticlesMap,
       particleTruthMap, allHits);
 
+  // Create maps to store the best matched slice to each truth
+  // TODO: make into a strut
   std::map<std::string, std::map<art::Ptr<simb::MCTruth>, unsigned int> > pfpTruthNuCounterMap;
   std::map<std::string, std::map<art::Ptr<simb::MCTruth>, unsigned int> > pfpTruthSliceCounterMap;
   std::map<std::string, std::map<art::Ptr<simb::MCTruth>, float> > pfpTruthCompMap;
   std::map<std::string, std::map<art::Ptr<simb::MCTruth>, float> > pfpTruthPurityMap;
   std::map<std::string, std::map<art::Ptr<simb::MCTruth>, float> > pfpTruthScoreMap;
+  std::map<std::string, std::map<art::Ptr<simb::MCTruth>, int> > pfpTruthPdgMap;
   std::map<std::string, std::map<art::Ptr<simb::MCTruth>, int> > pfpTruthNuMap;
   std::map<std::string, std::map<art::Ptr<simb::MCTruth>, double> > pfpTruthVtxMapX;
   std::map<std::string, std::map<art::Ptr<simb::MCTruth>, double> > pfpTruthVtxMapY;
   std::map<std::string, std::map<art::Ptr<simb::MCTruth>, double> > pfpTruthVtxMapZ;
 
+  // Initialise the counters in the maps
   for (auto const fPFParticleLabel: fPFParticleLabels){
     for (auto const& truth: truthVec){
       pfpTruthNuCounterMap[fPFParticleLabel][truth]    = 0;
       pfpTruthSliceCounterMap[fPFParticleLabel][truth] = 0;
-    }
-  }
+    } // truth: truthVec
+  } // fPFParticleLabel: fPFParticleLabels
 
   for (auto const fPFParticleLabel: fPFParticleLabels){
 
     if (fVerbose){
       std::cout << "On PFParticleLabel: " << fPFParticleLabel <<std::endl;
-    }
+    } // fVerbose
 
     // Get all the PFPs
     std::vector<art::Ptr<recob::Slice> > pfpSliceVec;
@@ -252,41 +280,46 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
       return;
     }
     art::FindManyP<recob::PFParticle> fmSlicePFPs(pfpSliceVec, evt, fPFParticleLabel);
-    if (!fmSlicePFPs.isValid() || fmSlicePFPs.size()==0){
+    if (!fmSlicePFPs.isValid()){
       std::cout<<"FindMany Slice PFPs not valid"<<std::endl;
       return;
     }
     // Create a map between PFParticles and their IDs
     art::FindManyP<larpandoraobj::PFParticleMetadata> fmpfpmd(pfps, evt, fPFParticleLabel);
-    if (!fmpfpmd.isValid() || fmpfpmd.size()==0){
+    if (!fmpfpmd.isValid()) {
       std::cout<<"PFP MetaData handle not valid"<<std::endl;
       return;
     }
 
+    // Get maps of the pfp's Id to the pfp objects
+    // And for pfp neutrinos, get the slice id mva score
     std::map<long unsigned int, art::Ptr<recob::PFParticle> > pfpMap;
     std::map<long unsigned int, float > pfpNuScoreMap;
     std::vector<art::Ptr<recob::PFParticle> > pfpNeutrinoVec;
     for (auto const& pfp: pfps){
       long unsigned int pfpID = pfp->Self();
       pfpMap[pfpID] = pfp;
-      if ((pfp->PdgCode()==12) ||(pfp->PdgCode()==14)){
+      // Select PFP neutrinos
+      if (pfp->PdgCode()==12 || pfp->PdgCode()==14){
         pfpNeutrinoVec.push_back(pfp);
+        if (fmpfpmd.size()==0) {
+          std::cout<<"PFP MetaData handle not valid"<<std::endl;
+          return;
+        } // fmpfpmd.size()
 
         const std::vector< art::Ptr<larpandoraobj::PFParticleMetadata> > pfpMetaVec = fmpfpmd.at(pfpID);
         for (auto const pfpMeta: pfpMetaVec)
         {
           larpandoraobj::PFParticleMetadata::PropertiesMap propertiesMap = pfpMeta->GetPropertiesMap();
           pfpNuScoreMap[pfpID] = propertiesMap.at("NuScore");
-        }
-      }
-    }
+        } // pfpMeta: pfpMetaVec
+      } // pfp->PdgCode()==12 || pfp->PdgCode()==14
+    } // pfp: pfps
 
-    eventPFPSlices[fPFParticleLabel] = pfpSliceVec.size();
+    eventPFPSlices[fPFParticleLabel]    = pfpSliceVec.size();
     eventPFPNeutrinos[fPFParticleLabel] = pfpNeutrinoVec.size();
 
     for (const auto& pfpSlice: pfpSliceVec){
-
-      ++eventPFPSlices[fPFParticleLabel];
 
       std::vector<art::Ptr<recob::Hit> > sliceHits = fmSliceHits.at(pfpSlice.key());
       std::vector<art::Ptr<recob::PFParticle> > slicePFPs = fmSlicePFPs.at(pfpSlice.key());
@@ -294,55 +327,64 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
       bool isNeutrinoSlice(false);
       float nuScore(-999);
       long unsigned int pfpNu(-999);
+      // Check if it is a neutrino slice, if so get some info from the pfp neutrino
       for (auto const& pfp: slicePFPs){
-        if ((pfp->PdgCode()==12) ||(pfp->PdgCode()==14)){
+        if (pfp->PdgCode()==12 || pfp->PdgCode()==14){
           pfpNu = pfp->Self();
           nuScore = pfpNuScoreMap[pfpNu];
           isNeutrinoSlice = true;
-          ++eventPFPNeutrinos[fPFParticleLabel];
-          break;
-        }
-      }
+          break; // Should only be 1 neutrino per slice
+        } // pfp->PdgCode()==12 || pfp->PdgCode()==14
+      } // pfp:slicePFPs
 
+      // Find the MCTruth that contains most of the hits from the slice
       float purity(-999), completeness(-999);
       art::Ptr<simb::MCTruth> trueMatch = GetSliceTruthMatchHits(sliceHits, particleTruthMap,
           truthHitMap, completeness, purity);
 
-      if (trueMatch.isNull()){
-        if (isNeutrinoSlice){
-          eventCosmicScores[fPFParticleLabel].push_back(nuScore);
-        }
+      // Check if it matched to anything
+      if (trueMatch.isNull())
         continue;
-      }
 
-      if (fVerbose){
+      if (fVerbose && isNeutrinoSlice){
         std::cout << "True Match: "  << trueMatch << " with completeness: " << completeness
           << " and purity: " << purity    << " and score: "         << nuScore
           << std::endl;;
-      }
+      } // fVerbose
 
+      // Increment the counters for the true match
       ++pfpTruthSliceCounterMap[fPFParticleLabel][trueMatch];
       if (isNeutrinoSlice) {
         ++pfpTruthNuCounterMap[fPFParticleLabel][trueMatch];
-        eventNeutrinoScores[fPFParticleLabel].push_back(nuScore);
-      }
+        if (trueMatch->NeutrinoSet()) {
+          eventNeutrinoScores[fPFParticleLabel].push_back(nuScore);
+        } else { // cosmicTruth
+          eventCosmicScores[fPFParticleLabel].push_back(nuScore);
+        } // neutrinoTruth
+      } // isNeutrinoSlice
+
+      // Choose the best match slice, defined as the slice with the best completeness
       if (completeness > pfpTruthCompMap[fPFParticleLabel][trueMatch]){
         pfpTruthCompMap[fPFParticleLabel][trueMatch]   = completeness;
         pfpTruthPurityMap[fPFParticleLabel][trueMatch] = purity;
         pfpTruthScoreMap[fPFParticleLabel][trueMatch]  = nuScore;
         pfpTruthNuMap[fPFParticleLabel][trueMatch]     = pfpNu;
 
-        art::Ptr<recob::PFParticle> pfpNeutrino = pfpMap.at(pfpNu);;
-        art::Ptr<recob::Vertex> pfpVertex = fopfv.at(pfpNeutrino.key());
+        if (isNeutrinoSlice) {
+          art::Ptr<recob::PFParticle> pfpNeutrino = pfpMap.at(pfpNu);;
+          art::Ptr<recob::Vertex> pfpVertex = fopfv.at(pfpNeutrino.key());
 
-        double pfpVtx[3];
-        pfpVertex->XYZ(pfpVtx);
-        pfpTruthVtxMapX[fPFParticleLabel][trueMatch] = pfpVtx[0];
-        pfpTruthVtxMapY[fPFParticleLabel][trueMatch] = pfpVtx[1];
-        pfpTruthVtxMapZ[fPFParticleLabel][trueMatch] = pfpVtx[2];
-      }
-    }
-  }
+          pfpTruthPdgMap[fPFParticleLabel][trueMatch] = pfpNeutrino->PdgCode();
+
+          double pfpVtx[3];
+          pfpVertex->XYZ(pfpVtx);
+          pfpTruthVtxMapX[fPFParticleLabel][trueMatch] = pfpVtx[0];
+          pfpTruthVtxMapY[fPFParticleLabel][trueMatch] = pfpVtx[1];
+          pfpTruthVtxMapZ[fPFParticleLabel][trueMatch] = pfpVtx[2];
+        } // isNeutrinoSlice
+      } // bestMatch
+    } // pfpSlice:pfpSliceVec
+  } // auto const fPFParticleLabel: fPFParticleLabels
 
   eventTree->Fill();
 
@@ -351,30 +393,42 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
 
     ClearTrueTree();
 
+    // Only fill the tree for truth neutrinos
+    if (!truth->NeutrinoSet())
+      continue;
+
+    // Get the truth interaction variables
     const simb::MCNeutrino neutrino = truth->GetNeutrino();
     const simb::MCParticle nu = neutrino.Nu();
     const simb::MCParticle lepton  = neutrino.Lepton();
 
-    intType = neutrino.Mode();
-    CCNC = neutrino.CCNC();
+    intType     = neutrino.Mode();
+    CCNC        = neutrino.CCNC();
     neutrinoPDG = nu.PdgCode();
-
-    W = neutrino.W();
-    X = neutrino.X();
-    Y = neutrino.Y();
-    QSqr = neutrino.QSqr();
-    Pt = neutrino.Pt();
-    Theta = neutrino.Theta();
+    W         = neutrino.W();
+    X         = neutrino.X();
+    Y         = neutrino.Y();
+    QSqr      = neutrino.QSqr();
+    Pt        = neutrino.Pt();
+    Theta     = neutrino.Theta();
     neutrinoE = nu.E();
-    leptonP = lepton.P();
+    leptonP   = lepton.P();
 
     trueVertexX = nu.Vx();
     trueVertexY = nu.Vy();
     trueVertexZ = nu.Vz();
 
-    for (auto const& [primary, truthIter]: particleTruthMap){
+    // Number of true hits from the slice
+    numTrueHits = truthHitMap.at(truth);
+
+    // Calculate the number of direct daughters
+    for (auto const& [particleId, truthIter]: particleTruthMap){
       if (truthIter!=truth) continue;
-      const simb::MCParticle* particle = trueParticlesMap.at(primary);
+      const simb::MCParticle* particle = trueParticlesMap.at(particleId);
+      // We only want the primary daughters
+      if (particle->Process() != "primary")
+        continue;
+      // Apply 21MeV KE cut on protons
       if (particle->PdgCode() == 2212 && (particle->E()-particle->Mass())>0.021) {
         ++numProtons;
       }  else if (TMath::Abs(particle->PdgCode()) == 211) {
@@ -384,67 +438,92 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
       }
     }
 
-    for (auto const fPFParticleLabel: fPFParticleLabels){
-      // if (pfpTruthSliceCounterMap[fPFParticleLabel].find(truth)
-      //     != pfpTruthSliceCounterMap[fPFParticleLabel].end()){
+    if (fVerbose){
+      std::cout << "\nTruth: " << truth <<std::endl;
+    } // fVerbose
 
+    for (auto const fPFParticleLabel: fPFParticleLabels){
+
+
+      // Check we actually match a slice to the truth
+      if (pfpTruthSliceCounterMap[fPFParticleLabel].at(truth)){
         nuSlices[fPFParticleLabel] = pfpTruthSliceCounterMap[fPFParticleLabel][truth];
         nuNeutrinos[fPFParticleLabel] = pfpTruthNuCounterMap[fPFParticleLabel][truth];
         bestNuComp[fPFParticleLabel] = pfpTruthCompMap[fPFParticleLabel][truth];
         bestNuPurity[fPFParticleLabel] = pfpTruthPurityMap[fPFParticleLabel][truth];
         bestNuScore[fPFParticleLabel] = pfpTruthScoreMap[fPFParticleLabel][truth];
+        bestNuPdg[fPFParticleLabel] = pfpTruthPdgMap[fPFParticleLabel][truth];
         nuMatchNeutrino[fPFParticleLabel] = (pfpTruthNuMap[fPFParticleLabel][truth]!=-999);
 
-        if (!nuMatchNeutrino[fPFParticleLabel])
-          continue;
+        // If we matched a neutrino slice, get the vertex info
+        if (nuMatchNeutrino[fPFParticleLabel]) {
 
-        pfpVertexX[fPFParticleLabel] = pfpTruthVtxMapX[fPFParticleLabel][truth];
-        pfpVertexY[fPFParticleLabel] = pfpTruthVtxMapY[fPFParticleLabel][truth];
-        pfpVertexZ[fPFParticleLabel] = pfpTruthVtxMapZ[fPFParticleLabel][truth];
+          pfpVertexX[fPFParticleLabel] = pfpTruthVtxMapX[fPFParticleLabel][truth];
+          pfpVertexY[fPFParticleLabel] = pfpTruthVtxMapY[fPFParticleLabel][truth];
+          pfpVertexZ[fPFParticleLabel] = pfpTruthVtxMapZ[fPFParticleLabel][truth];
 
-        pfpVertexDistX[fPFParticleLabel] = pfpVertexX[fPFParticleLabel] - nu.Vx();
-        pfpVertexDistY[fPFParticleLabel] = pfpVertexY[fPFParticleLabel] - nu.Vy();
-        pfpVertexDistZ[fPFParticleLabel] = pfpVertexZ[fPFParticleLabel] - nu.Vz();
+          pfpVertexDistX[fPFParticleLabel] = pfpVertexX[fPFParticleLabel] - nu.Vx();
+          pfpVertexDistY[fPFParticleLabel] = pfpVertexY[fPFParticleLabel] - nu.Vy();
+          pfpVertexDistZ[fPFParticleLabel] = pfpVertexZ[fPFParticleLabel] - nu.Vz();
 
-        pfpVertexDistMag[fPFParticleLabel] = sqrt(
-            pfpVertexDistX[fPFParticleLabel] * pfpVertexDistX[fPFParticleLabel] +
-            pfpVertexDistY[fPFParticleLabel] * pfpVertexDistY[fPFParticleLabel] +
-            pfpVertexDistZ[fPFParticleLabel] * pfpVertexDistZ[fPFParticleLabel]);
-      }
-    // }
+          pfpVertexDistMag[fPFParticleLabel] = sqrt(
+              pfpVertexDistX[fPFParticleLabel] * pfpVertexDistX[fPFParticleLabel] +
+              pfpVertexDistY[fPFParticleLabel] * pfpVertexDistY[fPFParticleLabel] +
+              pfpVertexDistZ[fPFParticleLabel] * pfpVertexDistZ[fPFParticleLabel]);
+        } else if (CCNC==0) {
+          std::cout << "X: " << nu.Vx() << " Y: " << nu.Vy() << " Z " << nu.Vz() << std::endl;
+          std::cout << "Event: " << evt.id() << std::endl;
+        } //nuMatchNeutrino
+      } else if (CCNC==0) {
+        std::cout << "X: " << nu.Vx() << " Y: " << nu.Vy() << " Z " << nu.Vz() << std::endl;
+        std::cout << "Event: " << evt.id() << std::endl;
+      } // pfpTruthSliceCounter
+
+      if (fVerbose){
+        std::cout << "PFParticleLabel: " << fPFParticleLabel <<std::endl;
+
+        std::cout << "Nu Slices: "         << nuSlices[fPFParticleLabel]
+          << " and Nu Neutrinos: " << nuNeutrinos[fPFParticleLabel]
+          << " with best Nu Pdg: " << bestNuPdg[fPFParticleLabel]
+          << "\nCompleteness: "    << bestNuComp[fPFParticleLabel]
+          << " and purity: "       << bestNuPurity[fPFParticleLabel]
+          << " and score: "        << bestNuScore[fPFParticleLabel]
+          << std::endl;;
+      } // fVerbose
+    } // fPFParticleLabel: fPFParticleLabels
     trueTree->Fill();
-  }
-
-  eventTree->Fill();
+  } // truth: truthVec
   std::cout<<"\n"<<std::endl;
-
-}
+} // analyze
 
 std::map<art::Ptr<simb::MCTruth>, int> ana::PFPSliceValidation::GetTruthHitMap(
     const sim::ParticleList& trueParticlesMap,
     const std::map<int, art::Ptr<simb::MCTruth> >& particleTruthMap,
     const std::vector< art::Ptr< recob::Hit> >& allHits){
 
+  // Create a map of true particles to number of hits
   std::map<int,int> trueParticleHits;
   for (const auto& hit: allHits){
     int trackID     = 0;
     float hitEnergy = 0;
     std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(hit);
+    // For each hit, chose the particle that contributed the most energy
     for (const auto& ide: trackIDEs) {
       if (ide.energy > hitEnergy){
         hitEnergy = ide.energy;
         trackID   = TMath::Abs(ide.trackID);
-      }
-    }
+      } // ide.energy > hitEnergy
+    } // ide: trackIDEs
     ++trueParticleHits[trackID];
-  }
+  } // hit: allHits
 
+  // Roll up the particles in their slices
   std::map<art::Ptr<simb::MCTruth>, int> truthHitMap;
   for (const auto& [trueParticle, truth]: particleTruthMap){
     truthHitMap[truth] += trueParticleHits[trueParticle];
-  }
+  } // [trueParticle, truth]: particleTruthMap
   return truthHitMap;
-}
+} // GetTruthHitMap
 
 art::Ptr<simb::MCTruth> ana::PFPSliceValidation::GetSliceTruthMatchHits(
     const std::vector< art::Ptr< recob::Hit> >& sliceHits,
@@ -452,49 +531,58 @@ art::Ptr<simb::MCTruth> ana::PFPSliceValidation::GetSliceTruthMatchHits(
     const std::map<art::Ptr<simb::MCTruth>, int>& truthHitMap,
     float& completeness, float& purity){
 
-  std::map<int,int> particleHits;
+  // Create a map of true particles to number of hits
+  std::map<int,int> trueParticleHits;
   for (const auto& hit: sliceHits){
     int trackID     = 0;
     float hitEnergy = 0;
     std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(hit);
+    // For each hit, chose the particle that contributed the most energy
     for (const auto& ide: trackIDEs) {
       if (ide.energy > hitEnergy){
         hitEnergy = ide.energy;
         trackID   = TMath::Abs(ide.trackID);
-      }
-    }
-    ++particleHits[trackID];
-  }
+      } // ide.energy > hitEnergy
+    } // ide: trackIDEs
+    ++trueParticleHits[trackID];
+  } // hit: sliceHits
 
+  // Roll up the particles in their slices
   std::map<art::Ptr<simb::MCTruth>, int> sliceTruthHitMap;
-  for (const auto& [particle, truth]: particleTruthMap){
-    sliceTruthHitMap[truth] += particleHits[particle];
-  }
+  for (const auto& [trueParticle, truth]: particleTruthMap){
+    sliceTruthHitMap[truth] += trueParticleHits[trueParticle];
+  } // [trueParticle, truth]: particleTruthMap
 
+  // Choose the truth that contributed the most hits
   int maxHits = 0;
   art::Ptr<simb::MCTruth> bestTruthMatch;
   for (const auto& [truth, truthHits]: sliceTruthHitMap){
     if (truthHits > maxHits){
       maxHits        = truthHits;
       bestTruthMatch = truth;
-    }
-  }
+    } // truthHits > maxHuts
+  } // [truth, truthHits]: sliceTruthHitMap
 
-  purity       = (float) maxHits / sliceHits.size();
-  completeness = (float) maxHits / truthHitMap.at(bestTruthMatch);
+  // If we have truth matched the slice, calculate purtity and completeness
+  // Note these are passed by referecne
+  if (!bestTruthMatch.isNull()){
+    purity       = (float) maxHits / sliceHits.size();
+    completeness = (float) maxHits / truthHitMap.at(bestTruthMatch);
+  } // !bestTruthMatch.isNull()
+
   return bestTruthMatch;
-}
+} // GetSliceTruthMatchHits
 
 void ana::PFPSliceValidation::ClearTrueTree(){
 
   intType     = -999;
   CCNC        = -999;
   neutrinoPDG = -999;
-  numProtons  = -999;
-  numNeutrons = -999;
-  numPi       = -999;
-  numPi0      = -999;
-
+  numProtons  = 0;
+  numNeutrons = 0;
+  numPi       = 0;
+  numPi0      = 0;
+  numTrueHits = 0;
   W         = -999;
   X         = -999;
   Y         = -999;
@@ -511,22 +599,23 @@ void ana::PFPSliceValidation::ClearTrueTree(){
   for (auto const fPFParticleLabel: fPFParticleLabels){
 
     nuMatchNeutrino[fPFParticleLabel] = false;
-    nuSlices[fPFParticleLabel]       = -999;
-    nuNeutrinos[fPFParticleLabel]    = -999;
-    bestNuPurity[fPFParticleLabel]   = -999;
-    bestNuComp[fPFParticleLabel]     = -999;
-    bestNuScore[fPFParticleLabel]    = -999;
+    nuSlices[fPFParticleLabel]        = -99999;
+    nuNeutrinos[fPFParticleLabel]     = -99999;
+    bestNuPurity[fPFParticleLabel]    = -99999;
+    bestNuComp[fPFParticleLabel]      = -99999;
+    bestNuScore[fPFParticleLabel]     = -99999;
+    bestNuPdg[fPFParticleLabel]       = -99999;
 
-    pfpVertexX[fPFParticleLabel] = -999;
-    pfpVertexY[fPFParticleLabel] = -999;
-    pfpVertexZ[fPFParticleLabel] = -999;
+    pfpVertexX[fPFParticleLabel] = -99999;
+    pfpVertexY[fPFParticleLabel] = -99999;
+    pfpVertexZ[fPFParticleLabel] = -99999;
 
-    pfpVertexDistX[fPFParticleLabel]   = -999;
-    pfpVertexDistY[fPFParticleLabel]   = -999;
-    pfpVertexDistZ[fPFParticleLabel]   = -999;
-    pfpVertexDistMag[fPFParticleLabel] = -999;
-  }
-}
+    pfpVertexDistX[fPFParticleLabel]   = -99999;
+    pfpVertexDistY[fPFParticleLabel]   = -99999;
+    pfpVertexDistZ[fPFParticleLabel]   = -99999;
+    pfpVertexDistMag[fPFParticleLabel] = -99999;
+  } // fPFParticleLabel: fPFParticleLabels
+} // ClearTrueTree
 
 void ana::PFPSliceValidation::ClearEventTree(){
   eventTrueNeutrinos = -999;
@@ -535,8 +624,8 @@ void ana::PFPSliceValidation::ClearEventTree(){
     eventPFPSlices[fPFParticleLabel]      = -999;
     eventCosmicScores[fPFParticleLabel].clear();
     eventNeutrinoScores[fPFParticleLabel].clear();
-  }
-}
+  } // fPFParticleLabel: fPFParticleLabels
+} // ClearEventTree
 
 template <class T>
 void ana::PFPSliceValidation::initTree(TTree* Tree, std::string branchName,
@@ -546,7 +635,7 @@ void ana::PFPSliceValidation::initTree(TTree* Tree, std::string branchName,
     std::string branchString = branchName + "_" + fPFParticleLabel;
     const char* branchChar   = branchString.c_str();
     Tree->Branch(branchChar, &Metric[fPFParticleLabel], 32000, 0);
-  }
-}
+  } // fPFParticleLabel: fPFParticleLabels
+} // initTree
 
 DEFINE_ART_MODULE(ana::PFPSliceValidation)

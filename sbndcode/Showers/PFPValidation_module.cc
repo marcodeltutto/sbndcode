@@ -323,6 +323,8 @@ void ana::PFPValidation::analyze(art::Event const& evt)
 
     for (auto const& pfp: pfps){
 
+      clearPFPTree(fPFParticleLabel);
+
       // Update event wide metrics
       if (pfp->PdgCode()==11) {
         ++eventNumPFPShower[fPFParticleLabel];
@@ -355,7 +357,6 @@ void ana::PFPValidation::analyze(art::Event const& evt)
           pfpHits, 2);
       if (trueId.first==-99999){
         pfpTree->Fill();
-        clearPFPTree(fPFParticleLabel);
         continue;
       }
 
@@ -389,7 +390,6 @@ void ana::PFPValidation::analyze(art::Event const& evt)
       pfpEnergyCompMap[fPFParticleLabel][pfp->Self()]   = pfpEnergyComp[fPFParticleLabel];
       pfpHitSPRatioMap[fPFParticleLabel][pfp->Self()]   = pfpHitSPRatio[fPFParticleLabel];
 
-      clearPFPTree(fPFParticleLabel);
     }
     eventTree->Fill();
   }

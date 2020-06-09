@@ -1,0 +1,59 @@
+#include "analysisConfig.fcl"
+#include "simulationservices_sbnd.fcl"
+#include "backtrackerservice.fcl"
+#include "particleinventoryservice.fcl"
+
+process_name: AnalyseEvents # The process name must Not contain any underscores
+
+source:
+{
+   module_type:RootInput # Telling art we want a ROOT input
+               maxEvents:       -1
+}
+services:
+{
+   @table::sbnd_simulation_services
+   TFileService: {fileName: "analysisOutput_newnoise.root"}
+   BackTrackerService: @local::standard_backtrackerservice
+   ParticleInventoryService: @local::standard_particleinventoryservice
+
+}
+physics:
+{
+    analyzers:
+    {
+# ana: @local::analyseEvents
+      analysistreefifteen:   @local::analyseEvents
+      analysistreesixteen:   @local::analyseEvents
+      analysistreeseventeen: @local::analyseEvents
+      analysistreeeighteen:  @local::analyseEvents
+      analysistreenineteen:  @local::analyseEvents
+      analysistreetwenty:    @local::analyseEvents
+    } # analyzers
+ana: [ analysistreefifteen, analysistreesixteen, analysistreeseventeen, analysistreeeighteen, analysistreenineteen, analysistreetwenty]
+
+# path0:            [ ana ]
+    end_paths:        [ ana ]
+} #physics
+physics.analyzers.analysistreefifteen.HitsModuleLabel:   "gaushitfifteen"
+physics.analyzers.analysistreesixteen.HitsModuleLabel:   "gaushitsixteen"
+physics.analyzers.analysistreeseventeen.HitsModuleLabel: "gaushitseventeen"
+physics.analyzers.analysistreeeighteen.HitsModuleLabel:  "gaushiteighteen"
+physics.analyzers.analysistreenineteen.HitsModuleLabel:  "gaushitnineteen"
+physics.analyzers.analysistreetwenty.HitsModuleLabel:    "gaushittwenty"
+##HitsTrackLable 
+physics.analyzers.analysistreefifteen.HitsTrackLable:    "pandoraTrackfifteen"
+physics.analyzers.analysistreesixteen.HitsTrackLable:    "pandoraTracksixteen"
+physics.analyzers.analysistreeseventeen.HitsTrackLable:  "pandoraTrackseventeen"
+physics.analyzers.analysistreeeighteen.HitsTrackLable:   "pandoraTrackeighteen"
+physics.analyzers.analysistreenineteen.HitsTrackLable:   "pandoraTracknineteen"
+physics.analyzers.analysistreetwenty.HitsTrackLable:     "pandoraTracktwenty"
+## TrackModuleLabel:
+physics.analyzers.analysistreefifteen.TrackModuleLabel:      "pandoraTrackfifteen"
+physics.analyzers.analysistreesixteen.TrackModuleLabel:       "pandoraTracksixteen"
+physics.analyzers.analysistreeseventeen.TrackModuleLabel:   "pandoraTrackseventeen"
+physics.analyzers.analysistreeeighteen.TrackModuleLabel:  "pandoraTrackeighteen"
+physics.analyzers.analysistreenineteen.TrackModuleLabel:   "pandoraTracknineteen"
+physics.analyzers.analysistreetwenty.TrackModuleLabel:   "pandoraTracktwenty"
+
+services.message.destinations.LogStandardOut.categories.BackTracker: {limit: 0}

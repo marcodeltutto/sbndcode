@@ -1,0 +1,11 @@
+BEGIN_PROLOG
+analyseEvents:
+{
+module_type:         "AnalyseEventsb"
+ HitsModuleLabel:     "gaushit"
+ LArGeantModuleLabel: "largeant"
+ HitsTrackLable:      "pandoraTrack"
+ TrackModuleLabel:    "pandoraTrack"
+}
+
+END_PROLOG

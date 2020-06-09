@@ -1,0 +1,9 @@
+BEGIN_PROLOG
+
+CItest:
+{
+    module_type:              "CItest"
+    HitsModuleLabel:          "gaushit"
+}
+
+END_PROLOG

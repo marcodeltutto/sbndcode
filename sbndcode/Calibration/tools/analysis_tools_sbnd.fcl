@@ -8,7 +8,7 @@ TrackHitEfficiencyAnalysisTool:
   RawDigitLabelVec:	   ["daq"]
   ## WireModuleLabelVec:      ["decon1droi"]
   WireModuleLabelVec:	   ["caldata"]
-  HitModuleLabelVec:       ["gaushit"]
+  HitModuleLabelVec:       ["gaushitfifteen", "gaushitsixteen", "gaushitseventeen", "gaushiteighteen", "gaushitnineteen", "gaushittwenty"]
   MCParticleLabel:         "largeant"
   SimChannelLabel:         "largeant"
   LocalDirName:            "EfficHists"

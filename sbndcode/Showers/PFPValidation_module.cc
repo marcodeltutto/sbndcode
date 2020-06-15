@@ -89,6 +89,28 @@ class ana::PFPValidation : public art::EDAnalyzer {
         std::map<std::string, T>& Metric,
         std::vector<std::string> fPFParticleLabels);
 
+    struct TruthMatch {
+
+      TruthMatch(): mRecoId(0), mTrueId(-999), mRecoPdg(-999), mNumHits(-999),
+      mHitComp(-999), mHitPurity(-999), mEnergyComp(-999), mEnergyPurity(-999),
+      mHitSPRatio(-999), mTrackScore(-999) {}
+
+      TruthMatch(long unsigned int recoId, int trueId, int recoPdg, int numHits,
+          float hitComp, float hitPurity, float energyComp, float energyPurity,
+          float hitSPRatio, float trackScore):
+        mRecoId(recoId), mTrueId(trueId), mRecoPdg(recoPdg), mNumHits(numHits),
+        mHitComp(hitComp), mHitPurity(hitPurity), mEnergyComp(energyComp), mEnergyPurity(energyPurity),
+        mHitSPRatio(hitSPRatio), mTrackScore(trackScore) {}
+
+      long unsigned int mRecoId;
+      int mTrueId, mRecoPdg, mNumHits;
+      float mHitComp, mHitPurity, mEnergyComp, mEnergyPurity;
+      float mHitSPRatio, mTrackScore;
+
+      bool operator>(const TruthMatch& match) const {return mHitComp > match.mHitComp;}
+
+    };
+
   private:
 
     std::string fHitLabel, fGenieGenModuleLabel, fLArGeantModuleLabel;
@@ -231,9 +253,10 @@ void ana::PFPValidation::analyze(art::Event const& evt)
       truePrimaries, allHits);
 
   std::map<std::string, std::map<long unsigned int, art::Ptr<recob::PFParticle> > > pfpMap;
-  std::map<std::string, std::map<long unsigned int, int>  > pfpTrueParticleMap, pfpHitMap;
-  std::map<std::string, std::map<long unsigned int, float> >  pfpHitCompMap, pfpHitPurityMap,
-    pfpEnergyCompMap, pfpEnergyPurityMap, pfpHitSPRatioMap, pfpTrackScoreMap;
+  std::map<std::string, std::map<long unsigned int, float> > pfpTrackScoreMap;
+
+  std::map<std::string, std::vector<TruthMatch> > pfpTruthMatchMap;
+
 
   for (auto const fPFParticleLabel: fPFParticleLabels){
 
@@ -382,14 +405,12 @@ void ana::PFPValidation::analyze(art::Event const& evt)
 
       pfpTree->Fill();
 
-      pfpTrueParticleMap[fPFParticleLabel][pfp->Self()] = trueId.first;
-      pfpHitMap[fPFParticleLabel][pfp->Self()]          = pfpHits.size();
-      pfpHitPurityMap[fPFParticleLabel][pfp->Self()]    = pfpHitPurity[fPFParticleLabel];
-      pfpHitCompMap[fPFParticleLabel][pfp->Self()]      = pfpHitComp[fPFParticleLabel];
-      pfpEnergyPurityMap[fPFParticleLabel][pfp->Self()] = pfpEnergyPurity[fPFParticleLabel];
-      pfpEnergyCompMap[fPFParticleLabel][pfp->Self()]   = pfpEnergyComp[fPFParticleLabel];
-      pfpHitSPRatioMap[fPFParticleLabel][pfp->Self()]   = pfpHitSPRatio[fPFParticleLabel];
+      TruthMatch match(pfp->Self(), trueId.first, pfpPdg[fPFParticleLabel], pfpNumHits[fPFParticleLabel],
+           pfpHitComp[fPFParticleLabel], pfpHitPurity[fPFParticleLabel],
+           pfpEnergyComp[fPFParticleLabel], pfpEnergyPurity[fPFParticleLabel],
+           pfpHitSPRatio[fPFParticleLabel], pfpTrackScore[fPFParticleLabel]);
 
+      pfpTruthMatchMap[fPFParticleLabel].push_back(match);
     }
     eventTree->Fill();
   }
@@ -420,14 +441,15 @@ void ana::PFPValidation::analyze(art::Event const& evt)
         << trueDepositedEnergy << std::endl;
     }
     for (auto const fPFParticleLabel: fPFParticleLabels){
-      std::vector<long unsigned int> pfpMatches;
+      std::vector<TruthMatch> pfpMatches;
       unsigned int pfpTracks(0), pfpShowers(0);
-      for (auto const& [pfpId, trueMatch]: pfpTrueParticleMap[fPFParticleLabel]){
-        if (trueId==trueMatch){
-          pfpMatches.push_back(pfpId);
-          if (pfpMap[fPFParticleLabel].at(pfpId)->PdgCode()==11)
+      for (TruthMatch const& truthMatch: pfpTruthMatchMap[fPFParticleLabel]){
+        // Check the pfp is matched to the true particle we care about
+        if (trueId==truthMatch.mTrueId){
+          pfpMatches.push_back(truthMatch);
+          if (truthMatch.mRecoPdg==11)
             ++pfpShowers;
-          if (pfpMap[fPFParticleLabel].at(pfpId)->PdgCode()==13)
+          if (truthMatch.mRecoPdg==13)
             ++pfpTracks;
         }
       }
@@ -436,24 +458,21 @@ void ana::PFPValidation::analyze(art::Event const& evt)
       recoPFPShowers[fPFParticleLabel] = pfpShowers;
 
       if (pfpMatches.size()>0){
-        int bestMatchPFP = -999;
-        float bestComp = -999;
+        TruthMatch bestMatch;
         // Find the "Best Match" as the pfp with the highest completeness
-        for (auto const& pfpMatch: pfpMatches){
-          float hitCompleteness = pfpHitCompMap[fPFParticleLabel].at(pfpMatch);
-          if (hitCompleteness>bestComp){
-            bestComp = hitCompleteness;
-            bestMatchPFP = pfpMatch;
+        for (TruthMatch const& pfpMatch: pfpMatches){
+          if (pfpMatch > bestMatch){
+            bestMatch = pfpMatch;
           }
         }
-        recoPdg[fPFParticleLabel]        = pfpMap[fPFParticleLabel].at(bestMatchPFP)->PdgCode();
-        recoTrackScore[fPFParticleLabel] = pfpTrackScoreMap[fPFParticleLabel].at(bestMatchPFP);
-        recoHits[fPFParticleLabel]       = pfpHitMap[fPFParticleLabel].at(bestMatchPFP);
-        hitPurity[fPFParticleLabel]      = pfpHitPurityMap[fPFParticleLabel].at(bestMatchPFP);
-        hitComp[fPFParticleLabel]        = pfpHitCompMap[fPFParticleLabel].at(bestMatchPFP);
-        energyPurity[fPFParticleLabel]   = pfpEnergyPurityMap[fPFParticleLabel].at(bestMatchPFP);
-        energyComp[fPFParticleLabel]     = pfpEnergyCompMap[fPFParticleLabel].at(bestMatchPFP);
-        hitSPRatio[fPFParticleLabel]     = pfpHitSPRatioMap[fPFParticleLabel].at(bestMatchPFP);
+        recoPdg[fPFParticleLabel]        = bestMatch.mRecoPdg;
+        recoHits[fPFParticleLabel]       = bestMatch.mNumHits;
+        hitComp[fPFParticleLabel]        = bestMatch.mHitComp;
+        hitPurity[fPFParticleLabel]      = bestMatch.mHitPurity;
+        energyComp[fPFParticleLabel]     = bestMatch.mEnergyComp;
+        energyPurity[fPFParticleLabel]   = bestMatch.mEnergyPurity;
+        hitSPRatio[fPFParticleLabel]     = bestMatch.mHitSPRatio;
+        recoTrackScore[fPFParticleLabel] = bestMatch.mTrackScore;
       }
       if (trueProcess=="primary"){
         std::cout << "  " << fPFParticleLabel << ": and reco pdg: "<<recoPdg[fPFParticleLabel]

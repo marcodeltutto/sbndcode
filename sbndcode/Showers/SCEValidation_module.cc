@@ -244,9 +244,16 @@ void ana::SCEValidation::analyze(art::Event const& evt)
 
       int trueParticleId = RecoUtils::TrueParticleIDFromTotalTrueEnergy(trackHits);
 
+
       if (trueParticleId!=-99999){
         const simb::MCParticle* trueParticle = trueParticles.at(trueParticleId);
         trackTrueT0 = trueParticle->T();
+
+        std::cout << "TrackLabel:" << trackTreeLabel << "\n"
+        << "X: " << "True: " << trueParticle->Vx() << " and Reco: " << trackStartX << "\n"
+        << "Y: " << "True: " << trueParticle->Vy() << " and Reco: " << trackStartY << "\n"
+        << "Z: " << "True: " << trueParticle->Vz() << " and Reco: " << trackStartZ << "\n"
+        << std::endl;
       }
       trackTree->Fill();
     }

@@ -122,23 +122,23 @@ namespace sbnd{
     std::pair<double, double> TrackT0Range(double startX, double endX, int driftDirection, std::pair<double, double> xLimits);
 
     // Calculate the distance of closest approach (DCA) between the end of a track and a crt hit
-    double DistOfClosestApproach(TVector3 trackPos, TVector3 trackDir, crt::CRTHit crtHit, int driftDirection, double t0);
+    double DistOfClosestApproach(TVector3 trackPos, TVector3 trackDir, sbn::crt::CRTHit crtHit, int driftDirection, double t0);
 
     std::pair<TVector3, TVector3> TrackDirectionAverage(recob::Track track, double frac);
     std::pair<TVector3, TVector3> TrackDirectionAverageFromPoints(recob::Track track, double frac);
 
     // Return the closest CRT hit to a TPC track and the DCA
-    std::pair<crt::CRTHit, double> ClosestCRTHit(recob::Track tpcTrack, std::pair<double, double> t0MinMax, std::vector<sbnd::crt::CRTHit> crtHits, int driftDirection);
-    std::pair<crt::CRTHit, double> ClosestCRTHit(recob::Track tpcTrack, std::vector<sbnd::crt::CRTHit> crtHits, const art::Event& event);
-    std::pair<crt::CRTHit, double> ClosestCRTHit(recob::Track tpcTrack, std::vector<art::Ptr<recob::Hit>> hits, std::vector<sbnd::crt::CRTHit> crtHits);
+    std::pair<sbn::crt::CRTHit, double> ClosestCRTHit(recob::Track tpcTrack, std::pair<double, double> t0MinMax, std::vector<sbn::crt::CRTHit> crtHits, int driftDirection);
+    std::pair<sbn::crt::CRTHit, double> ClosestCRTHit(recob::Track tpcTrack, std::vector<sbn::crt::CRTHit> crtHits, const art::Event& event);
+    std::pair<sbn::crt::CRTHit, double> ClosestCRTHit(recob::Track tpcTrack, std::vector<art::Ptr<recob::Hit>> hits, std::vector<sbn::crt::CRTHit> crtHits);
 
     // Match track to T0 from CRT hits
-    double T0FromCRTHits(recob::Track tpcTrack, std::vector<sbnd::crt::CRTHit> crtHits, const art::Event& event);
-    double T0FromCRTHits(recob::Track tpcTrack, std::vector<art::Ptr<recob::Hit>> hits, std::vector<sbnd::crt::CRTHit> crtHits);
+    double T0FromCRTHits(recob::Track tpcTrack, std::vector<sbn::crt::CRTHit> crtHits, const art::Event& event);
+    double T0FromCRTHits(recob::Track tpcTrack, std::vector<art::Ptr<recob::Hit>> hits, std::vector<sbn::crt::CRTHit> crtHits);
 
     // Match track to T0 from CRT hits, also return the DCA
-    std::pair<double, double> T0AndDCAFromCRTHits(recob::Track tpcTrack, std::vector<sbnd::crt::CRTHit> crtHits, const art::Event& event);
-    std::pair<double, double> T0AndDCAFromCRTHits(recob::Track tpcTrack, std::vector<art::Ptr<recob::Hit>> hits, std::vector<sbnd::crt::CRTHit> crtHits);
+    std::pair<double, double> T0AndDCAFromCRTHits(recob::Track tpcTrack, std::vector<sbn::crt::CRTHit> crtHits, const art::Event& event);
+    std::pair<double, double> T0AndDCAFromCRTHits(recob::Track tpcTrack, std::vector<art::Ptr<recob::Hit>> hits, std::vector<sbn::crt::CRTHit> crtHits);
 
 
   private:

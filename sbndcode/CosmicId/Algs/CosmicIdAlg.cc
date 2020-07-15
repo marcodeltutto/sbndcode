@@ -152,16 +152,16 @@ bool CosmicIdAlg::CosmicId(recob::Track track, const art::Event& event, std::vec
 
   // Tag cosmics which match CRT tracks
   if(fApplyCrtTrackCut){
-    auto crtTrackHandle = event.getValidHandle<std::vector<crt::CRTTrack>>(fCrtTrackModuleLabel);
-    std::vector<crt::CRTTrack> crtTracks = (*crtTrackHandle);
+    auto crtTrackHandle = event.getValidHandle<std::vector<sbn::crt::CRTTrack>>(fCrtTrackModuleLabel);
+    std::vector<sbn::crt::CRTTrack> crtTracks = (*crtTrackHandle);
 
     if(ctTag.CrtTrackCosmicId(track, crtTracks, event)) return true;
   }
 
   // Tag cosmics which match CRT hits
   if(fApplyCrtHitCut){
-    auto crtHitHandle = event.getValidHandle<std::vector<crt::CRTHit>>(fCrtHitModuleLabel);
-    std::vector<crt::CRTHit> crtHits = (*crtHitHandle);
+    auto crtHitHandle = event.getValidHandle<std::vector<sbn::crt::CRTHit>>(fCrtHitModuleLabel);
+    std::vector<sbn::crt::CRTHit> crtHits = (*crtHitHandle);
 
     if(chTag.CrtHitCosmicId(track, crtHits, event)) return true;
   }
@@ -233,8 +233,8 @@ bool CosmicIdAlg::CosmicId(recob::PFParticle pfparticle, std::map< size_t, art::
 
   // Tag cosmics which match CRT tracks
   if(fApplyCrtTrackCut){
-    auto crtTrackHandle = event.getValidHandle<std::vector<crt::CRTTrack>>(fCrtTrackModuleLabel);
-    std::vector<crt::CRTTrack> crtTracks = (*crtTrackHandle);
+    auto crtTrackHandle = event.getValidHandle<std::vector<sbn::crt::CRTTrack>>(fCrtTrackModuleLabel);
+    std::vector<sbn::crt::CRTTrack> crtTracks = (*crtTrackHandle);
 
     if(ctTag.CrtTrackCosmicId(track, crtTracks, event)) return true;
   }
@@ -307,8 +307,8 @@ bool CosmicIdAlg::CosmicId(recob::PFParticle pfparticle, std::map< size_t, art::
       // Check if either track matches CRT hit
       if(fApplyCrtHitCut){
         // Apply crt hit match cut to both tracks
-        auto crtHitHandle = event.getValidHandle<std::vector<crt::CRTHit>>(fCrtHitModuleLabel);
-        std::vector<crt::CRTHit> crtHits = (*crtHitHandle);
+        auto crtHitHandle = event.getValidHandle<std::vector<sbn::crt::CRTHit>>(fCrtHitModuleLabel);
+        std::vector<sbn::crt::CRTHit> crtHits = (*crtHitHandle);
         if(chTag.CrtHitCosmicId(track, crtHits, event)) return true;
         if(chTag.CrtHitCosmicId(track2, crtHits, event)) return true;
       }
@@ -332,8 +332,8 @@ bool CosmicIdAlg::CosmicId(recob::PFParticle pfparticle, std::map< size_t, art::
 
     // Tag cosmics which match CRT hits
     if(fApplyCrtHitCut){
-      auto crtHitHandle = event.getValidHandle<std::vector<crt::CRTHit>>(fCrtHitModuleLabel);
-      std::vector<crt::CRTHit> crtHits = (*crtHitHandle);
+      auto crtHitHandle = event.getValidHandle<std::vector<sbn::crt::CRTHit>>(fCrtHitModuleLabel);
+      std::vector<sbn::crt::CRTHit> crtHits = (*crtHitHandle);
 
       if(chTag.CrtHitCosmicId(track, crtHits, event)) return true;
     }

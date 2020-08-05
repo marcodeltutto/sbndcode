@@ -1,4 +1,7 @@
-install_fhicl()
+add_subdirectory(gen)
+add_subdirectory(g4)
+add_subdirectory(detsim)
+add_subdirectory(reco)
+add_subdirectory(anatree)
 
-FILE(GLOB fcl_files *.fcl)
-install_source(EXTRAS  ${fcl_files} )
+install_fhicl()

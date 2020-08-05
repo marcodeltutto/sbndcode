@@ -24,8 +24,6 @@ void CRTBackTracker::reconfigure(const Config& config){
   fCRTHitLabel = config.CRTHitLabel();
   fCRTTrackLabel = config.CRTTrackLabel();
 
-  fRollupUnsavedIds = config.RollupUnsavedIds();
-
   return;
 
 }
@@ -54,9 +52,7 @@ void CRTBackTracker::Initialize(const art::Event& event){
     // Get all the true IDs from all the IDEs in the hit
     std::vector<art::Ptr<sim::AuxDetIDE>> ides = findManyIdes.at(data_i);
     for(size_t i = 0; i < ides.size(); i++){
-      int id = ides[i]->trackID;
-      if(fRollupUnsavedIds) id = std::abs(id);
-      fDataTrueIds[data_i][id] += ides[i]->energyDeposited;
+      fDataTrueIds[data_i][ides[i]->trackID] += ides[i]->energyDeposited;
     }
 
   }
@@ -182,9 +178,7 @@ std::vector<int> CRTBackTracker::AllTrueIds(const art::Event& event, const crt::
   // Get all the true IDs from all the IDEs in the hit
   std::vector<art::Ptr<sim::AuxDetIDE>> ides = findManyIdes.at(data_i);
   for(size_t i = 0; i < ides.size(); i++){
-    int id = ides[i]->trackID;
-    if(fRollupUnsavedIds) id = std::abs(id);
-    ids.push_back(id);
+    ids.push_back(ides[i]->trackID);
   }
 
   // Remove any repeated IDs
@@ -220,9 +214,7 @@ std::vector<int> CRTBackTracker::AllTrueIds(const art::Event& event, const crt::
   for(size_t i = 0; i < data.size(); i++){
     std::vector<art::Ptr<sim::AuxDetIDE>> ides = findManyIdes.at(i);
     for(size_t j = 0; j < ides.size(); j++){
-      int id = ides[j]->trackID;
-      if(fRollupUnsavedIds) id = std::abs(id);
-      ids.push_back(id);
+      ids.push_back(ides[j]->trackID);
     }
   }
 
@@ -262,9 +254,7 @@ std::vector<int> CRTBackTracker::AllTrueIds(const art::Event& event, const crt::
     for(size_t j = 0; j < data.size(); j++){
       std::vector<art::Ptr<sim::AuxDetIDE>> ides = findManyIdes.at(j);
       for(size_t k = 0; k < ides.size(); k++){
-        int id = ides[k]->trackID;
-        if(fRollupUnsavedIds) id = std::abs(id);
-        ids.push_back(id);
+        ids.push_back(ides[k]->trackID);
       }
     }
   }
@@ -297,9 +287,7 @@ int CRTBackTracker::TrueIdFromTotalEnergy(const art::Event& event, const crt::CR
   // Get all the true IDs from all the IDEs in the hit
   std::vector<art::Ptr<sim::AuxDetIDE>> ides = findManyIdes.at(data_i);
   for(size_t i = 0; i < ides.size(); i++){
-    int id = ides[i]->trackID;
-    if(fRollupUnsavedIds) id = std::abs(id);
-    ids[id] += ides[i]->energyDeposited;
+    ids[ides[i]->trackID] += ides[i]->energyDeposited;
   }
 
   // Find the true ID that contributed the most energy
@@ -359,9 +347,7 @@ int CRTBackTracker::TrueIdFromTotalEnergy(const art::Event& event, const crt::CR
   for(size_t i = 0; i < data.size(); i++){
     std::vector<art::Ptr<sim::AuxDetIDE>> ides = findManyIdes.at(i);
     for(size_t j = 0; j < ides.size(); j++){
-      int id = ides[j]->trackID;
-      if(fRollupUnsavedIds) id = std::abs(id);
-      ids[id] += ides[j]->energyDeposited;
+      ids[ides[j]->trackID] += ides[j]->energyDeposited;
     }
   }
 
@@ -424,9 +410,7 @@ int CRTBackTracker::TrueIdFromTotalEnergy(const art::Event& event, const crt::CR
     for(size_t j = 0; j < data.size(); j++){
       std::vector<art::Ptr<sim::AuxDetIDE>> ides = findManyIdes.at(j);
       for(size_t k = 0; k < ides.size(); k++){
-        int id = ides[k]->trackID;
-        if(fRollupUnsavedIds) id = std::abs(id);
-        ids[id] += ides[k]->energyDeposited;
+        ids[ides[k]->trackID] += ides[k]->energyDeposited;
       }
     }
   }

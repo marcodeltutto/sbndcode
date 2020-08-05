@@ -2,7 +2,7 @@
  * @file   SBNDGeometryHelper_service.cc
  * @brief  Geometry helper service for SBND geometries (implementation).
  * @author Erica Snider (erica@fnal.gov)
- *
+ * 
  * Handles SBND-specific information for the generic Geometry service
  * within LArSoft. Derived from the `geo::ExptGeoHelperInterface` class.
  */
@@ -14,18 +14,39 @@
 #include "sbndcode/Geometry/ChannelMapSBNDAlg.h"
 
 // LArSoft libraries
+#include "larcorealg/Geometry/GeometryCore.h"
 #include "larcorealg/Geometry/ChannelMapAlg.h"
+
+// framework libraries
+#include "canvas/Utilities/Exception.h"
+
 
 namespace sbnd
 {
-  SBNDGeometryHelper::SBNDGeometryHelper(fhicl::ParameterSet const&)
+
+  SBNDGeometryHelper::SBNDGeometryHelper( fhicl::ParameterSet const & , art::ActivityRegistry & )
+    :  fChannelMap()
   {}
 
-  std::unique_ptr<geo::ChannelMapAlg>
-  SBNDGeometryHelper::doConfigureChannelMapAlg(fhicl::ParameterSet const& sortingParameters,
-                                               std::string const& /*detectorName*/) const
+
+  void  SBNDGeometryHelper::doConfigureChannelMapAlg(fhicl::ParameterSet const& sortingParameters, geo::GeometryCore* geom)
   {
-    return std::make_unique<geo::ChannelMapSBNDAlg>(sortingParameters);
+    fChannelMap.reset();
+
+
+    fChannelMap = std::make_shared<geo::ChannelMapSBNDAlg>( sortingParameters );
+//    fChannelMap = std::make_shared<geo::ChannelMapStandardAlg>( sortingParameters );
+    if (!fChannelMap) {
+      throw art::Exception(art::errors::NullPointerError)
+        << "Failed to create a channel map for SBND geometry!\n";
+    }
+    geom->ApplyChannelMap(fChannelMap);
+  }
+
+
+  std::shared_ptr<const geo::ChannelMapAlg> SBNDGeometryHelper::doGetChannelMapAlg() const
+  {
+    return fChannelMap;
   }
 
 } // namespace sbnd

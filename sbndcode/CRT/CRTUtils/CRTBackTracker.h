@@ -52,9 +52,6 @@ namespace sbnd{
       fhicl::Atom<art::InputTag> CRTTrackLabel {
         Name("CRTTrackLabel")
       };
-      fhicl::Atom<bool> RollupUnsavedIds {
-        Name("RollupUnsavedIds")
-      };
 
     };
 
@@ -110,8 +107,6 @@ namespace sbnd{
     art::InputTag fCRTDataLabel;
     art::InputTag fCRTHitLabel;
     art::InputTag fCRTTrackLabel;
-
-    bool fRollupUnsavedIds;
 
     std::map<int, std::map<int, double>> fDataTrueIds;
     std::map<int, std::map<int, double>> fHitTrueIds;

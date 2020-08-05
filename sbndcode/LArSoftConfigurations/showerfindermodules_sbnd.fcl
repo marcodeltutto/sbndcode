@@ -24,6 +24,7 @@ sbnd_emshower.EMShowerAlg.ShowerEnergyAlg: @local::sbnd_showerenergyalg
 
 sbnd_tracs:  @local::standard_tracs_shower
 
+
 sbnd_showerstartpositionfinder:     @local::showerpfpvertexstartposition
 sbnd_showerdirectionfinder:         @local::showerpcadirection
 sbnd_showerenergyfinder:            @local::showerlinearenergy
@@ -45,7 +46,6 @@ sbnd_showerslidingstandardcalodedx.dEdxTrackLength: 3.1619
 sbnd_showerslidingstandardcalodedx.MinAngleToWire: 0.1745
 sbnd_showerslidingstandardcalodedx.MaxDist: 2.7277
 sbnd_showerslidingstandardcalodedx.CutStartPosition: true
-
 
 
 sbnd_showerstartpositioncheater: @local::showerstartpositioncheater

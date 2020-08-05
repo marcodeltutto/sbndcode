@@ -22,11 +22,14 @@ namespace geo {
 
     CRTGeoObjectSorter(fhicl::ParameterSet const& p);
 
-    void SortAuxDets (std::vector<geo::AuxDetGeo>& adgeo) const;
-    void SortAuxDetSensitive(std::vector<geo::AuxDetSensitiveGeo>& adsgeo) const;
+    ~CRTGeoObjectSorter();
+
+    void SortAuxDets (std::vector<geo::AuxDetGeo*>& adgeo) const;
+    void SortAuxDetSensitive(std::vector<geo::AuxDetSensitiveGeo*>& adsgeo) const;
 
   };
 
 }
 
 #endif  // SBND_CRTGeoObjectSorter_h
+

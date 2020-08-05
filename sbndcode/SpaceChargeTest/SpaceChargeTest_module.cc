@@ -16,7 +16,6 @@
 #include <TH1.h>
 
 // Larsoft includes
-#include "larcore/CoreUtils/ServiceUtil.h"
 #include "larevt/SpaceChargeServices/SpaceChargeService.h"
 
 using namespace std;

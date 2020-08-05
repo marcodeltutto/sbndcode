@@ -24,6 +24,4 @@ add_subdirectory(SpaceChargeServices)
 add_subdirectory(SpaceCharge)
 add_subdirectory(SpaceChargeTest)
 
-add_subdirectory(FlashMatch)
-
-add_subdirectory(Filters)
+add_subdirectory(ShowerAna)

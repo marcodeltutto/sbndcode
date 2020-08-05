@@ -74,18 +74,13 @@ namespace sbnd{
         Comment("")
       };
 
-      fhicl::Atom<double> MaxScore {
-        Name("MaxScore"),
-        Comment("")
-      };
-
       fhicl::Atom<art::InputTag> TPCTrackLabel {
         Name("TPCTrackLabel"),
         Comment("")
       };
 
-      fhicl::Atom<std::string> SelectionMetric {
-        Name("SelectionMetric"),
+      fhicl::Atom<bool> MinimizeAngle {
+        Name("MinimizeAngle"),
         Comment("")
       };
 
@@ -121,10 +116,6 @@ namespace sbnd{
     int GetMatchedCRTTrackId(recob::Track tpcTrack, std::vector<crt::CRTTrack> crtTracks, const art::Event& event);
     int GetMatchedCRTTrackId(recob::Track tpcTrack, std::vector<art::Ptr<recob::Hit>> hits, std::vector<crt::CRTTrack> crtTracks);
 
-    // Find the closest valid matching CRT track ID and return the minimised matching metric
-    std::pair<int,double> GetMatchedCRTTrackIdAndScore(recob::Track tpcTrack, std::vector<crt::CRTTrack> crtTracks, const art::Event& event);
-    std::pair<int,double> GetMatchedCRTTrackIdAndScore(recob::Track tpcTrack, std::vector<art::Ptr<recob::Hit>> hits, std::vector<crt::CRTTrack> crtTracks);
-
     // Get all CRT tracks that cross the right TPC within an allowed time
     std::vector<crt::CRTTrack> AllPossibleCRTTracks(recob::Track tpcTrack, 
                                                     std::vector<crt::CRTTrack> crtTracks, 
@@ -146,19 +137,12 @@ namespace sbnd{
     // Find the closest matching crt track by average DCA between tracks within angle and DCA limits
     std::pair<crt::CRTTrack, double> ClosestCRTTrackByDCA(recob::Track tpcTrack, 
                                                           std::vector<crt::CRTTrack> crtTracks, 
-							                                            const art::Event& event,
+							  const art::Event& event,
                                                           double minAngle = 0.); 
     std::pair<crt::CRTTrack, double> ClosestCRTTrackByDCA(recob::Track tpcTrack, 
                                                           std::vector<art::Ptr<recob::Hit>> hits, 
                                                           std::vector<crt::CRTTrack> crtTracks, 
                                                           double minAngle = 0.); 
-    // Find the closest matching crt track by average DCA between tracks within angle and DCA limits
-    std::pair<crt::CRTTrack, double> ClosestCRTTrackByScore(recob::Track tpcTrack, 
-                                                          std::vector<crt::CRTTrack> crtTracks, 
-							                                            const art::Event& event); 
-    std::pair<crt::CRTTrack, double> ClosestCRTTrackByScore(recob::Track tpcTrack, 
-                                                          std::vector<art::Ptr<recob::Hit>> hits, 
-                                                          std::vector<crt::CRTTrack> crtTracks);
 
     // Calculate the angle between tracks assuming start is at the largest Y
     double AngleBetweenTracks(recob::Track tpcTrack, crt::CRTTrack crtTrack);
@@ -177,8 +161,7 @@ namespace sbnd{
 
     double fMaxAngleDiff;
     double fMaxDistance;
-    double fMaxScore;
-    std::string fSelectionMetric;
+    bool fMinimizeAngle;
 
     art::InputTag fTPCTrackLabel;
 

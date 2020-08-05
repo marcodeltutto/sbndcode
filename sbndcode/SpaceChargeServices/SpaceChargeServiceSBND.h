@@ -17,7 +17,7 @@ namespace spacecharge
     public:
 	SpaceChargeServiceSBND(fhicl::ParameterSet const& pset, art::ActivityRegistry& reg);
 
-        void   reconfigure(fhicl::ParameterSet const& pset);
+	virtual void   reconfigure(fhicl::ParameterSet const& pset)  override;
 	void   preBeginRun(const art::Run& run);
 
 

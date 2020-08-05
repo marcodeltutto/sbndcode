@@ -1,0 +1,65 @@
+photonfilter: 
+{
+    module_type:         "sbndcode/ShowerAna/photonfilter"
+    GenieGenModuleLabel: "generator"
+}
+
+electronfilter: 
+{
+    module_type:         "sbndcode/ShowerAna/electronfilter"
+    GenieGenModuleLabel: "generator"
+}
+
+showerfilter:{
+    module_type:         "sbndcode/ShowerAna/showerfilter"
+    PFParticleLabel:   "pandoratune"
+    ShowerModuleLabel: "TRACStune"
+    GenieGenModuleLabel: "generator"
+    ActiveVolume: [
+        {
+            xmin: -199.15
+            ymin: -200.
+            zmin: 0.0
+            xmax: 199.15
+            ymax: 200.
+            zmax: 500.
+        }
+    ]
+
+}
+
+numufilter:{
+    module_type:         "sbndcode/ShowerAna/numufilter" 
+    GenieGenModuleLabel: "generator"
+    ActiveVolume: [
+        {
+            xmin: -199.15
+            ymin: -200.
+            zmin: 0.0
+            xmax: 199.15
+            ymax: 200.
+            zmax: 500.
+        }
+]
+}
+
+nuefilter:{ 
+    module_type:         "sbndcode/ShowerAna/nuefilter" 
+    GenieGenModuleLabel: "generator"
+    ActiveVolume: [
+        {
+            xmin: -199.15
+            ymin: -200.
+            zmin: 0.0
+            xmax: 199.15
+            ymax: 200.
+            zmax: 500.
+        }
+    ]
+
+}
+
+anglefilter: 
+{
+    module_type:         "sbndcode/ShowerAna/anglefilter"
+}

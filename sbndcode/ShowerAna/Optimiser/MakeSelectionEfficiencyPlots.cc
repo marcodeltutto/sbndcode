@@ -61,13 +61,13 @@ int main(int argc, char* argv[]){
 
   //Get the histogram for the signal
   TFile *f_eff = new TFile(signalfile.c_str());
-  TDirectory* dir_eff = f_eff->GetDirectory("efftwo");
+  TDirectory* dir_eff = f_eff->GetDirectory("effthree");
   TTree *tree_sig = (TTree*)dir_eff->Get("RecoEffMetricTree");  
   TTree *POT_sigtree = (TTree*)dir_eff->Get("RecoEffPOTTree");
 
   //Get the histogram for the background
   TFile *f_bk = new TFile(backgroundfile.c_str());
-  TDirectory* dir_bk = f_bk->GetDirectory("efftwo");
+  TDirectory* dir_bk = f_bk->GetDirectory("effthree");
   TTree *tree_bk = (TTree*)dir_bk->Get("RecoEffMetricTree");  
   TTree *POT_bktree = (TTree*)dir_bk->Get("RecoEffPOTTree");
 
@@ -91,7 +91,7 @@ int main(int argc, char* argv[]){
   }
 
   //Make New Optimiser Object. Setup up the branches
-  optimiser::NueRecoOptimiser NueOptimiser(tree_sig,tree_bk,TotalSigPOT,TotalBKPOT);
+  optimiser::NueRecoOptimiser NueOptimiser(tree_sig,tree_bk,TotalBKPOT,TotalSigPOT);
 
   //Set Up the metrics.
   NueOptimiser.InitialiseMetrics();

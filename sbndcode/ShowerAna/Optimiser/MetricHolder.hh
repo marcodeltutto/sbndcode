@@ -36,6 +36,13 @@ public:
     SignalHist = new TH1D(SignalName.c_str(),SignalName.c_str(),numbins,xmin,xmax);
     BackgroundHist = new TH1D(BackgroundName.c_str(),BackgroundName.c_str(),numbins,xmin,xmax);
 
+    std::string SignalNameNotNorm     = name + "_signalnotnorm"; 
+    std::string BackgroundNameNotNorm = name + "_backgroundnotnorm";
+    SignalHistNotNorm = new TH1D(SignalNameNotNorm.c_str(),SignalNameNotNorm.c_str(),numbins,xmin,xmax);
+    BackgroundHistNotNorm = new TH1D(BackgroundNameNotNorm.c_str(),BackgroundNameNotNorm.c_str(),numbins,xmin,xmax);
+
+
+
     fLessThan = true;
     fPartnerLessThan = true;
     fAND = true;
@@ -50,6 +57,11 @@ public:
 
     applyoscprob = ApplyOscProb;
     applypot     = ApplyPOT; 
+
+    Numbins = numbins;
+    Xmin    = xmin;
+    Xmax    = xmax;  
+
   };
 
   MetricHolder(std::string name, float sigpot, float bkpot, bool ApplyPOT, bool ApplyOscProb, std::string analysisname, bool FillMVA, TString mvaname, float mvaerror){
@@ -69,6 +81,7 @@ public:
 
     applyoscprob =  ApplyOscProb;
     applypot   = ApplyPOT;
+    
   };
 
   
@@ -83,6 +96,11 @@ public:
     std::string BackgroundName = name + "_background";
     SignalHist = new TH1D(SignalName.c_str(),SignalName.c_str(),numbins,xmin,xmax);
     BackgroundHist = new TH1D(BackgroundName.c_str(),BackgroundName.c_str(),numbins,xmin,xmax);
+
+    std::string SignalNameNotNorm     = name + "_signalnotnorm"; 
+    std::string BackgroundNameNotNorm = name + "_backgroundnotnorm";
+    SignalHistNotNorm = new TH1D(SignalNameNotNorm.c_str(),SignalNameNotNorm.c_str(),numbins,xmin,xmax);
+    BackgroundHistNotNorm = new TH1D(BackgroundNameNotNorm.c_str(),BackgroundNameNotNorm.c_str(),numbins,xmin,xmax);
 
     std::string SignalName2D     = name + "_signal_2D"; 
     std::string BackgroundName2D = name + "_background_2D";
@@ -102,6 +120,11 @@ public:
     TotalBKPOT  = bkpot;
 
 
+    Numbins = numbins;
+    Xmin    = xmin;
+    Xmax    = xmax;  
+
+
     applyoscprob =  ApplyOscProb;
     applypot   = ApplyPOT;
   };
@@ -114,9 +137,13 @@ public:
 
   void FillSignal(float& val,double& oscprob){
     SignalHist->Fill(val,oscprob);
+    SignalHistNotNorm->Fill(val);
+
   }
   void FillBackground(float& val, double& oscprob){
     BackgroundHist->Fill(val,oscprob);
+    BackgroundHistNotNorm->Fill(val);
+
   }
 
   void FillSignal(float& x,float& y, double& oscprob){
@@ -149,6 +176,9 @@ public:
 
   void Perform1DCutFinder();
   void Perform1DCutFinder(TH1D* signalhist, TH1D* backgroundhist);
+  void Perform1DCutFinder(TH1D* signalhist, TH1D* backgroundhist,
+			  TH1D* signalhistnotnorm, TH1D* backgroundhistnotnorm);
+
   void Perform2DCutFinder();  
 
   void Plot1D(TH1D* signalhist, TH1D* backgroundhist);
@@ -157,6 +187,11 @@ public:
   void Plot2D();
 
   void MakeEfficiencyPlots(TH1D* postcut, TH1D* precut, TH1D* extra);
+
+  void MakeEfficiencyPlots(TH1D* postcut_eff, TH1D* precut_eff, TH1D* extra_eff, 
+			   TH1D* postcut_bk, TH1D* precut_bk, TH1D* extra_bk,
+			   TH1D* postcut_eff_norm, TH1D* precut_eff_norm, TH1D* postcut_bk_en_norm, 
+			   TH1D* precut_bk_norm);
 
   void MakeStandardNumShowerAnalysisGraphs(float totalsig, float totalbk);
 
@@ -237,6 +272,10 @@ public:
     if(MVAVectorSignal.at(ind) == -999){
       return MVAErrorVal;
     }
+    if(MVAVectorSignal.at(ind) == MVAErrorVal){
+      return MVAErrorVal;
+    }
+
     if(MVAVectorSignal.at(ind) < MVAMinCap){
       return MVAMinCap;
     }
@@ -251,6 +290,9 @@ public:
       return MVAErrorVal;
     }
     if(MVAVectorBackground.at(ind) == -999){
+      return MVAErrorVal;
+    }
+    if(MVAVectorBackground.at(ind) == MVAErrorVal){
       return MVAErrorVal;
     }
     if(MVAVectorBackground.at(ind) < MVAMinCap){
@@ -277,6 +319,13 @@ public:
   TString GetMVAName(){
     return MVAName;
   }
+
+  void SetMVAVal(float& val){
+    MVAVal = val;
+    return;
+  }
+
+
 
   float GetErrorVal(){
     return MVAErrorVal;
@@ -325,6 +374,8 @@ private:
   TString axisTitle;
   TH1D* SignalHist;
   TH1D* BackgroundHist;
+  TH1D* SignalHistNotNorm;
+  TH1D* BackgroundHistNotNorm;
 
   TH2D* SignalHistPartner;
   TH2D* BackgroundHistPartner;
@@ -337,6 +388,13 @@ private:
 
   float TotalSigPOT;
   float TotalBKPOT;
+
+public:
+
+  int Numbins; 
+  float Xmin;
+  float Xmax;
+
   
 };
 

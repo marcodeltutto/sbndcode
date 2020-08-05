@@ -111,6 +111,23 @@ public:
 				 std::string& sample, 
 				 std::vector<std::pair<float,float> >& TwoDvals
 				 );
+
+  int StandardMaxDaughterAnalysis(optimiser::MetricHolder& Metric, 
+			       std::string& sample, 
+			       std::vector<float>& vals, 
+			       std::vector<std::pair<float,float> >& TwoDvals
+			       );
+  
+  int StandardMaxDaughter1DAnalysis(optimiser::MetricHolder& Metric,
+				 std::string& sample, 
+				 std::vector<float>& vals
+				 );
+  
+  int StandardMaxDaughter2DAnalysis(optimiser::MetricHolder& Metric, 
+				 std::string& sample, 
+				 std::vector<std::pair<float,float> >& TwoDvals
+				 );
+
   
   int StandardOverEDaughterAnalysis(optimiser::MetricHolder& Metric, 
 				    std::string& sample, 
@@ -124,6 +141,38 @@ public:
 				      );
   
   int StandardOverEDaughter2DAnalysis(optimiser::MetricHolder& Metric, 
+				      std::string& sample, 
+				      std::vector<std::pair<float,float> >& TwoDvals
+				      );
+
+  int StandardAboveEDaughterAnalysis(optimiser::MetricHolder& Metric, 
+				    std::string& sample, 
+				    std::vector<float>& vals, 
+				    std::vector<std::pair<float,float> >& TwoDvals
+				    );
+  
+  int StandardAboveEDaughter1DAnalysis(optimiser::MetricHolder& Metric,
+				      std::string& sample, 
+				      std::vector<float>& vals
+				      );
+  
+  int StandardAboveEDaughter2DAnalysis(optimiser::MetricHolder& Metric, 
+				      std::string& sample, 
+				      std::vector<std::pair<float,float> >& TwoDvals
+				      );
+
+  int StandardAboveOverEDaughterAnalysis(optimiser::MetricHolder& Metric, 
+				    std::string& sample, 
+				    std::vector<float>& vals, 
+				    std::vector<std::pair<float,float> >& TwoDvals
+				    );
+  
+  int StandardAboveOverEDaughter1DAnalysis(optimiser::MetricHolder& Metric,
+				      std::string& sample, 
+				      std::vector<float>& vals
+				      );
+  
+  int StandardAboveOverEDaughter2DAnalysis(optimiser::MetricHolder& Metric, 
 				      std::string& sample, 
 				      std::vector<std::pair<float,float> >& TwoDvals
 				      );
@@ -203,8 +252,16 @@ public:
 			 std::string& sample, 
 			 TString& MVAMethod);
 
+  int EfficiencyNeutrinoMaker(optimiser::MetricHolder& Metric, std::string& sample);
+
   float GetOscProb(int& iter, std::string sample, bool applyoscprob);
 
+  int StandardNeutrinoEnergyResolutionProfile(optimiser::MetricHolder& Metric,
+					      std::string& sample,
+					      std::vector<std::pair<float,float> >& TwoDvals);
+
+
+  int BDTAllsCut(optimiser::MetricHolder& Metric, std::string& sample, std::vector<float>& vals);
 
   EfficiencyTree SignalTree;
   EfficiencyTree BackgroundTree;
@@ -223,6 +280,7 @@ public:
 
   bool ApplyOscWht;
   bool ApplyPOTWht;
+  bool fApplyFVCut;
 
   std::map<std::string,optimiser::MetricHolder> MetricMap;
 

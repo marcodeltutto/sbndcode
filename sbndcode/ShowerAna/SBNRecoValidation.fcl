@@ -1,0 +1,405 @@
+#include "caldata_sbnd.fcl"
+#include "hitfindermodules_sbnd.fcl"
+#include "cluster_sbnd.fcl"
+#include "trackfindermodules_sbnd.fcl"
+#include "calorimetry_sbnd.fcl"
+#include "showerfindermodules_sbnd.fcl"
+#include "databaseutil_sbnd.fcl"
+#include "vertexfindermodules.fcl"
+#include "pandoramodules_sbnd.fcl"
+#include "particleid_sbnd.fcl"
+#include "rootoutput_sbnd.fcl"
+#include "showertools.fcl"
+
+#include "simulationservices_sbnd.fcl"                                                  
+#include "services_sbnd.fcl"                
+#include "backtrackerservice.fcl"
+#include "particleinventoryservice.fcl" 
+#include "sam_sbnd.fcl"
+#include "showerfindermodules.fcl"  
+#include "pandoramodules_sbnd.fcl"
+
+#Legacy code in EMSHOWER uses the backtracker to be removed after the SBN Workshop March 2018
+#include "backtrackerservice.fcl"
+#include "particleinventoryservice.fcl"
+
+# include for shower validation
+##include "showerfindermodules.fcl"
+#include "simulationservices_sbnd.fcl"
+
+##include "forwardfilter.fcl"
+#include "showerfilters.fcl"
+
+ShowerStartPositionFinder:     @local::showerpfpvertexstartposition
+ShowerDirectionFinder:         @local::showerpcadirection
+ShowerEnergyFinder:            @local::showerlinearenergy
+ShowerdEdxFinder:              @local::showerstandardcalodedx
+ShowerTrackDirectionFinder:    @local::showertrackdirection
+ShowerTrackTrajectoryPointDirection: @local::showertracktrajectorypointdirection
+ShowerSmartTrackTrajectoryPointDirection: @local::showersmarttracktrajectorypointdirection
+ShowerSmartTrackTrajectoryPointDirection.AngleCut:0.0
+Shower2DLinearRegressionTrackHitFinder:@local::shower2Dlinearregressiontrackhitfinder 
+ShowerPMATrackfinder: @local::showerpmatrackfinder
+ShowerPandoraSlidingFitTrackFinder: @local::showerpandoraslidingfittrackfinder
+ShowerPandoraSlidingFitTrackFinder.SlidingFitHalfWindow:6
+Shower3DTrackHitFinder: @local::shower3Dtrackhitfinder
+ShowerTrackTrajToSpacePoint: @local::showertracktrajtospacepoint
+ShowerTrackHitDirection: @local::showertrackhitdirection
+ShowerTrackSpacePointDirection: @local::showertrackspacepointdirection 
+ShowerSlidingStandardCalodEdx: @local::showerslidingstandardcalodedx
+ShowerStartPositionCheater: @local::showerstartpositioncheater
+ShowerDirectionCheater: @local::showerdirectioncheater
+ShowerTrackFinderCheater: @local::showertrackfindercheater
+ShowerResidualTrackHitFinder: @local::showerresidualtrackhitfinder
+ShowerPCAPropergationStartPosition: @local::showerpcapropergationstartposition
+
+
+ShowerdEdxFinder.CalorimetryAlg:  @local::sbnd_calorimetryalgmc
+ShowerSlidingStandardCalodEdx.CalorimetryAlg:  @local::sbnd_calorimetryalgmc
+
+ShowerdEdxCutter: @local::showerbayeslikelihooddedxcutting
+
+ShowerSlidingStandardCalodEdx.dEdxTrackLength: 5.139028033453886
+ShowerSlidingStandardCalodEdx.MinAngleToWire: 0.26
+ShowerSlidingStandardCalodEdx.CutStartPosition: true
+ShowerSlidingStandardCalodEdx.MinDistCutOff: 0
+ShowerSlidingStandardCalodEdx.MaxDist: 2.1176896937087157
+
+ShowerdEdxCutter.ProbDiff: 0
+ShowerdEdxCutter.ProbDiffSeed: 0.005192360559014423
+ShowerdEdxCutter.nSkipHits: 4
+ShowerdEdxCutter.NumSeedHits: 7
+ShowerdEdxCutter.DefineBestPlane: true
+
+ShowerResidualTrackHitFinder.UseShowerDirection: false
+ShowerResidualTrackHitFinder.ForwardHitsOnly: true
+ShowerResidualTrackHitFinder.ChargeWeighted: false
+ShowerResidualTrackHitFinder.MaxResidualDiff: 0.04682737882313664
+ShowerResidualTrackHitFinder.StartFitSize: 19
+ShowerResidualTrackHitFinder.NMissPoints: 0
+ShowerResidualTrackHitFinder.TrackMaxAdjacentSPDistance: 2.7819601901030944
+ShowerResidualTrackHitFinder.MaxAverageResidual: 1.0
+ShowerResidualTrackHitFinder.MakeTrackSeed: true
+ShowerResidualTrackHitFinder.StartDistanceCut: 0
+ShowerResidualTrackHitFinder.DistanceCut: 999
+
+ShowerdEdxCutter.PriorFname: "dEdx_plots.root"
+
+ShowerdEdxFinder.dEdxTrackLength: 6.034881797855389
+
+
+ShowerDirectionTopologyDecision: @local::showerdirectiontopologydecision
+
+ShowerEnergyFinder.Gradients: [0.00155644,0.00173915, 0.00153631]
+ShowerEnergyFinder.Intercepts: [5.92931, -2.13307, 5.19711]
+
+ShowerLengthTool: @local::showerlength90percentile
+ShowerEigenTool: @local::showerpcaeigenvaluelength
+
+ShowerDirectionEnergyDecision: @local::showerdirectionenergydecision
+ShowerDirectionEnergyDecision.EnergyCut:185.74787755531906
+
+standard_tracs_showerhitremov: @local::standard_tracs_shower
+standard_tracs_showerhitremov.ShowerFinderTools:[@local::ShowerStartPositionFinder
+                                               ,@local::ShowerDirectionFinder
+                                               ,@local::ShowerEnergyFinder
+                                               ,@local::Shower3DTrackHitFinder
+                                               ,@local::ShowerPandoraSlidingFitTrackFinder
+                                               ,@local::ShowerTrackTrajToSpacePoint
+                                               ,@local::ShowerdEdxFinder
+                                               ]
+
+standard_tracs_shower_stan: @local::standard_tracs_shower
+standard_tracs_shower_stan.ShowerFinderTools: [ @local::ShowerStartPositionFinder
+                                              ,@local::ShowerDirectionFinder
+                                              ,@local::ShowerEnergyFinder
+                                              ,@local::Shower3DTrackHitFinder
+                                              ,@local::ShowerPandoraSlidingFitTrackFinder
+                                              ,@local::ShowerSlidingStandardCalodEdx
+                                              ]
+standard_tracs_shower_stan.Verbose: false
+
+standard_tracs_showerhitremovcheat: @local::standard_tracs_shower
+standard_tracs_showerhitremovcheat.ShowerFinderTools:[@local::ShowerStartPositionCheater
+                                               ,@local::ShowerDirectionCheater
+                                               ,@local::ShowerEnergyFinder
+                                               ,@local::ShowerTrackFinderCheater
+                                               ,@local::ShowerPandoraSlidingFitTrackFinder
+                                               ,@local::ShowerTrackTrajToSpacePoint
+                                               ,@local::ShowerdEdxFinder
+                                               ]
+
+standard_tracs_shower_stancheat: @local::standard_tracs_shower
+standard_tracs_shower_stancheat.ShowerFinderTools: [ @local::ShowerStartPositionCheater
+                                              ,@local::ShowerDirectionCheater
+                                              ,@local::ShowerEnergyFinder
+                                              ,@local::ShowerTrackFinderCheater
+                                              ,@local::ShowerPandoraSlidingFitTrackFinder
+                                              ,@local::ShowerdEdxFinder
+                                              ]
+
+
+
+process_name: Reco11
+
+services:
+{
+  TFileService: { fileName: "showervalidationGraphs.root" }
+  @table::sbnd_services
+  FileCatalogMetadata:  @local::sbnd_file_catalog_mc
+  ParticleInventoryService: @local::standard_particleinventoryservice
+  BackTrackerService:  @local::standard_backtrackerservice
+
+  #Legacy code in EMSHOWER uses the backtracker to be removed after the SBN Workshop March 2018
+  BackTrackerService:  @local::standard_backtrackerservice
+  ParticleInventoryService: @local::standard_particleinventoryservice
+}
+
+source:
+{
+  module_type: RootInput
+  maxEvents:  -1        # Number of events to create                                   
+}
+
+
+physics:
+{
+
+ filters:
+ {
+  ElectronFilter: @local::electronfilter 
+ # ForwardFilter:   @local::forwardfilter
+}
+
+ producers:
+ {
+
+  ### pandora
+  SBNShowerNew:                @local::standard_tracs_shower_stan
+  pandoraCalotuneNew:         @local::sbnd_calomc                      
+  pandoraPidtuneNew:          @local::sbnd_chi2pid  
+     TRACSReTune:  @local::standard_tracs_shower_stan
+
+  }	
+
+ fpath: [
+  #   ForwardFilter
+     ElectronFilter
+        ]
+
+
+ reco: [
+#     ,ElectronFilter
+     pandoraCalotuneNew,
+     pandoraPidtuneNew
+     ,TRACSReTune
+
+]
+
+  analyzers:     
+ {
+     ana: @local::standard_showervalidation
+
+  effthree: {
+        module_type: RecoEfficencyFinder
+        ShowerModuleLabel: "TRACSReTune" 
+        PFParticleLabel: "pandoratune"
+        GenieGenModuleLabel: "generator" 
+        MinRecoEnergyCut: 0
+        NSegments: 10
+        CalorimetryModuleLabel: "pandoraCalotune"
+        TrackModuleLabel: "pandoraTracktune"
+        ParticleIDModuleLabel: "pandoraPidtune"
+        LArGeantModuleLabel: "largeant"
+        HitsModuleLabel: "linecluster"
+        dmsq: 11.3
+        sinsq2thmumu: 0.07
+        sinsq2thmue: 0.003
+        RemoveStartFin: true
+
+        ActiveVolume: [
+                {
+                    xmin: -199.15
+                    ymin: -200.
+                    zmin: 0.0
+                    xmax: 199.15
+                    ymax: 200.
+                    zmax: 500.
+                    }
+                ]
+
+        FiducalVolume: [
+                {
+                    xmin: -175
+                    ymin: -175
+                    zmin: 30.
+                    xmax: -1.5
+                    ymax: 175
+                    zmax: 450.
+                    },
+                {
+                    xmin: 1.5
+                    ymin: -175
+                    zmin: 30.
+                    xmax: 175
+                    ymax: 175
+                    zmax: 450.
+                    }
+                ]
+        
+        }
+
+
+     efffour: {
+        module_type: RecoEfficencyFinder
+        ShowerModuleLabel: "TRACSReTune" 
+        PFParticleLabel: "pandoratune"
+        GenieGenModuleLabel: "generator" 
+        MinRecoEnergyCut: 0
+        NSegments: 10
+        CalorimetryModuleLabel: "pandoraCalotuneNew"
+        TrackModuleLabel: "pandoraTracktune"
+        ParticleIDModuleLabel: "pandoraPidtuneNew"
+        LArGeantModuleLabel: "largeant"
+        HitsModuleLabel: "linecluster"
+        dmsq: 11.3
+        sinsq2thmumu: 0.07
+        sinsq2thmue: 0.003
+        RemoveStartFin: true
+
+        ActiveVolume: [
+                {
+                    xmin: -199.15
+                    ymin: -200.
+                    zmin: 0.0
+                    xmax: 199.15
+                    ymax: 200.
+                    zmax: 500.
+                    }
+                ]
+
+        FiducalVolume: [
+                {
+                    xmin: -175
+                    ymin: -175
+                    zmin: 30.
+                    xmax: -1.5
+                    ymax: 175
+                    zmax: 450.
+                    },
+                {
+                    xmin: 1.5
+                    ymin: -175
+                    zmin: 30.
+                    xmax: 175
+                    ymax: 175
+                    zmax: 450.
+                    }
+                ]
+        
+        }
+
+
+     
+     
+     
+} 
+
+
+  trigger_paths: [reco]
+    a1: [effthree, efffour, ana]
+  end_paths: [  a1 ]
+
+}
+
+
+#physics.analyzers.effthree.SelectEvents: [fpath]
+
+services.DetectorClocksService.InheritClockConfig: false
+#physics.analyzers.ana.SelectEvents: [fpath]
+
+
+services.DetectorClocksService.InheritClockConfig: false
+
+
+physics.analyzers.ana.PFParticleLabel:               "pandoratune"
+physics.analyzers.ana.ShowerModuleLabels:           ["TRACSReTune",
+                                                     "emshower"
+                                                     ]
+
+Physics.analyzers.ana.UseBiggestShower:               true
+physics.analyzers.ana.RemoveNonContainedParticles:    true
+physics.analyzers.ana.PFPValidation:                  false
+physics.analyzers.ana.PFParticleLabel:                "pandoratune" 
+physics.analyzers.ana.Verbose:                        0
+physics.analyzers.ana.MaxSimEnergy:                   999
+physics.analyzers.ana.DrawCanvases:                   false
+physics.analyzers.ana.FillOnlyClosestShower:          false
+physics.analyzers.ana.MinHitSize:                     0
+physics.analyzers.ana.SimEnergyCut:                   0 #in GeV!!!
+physics.analyzers.ana.DensityCut:                     0
+physics.analyzers.ana.MinRecoEnergy:                  0 #in MeV
+physics.analyzers.ana.ClusterValidation: false
+physics.analyzers.ana.HitValidation: false
+physics.analyzers.ana.MatchShowersInTruth: true
+physics.analyzers.ana.UseNeutrinoShowers: true
+
+physics.producers.TRACSReTune.AllowPartialShowers: false
+physics.producers.TRACSReTune.PFParticleModuleLabel: "pandoratune"  
+physics.producers.TRACSReTune.Verbose: false
+physics.producers.TRACSReTune.ShowerFinderTools: [ 
+    @local::ShowerStartPositionFinder
+    ,@local::ShowerDirectionFinder
+    ,@local::ShowerEnergyFinder
+    ,@local::ShowerResidualTrackHitFinder
+    ,@local::ShowerdEdxFinder
+    ,@local::ShowerPandoraSlidingFitTrackFinder
+    ,@local::ShowerSlidingStandardCalodEdx
+    ,@local::ShowerdEdxCutter
+    ,@local::ShowerPandoraSlidingFitTrackFinder
+    ,@local::ShowerSmartTrackTrajectoryPointDirection
+    ,@local::ShowerDirectionTopologyDecision
+    ,@local::ShowerLengthTool
+
+]
+
+physics.producers.TRACSReTune.ShowerFinderTools[0].PFParticleModuleLabel: "pandoratune"
+physics.producers.TRACSReTune.ShowerFinderTools[1].PFParticleModuleLabel: "pandoratune"
+physics.producers.TRACSReTune.ShowerFinderTools[2].PFParticleModuleLabel: "pandoratune"
+physics.producers.TRACSReTune.ShowerFinderTools[3].PFParticleModuleLabel: "pandoratune"
+physics.producers.TRACSReTune.ShowerFinderTools[4].PFParticleModuleLabel: "pandoratune"
+physics.producers.TRACSReTune.ShowerFinderTools[5].PFParticleModuleLabel: "pandoratune"
+physics.producers.TRACSReTune.ShowerFinderTools[6].PFParticleModuleLabel: "pandoratune"
+physics.producers.TRACSReTune.ShowerFinderTools[7].PFParticleModuleLabel: "pandoratune"
+physics.producers.TRACSReTune.ShowerFinderTools[8].PFParticleModuleLabel: "pandoratune"
+physics.producers.TRACSReTune.ShowerFinderTools[9].PFParticleModuleLabel: "pandoratune"
+physics.producers.TRACSReTune.ShowerFinderTools[10].PFParticleModuleLabel: "pandoratune"
+physics.producers.TRACSReTune.ShowerFinderTools[11].PFParticleModuleLabel: "pandoratune"
+
+
+services.message.destinations.LogStandardOut.categories.BackTracker: {limit: 0}
+
+
+#physics.producers.TRACSReTune.ShowerFinderTools[8].InitialTrackOutputLabel: "SmartDirectionTrack"
+#physics.producers.TRACSReTune.ShowerFinderTools[8].CreateTrack: false
+#physics.producers.TRACSReTune.ShowerFinderTools[9].InitialTrackInputLabel: "SmartDirectionTrack"
+#physics.producers.TRACSReTune.ShowerFinderTools[9].ShowerDirectionOutputLabel: "ShowerDirectionFirst"
+#physics.producers.TRACSReTune.ShowerFinderTools[10].SecondDirectionInputLabel: "ShowerDirection"
+
+physics.producers.TRACSReTune.ShowerFinderTools[8].SlidingFitHalfWindow:20
+physics.producers.TRACSReTune.ShowerFinderTools[8].InitialTrackOutputLabel: "SmartDirectionTrack"
+physics.producers.TRACSReTune.ShowerFinderTools[9].InitialTrackInputLabel: "SmartDirectionTrack"
+physics.producers.TRACSReTune.ShowerFinderTools[9].ShowerDirectionOutputLabel: "ShowerDirectionSmart"
+physics.producers.TRACSReTune.ShowerFinderTools[10].FirstDirectionInputLabel: "ShowerDirectionSmart"
+physics.producers.TRACSReTune.ShowerFinderTools[10].SecondDirectionInputLabel: "ShowerDirection"
+physics.producers.TRACSReTune.ShowerFinderTools[10].ShowerDirectionOutputLabel: "ShowerDirection"
+physics.producers.TRACSReTune.ShowerDirectionLabel: "ShowerDirection"
+physics.producers.TRACSReTune.ShowerFinderTools[8].CreateTrack: false
+physics.producers.TRACSReTune.ShowerFinderTools[10].AngleCut:0.36631875069722314
+physics.producers.TRACSReTune.ShowerFinderTools[9].AngleCut: 3.14
+
+
+physics.producers.pandoraCalotuneNew.TrackModuleLabel:                  "pandoraTracktune"   
+physics.producers.pandoraCalotuneNew.SpacePointModuleLabel:             "pandoratune"        
+physics.producers.pandoraPidtuneNew.TrackModuleLabel:                   "pandoraTracktune"
+physics.producers.pandoraPidtuneNew.CalorimetryModuleLabel:             "pandoraCalotuneNew"    

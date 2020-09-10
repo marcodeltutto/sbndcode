@@ -1,2 +1,0 @@
-#include "prodsingle_mu_100-1257MeV_fixposcontained_fixangle.fcl"
-physics.producers.generator.PDG: [-13]

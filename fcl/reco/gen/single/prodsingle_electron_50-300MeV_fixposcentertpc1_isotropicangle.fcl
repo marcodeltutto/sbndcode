@@ -1,3 +1,0 @@
-#include "prodsingle_gamma_50-300MeV_fixposcentertpc1_isotropicangle.fcl"
-
-physics.producers.generator.PDG: [11]

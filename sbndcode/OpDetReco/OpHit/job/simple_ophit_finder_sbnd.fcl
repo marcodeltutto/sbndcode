@@ -1,0 +1,28 @@
+BEGIN_PROLOG
+
+sbnd_simple_ophit_finder:
+{
+  module_type:    "SBNDSimpleOpHitFinder"
+  GenModule:      "generator"
+  InputModule:    "opdaq"
+  InputLabels:    [""]
+  ChannelMasks:   []                  # Will ignore channels in this list
+  PD:             ["pmt_coated", "pmt_uncoated"]  # Will only use PDS in this list
+
+  BaselineSample:    95  # ticks (make it slightly smaller than the pre-trigger)
+  IntegrationWindow: 100  # ticks (was 25)
+  NumPreSample:      10  # ticks
+  Threshold:         35  # ADC
+  DeadTime:          4000 # in ticks (4000 ticks = 8 us)
+  NWaveformsToFile:  2
+
+  SPEArea:        317.1 # If AreaToPE is true, this number is
+                        # used as single PE area (in ADC counts)
+                        # It's 66.33 ADC = 132.66 ADCxns x 0.5ns^-1
+                        # for the ideal response
+                        # and is 317.1 ADC = 634.2 ADCxns x 0.5ns^-1
+                        # for the test bench response,
+                        # where 0.5 is the sampling rate
+}
+
+END_PROLOG

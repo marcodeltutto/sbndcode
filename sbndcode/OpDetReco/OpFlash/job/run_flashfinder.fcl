@@ -6,6 +6,7 @@
 #include "opdetdigitizer_sbnd.fcl"
 #include "ophitfinder_sbnd.fcl"
 #include "ophit_finder_sbnd.fcl"
+#include "simple_ophit_finder_sbnd.fcl"
 #include "sbnd_flashfinder.fcl"
 #include "sbnd_mcflash.fcl"
 #include "sbnd_flashana.fcl"
@@ -55,7 +56,8 @@ physics:
   producers:
   {
     opdaq:        @local::sbnd_opdetdigitizer
-    ophit:        @local::sbnd_ophit_finder
+    # ophit:        @local::sbnd_ophit_finder
+    ophit:        @local::sbnd_simple_ophit_finder
     opflashtpc0:  @local::SBNDSimpleFlashTPC0
     opflashtpc1:  @local::SBNDSimpleFlashTPC1
     mcflashtpc0:  @local::SBNDMCFlashTPC0
@@ -95,13 +97,13 @@ physics:
 }
 
 ## Uncomment these if you switch to test bench response
-# physics.producers.opdaq.SinglePEmodel: true
-# physics.producers.opdaq.PMTChargeToADC: -51.9
-# physics.producers.ophit.SPEArea: 317.1
+physics.producers.opdaq.SinglePEmodel: true
+physics.producers.opdaq.PMTChargeToADC: -51.9
+physics.producers.ophit.SPEArea: 317.1
 # physics.producers.ophit.PedAlgoPset.SampleSize: 10
-# physics.producers.ophit.PedAlgoPset.Threshold: 15
-# physics.producers.ophit.HitAlgoPset.ADCThreshold: 35
-# physics.producers.opflashtpc0.PECalib.SPEAreaGain: 317.1
-# physics.producers.opflashtpc1.PECalib.SPEAreaGain: 317.1
+# physics.producers.ophit.PedAlgoPset.Threshold: 5 #15
+physics.producers.ophit.HitAlgoPset.ADCThreshold: 35
+physics.producers.opflashtpc0.PECalib.SPEAreaGain: 317.1
+physics.producers.opflashtpc1.PECalib.SPEAreaGain: 317.1
 
 

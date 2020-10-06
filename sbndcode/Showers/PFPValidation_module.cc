@@ -26,6 +26,7 @@
 #include "nusimdata/SimulationBase/MCTruth.h"
 #include "larsim/MCCheater/ParticleInventoryService.h"
 #include "larsim/MCCheater/BackTrackerService.h"
+#include "lardata/DetectorInfoServices/DetectorClocksService.h"
 #include "lardataobj/RecoBase/Cluster.h"
 #include "lardataobj/RecoBase/Hit.h"
 #include "lardataobj/RecoBase/SpacePoint.h"
@@ -67,6 +68,7 @@ class ana::PFPValidation : public art::EDAnalyzer {
     void clearEventTree();
 
     std::map<int, int> GetTruePrimaryHits(
+        const detinfo::DetectorClocksData& clockData,
         std::map<int,const simb::MCParticle*>& trueParticles,
         std::map<int,std::vector<int> >& truePrimaries,
         std::vector< art::Ptr< recob::Hit> >& allHits);
@@ -78,16 +80,19 @@ class ana::PFPValidation : public art::EDAnalyzer {
 
 
     std::map<int, float> GetTruePrimaryHitEnergies(
+        const detinfo::DetectorClocksData& clockData,
         std::map<int,const simb::MCParticle*>& trueParticles,
         std::map<int,std::vector<int> >& truePrimaries,
         std::vector< art::Ptr< recob::Hit> >& allHits);
 
-    float GetTotalEnergyInHits(std::vector<art::Ptr<recob::Hit> > hits);
+    float GetTotalEnergyInHits(
+        const detinfo::DetectorClocksData& clockData,
+        std::vector<art::Ptr<recob::Hit> > hits);
 
     template <class T>
-    void initTree(TTree* Tree, std::string branchName,
-        std::map<std::string, T>& Metric,
-        std::vector<std::string> fPFParticleLabels);
+      void initTree(TTree* Tree, std::string branchName,
+          std::map<std::string, T>& Metric,
+          std::vector<std::string> fPFParticleLabels);
 
     struct TruthMatch {
 
@@ -246,10 +251,11 @@ void ana::PFPValidation::analyze(art::Event const& evt)
   {art::fill_ptr_vector(simChannels, simChannelHandle);}
 
   // Get map of true primary particle to number of reco hits / energy in reco hits
-  std::map<int, int> truePrimaryHits = GetTruePrimaryHits(trueParticles, truePrimaries, allHits);
+  auto const clockData = art::ServiceHandle<detinfo::DetectorClocksService const>()->DataFor(evt);
+  std::map<int, int> truePrimaryHits = GetTruePrimaryHits(clockData, trueParticles, truePrimaries, allHits);
   std::map<int, float> truePrimaryEnergies = GetTruePrimaryEnergies(trueParticles, truePrimaries,
       simChannels);
-  std::map<int, float> truePrimaryHitEnergies = GetTruePrimaryHitEnergies(trueParticles,
+  std::map<int, float> truePrimaryHitEnergies = GetTruePrimaryHitEnergies(clockData, trueParticles,
       truePrimaries, allHits);
 
   std::map<std::string, std::map<long unsigned int, art::Ptr<recob::PFParticle> > > pfpMap;
@@ -376,15 +382,16 @@ void ana::PFPValidation::analyze(art::Event const& evt)
       pfpNumHits[fPFParticleLabel]   = pfpHits.size();
       pfpHitSPRatio[fPFParticleLabel]= (float)sps.size() / pfpHits.size();
 
-      std::pair<int, double> trueId = ShowerUtils::TrueParticleIDFromTrueChain(truePrimaries,
+      std::pair<int, double> trueId = ShowerUtils::TrueParticleIDFromTrueChain(clockData, truePrimaries,
           pfpHits, 2);
       if (trueId.first==-99999){
         pfpTree->Fill();
         continue;
       }
 
-      std::map<int, int> pfpTrueHitsMap = GetTruePrimaryHits(trueParticles, truePrimaries, pfpHits);
-      std::map<int, float> pfpTrueEnergyMap = GetTruePrimaryHitEnergies(trueParticles, truePrimaries, pfpHits);
+      std::map<int, int> pfpTrueHitsMap = GetTruePrimaryHits(clockData, trueParticles, truePrimaries, pfpHits);
+      std::map<int, float> pfpTrueEnergyMap = GetTruePrimaryHitEnergies(clockData, trueParticles,
+          truePrimaries, pfpHits);
 
       const simb::MCParticle* trueParticle = trueParticles.at(trueId.first);
 
@@ -394,7 +401,7 @@ void ana::PFPValidation::analyze(art::Event const& evt)
 
       int   pfpHitsTrueHits    = pfpTrueHitsMap.at(trueId.first);
       float pfpHitsTrueEnergy  = pfpTrueEnergyMap.at(trueId.first);
-      float pfpHitsTotalEnergy = GetTotalEnergyInHits(pfpHits);
+      float pfpHitsTotalEnergy = GetTotalEnergyInHits(clockData, pfpHits);
 
       pfpHitPurity[fPFParticleLabel]          = (float)pfpHitsTrueHits / pfpHits.size();
       pfpHitComp[fPFParticleLabel]            = (float)pfpHitsTrueHits / truePrimaryHits.at(trueId.first);
@@ -406,9 +413,9 @@ void ana::PFPValidation::analyze(art::Event const& evt)
       pfpTree->Fill();
 
       TruthMatch match(pfp->Self(), trueId.first, pfpPdg[fPFParticleLabel], pfpNumHits[fPFParticleLabel],
-           pfpHitComp[fPFParticleLabel], pfpHitPurity[fPFParticleLabel],
-           pfpEnergyComp[fPFParticleLabel], pfpEnergyPurity[fPFParticleLabel],
-           pfpHitSPRatio[fPFParticleLabel], pfpTrackScore[fPFParticleLabel]);
+          pfpHitComp[fPFParticleLabel], pfpHitPurity[fPFParticleLabel],
+          pfpEnergyComp[fPFParticleLabel], pfpEnergyPurity[fPFParticleLabel],
+          pfpHitSPRatio[fPFParticleLabel], pfpTrackScore[fPFParticleLabel]);
 
       pfpTruthMatchMap[fPFParticleLabel].push_back(match);
     }
@@ -490,6 +497,7 @@ void ana::PFPValidation::analyze(art::Event const& evt)
 }
 
 std::map<int, int> ana::PFPValidation::GetTruePrimaryHits(
+    const detinfo::DetectorClocksData& clockData,
     std::map<int,const simb::MCParticle*>& trueParticles,
     std::map<int,std::vector<int> >& truePrimaries,
     std::vector< art::Ptr< recob::Hit> >& allHits){
@@ -498,7 +506,7 @@ std::map<int, int> ana::PFPValidation::GetTruePrimaryHits(
   for (const auto& hit: allHits){
     int trackID     = 0;
     float hitEnergy = 0;
-    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(hit);
+    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(clockData, hit);
     for (const auto& ide: trackIDEs) {
       if (ide.energy > hitEnergy){
         hitEnergy = ide.energy;
@@ -542,13 +550,14 @@ std::map<int, float> ana::PFPValidation::GetTruePrimaryEnergies(
 }
 
 std::map<int, float> ana::PFPValidation::GetTruePrimaryHitEnergies(
+    const detinfo::DetectorClocksData& clockData,
     std::map<int,const simb::MCParticle*>& trueParticles,
     std::map<int,std::vector<int> >& truePrimaries,
     std::vector< art::Ptr< recob::Hit> >& allHits){
 
   std::map<int, float> trueParticleEnergies;
   for (const auto& hit: allHits){
-    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(hit);
+    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(clockData, hit);
     for (const auto& ide: trackIDEs) {
       trueParticleEnergies[TMath::Abs(ide.trackID)] += ide.energy;
     }
@@ -562,10 +571,13 @@ std::map<int, float> ana::PFPValidation::GetTruePrimaryHitEnergies(
   return truePrimaryHitEnergies;
 }
 
-float ana::PFPValidation::GetTotalEnergyInHits(std::vector<art::Ptr<recob::Hit> >  hits){
+float ana::PFPValidation::GetTotalEnergyInHits(
+    const detinfo::DetectorClocksData& clockData,
+    std::vector<art::Ptr<recob::Hit> >  hits){
+
   float energy = 0;
   for (auto const& hit:hits){
-    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(hit);
+    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(clockData, hit);
     for (auto const& trackIDE: trackIDEs){
       energy+=trackIDE.energy;
     }

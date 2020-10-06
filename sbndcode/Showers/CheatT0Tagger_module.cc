@@ -20,6 +20,7 @@
 #include "lardata/Utilities/AssociationUtil.h"
 
 #include "larsim/MCCheater/ParticleInventoryService.h"
+#include "lardata/DetectorInfoServices/DetectorClocksService.h"
 #include "lardataobj/AnalysisBase/T0.h"
 #include "lardataobj/RecoBase/Cluster.h"
 #include "lardataobj/RecoBase/PFParticle.h"
@@ -101,6 +102,8 @@ void cheat::CheatT0Tagger::produce(art::Event& evt)
   if (!fmPFPCluster.isValid() || !fmClusterHit.isValid())
     return;
 
+  auto const clockData = art::ServiceHandle<detinfo::DetectorClocksService const>()->DataFor(evt);
+
   for (auto const& pfp: pfps){
 
     std::vector<art::Ptr<recob::Hit> > pfpHits;
@@ -109,7 +112,7 @@ void cheat::CheatT0Tagger::produce(art::Event& evt)
       const std::vector< art::Ptr< recob::Hit> >& hits = fmClusterHit.at(cluster.key());
       pfpHits.insert(pfpHits.end(), hits.begin(), hits.end());
     }
-    int trueParticleId = RecoUtils::TrueParticleIDFromTotalTrueEnergy(pfpHits);
+    int trueParticleId = RecoUtils::TrueParticleIDFromTotalTrueEnergy(clockData, pfpHits);
 
     if (trueParticleId!=-99999){
       const simb::MCParticle* trueParticle = trueParticles.at(trueParticleId);

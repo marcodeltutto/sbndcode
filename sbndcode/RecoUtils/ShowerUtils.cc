@@ -85,7 +85,7 @@ std::map<int,std::vector<int> > ShowerUtils::FindTrueShowerIDs(std::map<int,cons
   return ShowersMothers;
 }
 
-std::pair<int,double> ShowerUtils::TrueParticleIDFromTrueChain(std::map<int,std::vector<int>> &ShowersMothers,const std::vector<art::Ptr<recob::Hit> >& hits, int planeid) {
+std::pair<int,double> ShowerUtils::TrueParticleIDFromTrueChain(detinfo::DetectorClocksData const& clockData, std::map<int,std::vector<int>> &ShowersMothers,const std::vector<art::Ptr<recob::Hit> >& hits, int planeid) {
   art::ServiceHandle<cheat::BackTrackerService> bt_serv;
   art::ServiceHandle<cheat::ParticleInventoryService> particleInventory;
 
@@ -98,7 +98,7 @@ std::pair<int,double> ShowerUtils::TrueParticleIDFromTrueChain(std::map<int,std:
     //Get the plane ID
     geo::WireID wireid = (*hitIt)->WireID();
     int PlaneID = wireid.Plane;
-    std::vector<sim::TrackIDE> trackIDs = bt_serv->HitToTrackIDEs(hit);
+    std::vector<sim::TrackIDE> trackIDs = bt_serv->HitToTrackIDEs(clockData, hit);
     for (unsigned int idIt = 0; idIt < trackIDs.size(); ++idIt) {
       trackIDTo3EDepMap[TMath::Abs(trackIDs[idIt].trackID)] += trackIDs[idIt].energy;
       if(PlaneID == planeid){trackIDToEDepMap[TMath::Abs(trackIDs[idIt].trackID)] += trackIDs[idIt].energy;}
@@ -136,7 +136,7 @@ std::pair<int,double> ShowerUtils::TrueParticleIDFromTrueChain(std::map<int,std:
 }
 
 
-std::map<geo::PlaneID,int> ShowerUtils::NumberofWiresHitByShower(std::vector<int> &TrackIDs, const std::vector<art::Ptr<recob::Hit> >& hits){
+std::map<geo::PlaneID,int> ShowerUtils::NumberofWiresHitByShower(detinfo::DetectorClocksData const& clockData, std::vector<int> &TrackIDs, const std::vector<art::Ptr<recob::Hit> >& hits){
 
   art::ServiceHandle<cheat::BackTrackerService> bt_serv;
 
@@ -154,7 +154,7 @@ std::map<geo::PlaneID,int> ShowerUtils::NumberofWiresHitByShower(std::vector<int
     //Check to see if the wire is already been continued.
     if(std::find(WiresUsed.begin(),WiresUsed.end(),wireid) != WiresUsed.end()){continue;}
 
-    std::vector<sim::TrackIDE> trackIDs = bt_serv->HitToTrackIDEs(hit);
+    std::vector<sim::TrackIDE> trackIDs = bt_serv->HitToTrackIDEs(clockData, hit);
     for (unsigned int idIt = 0; idIt < trackIDs.size(); ++idIt) {
       if(std::find(TrackIDs.begin(), TrackIDs.end(),TMath::Abs(trackIDs.at(idIt).trackID)) != TrackIDs.end()){
         WiresUsed.push_back(wireid);
@@ -231,16 +231,16 @@ void ShowerUtils::CutShowerMothersByE(std::map<int,std::vector<int> >& ShowersMo
   return;
 }
 
-void ShowerUtils::CutShowerMothersByDensity(std::map<int,std::vector<int> >& ShowersMothers, std::map<int,const simb::MCParticle*>& trueParticles,std::vector<art::Ptr<recob::Hit> >& hits, float& fDensityCut){
+void ShowerUtils::CutShowerMothersByDensity(detinfo::DetectorClocksData const& clockData, std::map<int,std::vector<int> >& ShowersMothers, std::map<int,const simb::MCParticle*>& trueParticles,std::vector<art::Ptr<recob::Hit> >& hits, float& fDensityCut){
 
   //Time to cut the true showers and make sure they are a shower.
   for(std::map<int,std::vector<int> >::iterator showermother=ShowersMothers.begin(); showermother!=ShowersMothers.end();){
 
     //using the RecoUtil function calculate the number of hits that see a charge deposition from the track.
-    std::map<geo::PlaneID,int> Hit_num_map = RecoUtils::NumberofHitsThatContainEnergyDepositedByTracks(showermother->second, hits);
+    std::map<geo::PlaneID,int> Hit_num_map = RecoUtils::NumberofHitsThatContainEnergyDepositedByTracks(clockData, showermother->second, hits);
 
     //Calculaute the number of wires hit.
-    std::map<geo::PlaneID,int> Wire_num_map = ShowerUtils::NumberofWiresHitByShower(showermother->second, hits);
+    std::map<geo::PlaneID,int> Wire_num_map = ShowerUtils::NumberofWiresHitByShower(clockData, showermother->second, hits);
 
     int high_density_plane=0;
 

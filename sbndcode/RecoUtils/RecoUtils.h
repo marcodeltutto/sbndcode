@@ -52,31 +52,31 @@ namespace RecoUtils{
   bool IsInsideTPC(TVector3 position, double distance_buffer); //Checks if a position is within any of the TPCs in the geometry (user can define some distance buffer from the TPC walls)
   double CalculateTrackLength(const art::Ptr<recob::Track> track); //Calculates the total length of a recob::track by summing up the distances between adjacent traj. points
 
-  int NumberofHitsFromTrack(int TrackID, const std::vector<art::Ptr<recob::Hit> >& hits); //Returns the number of hits in the vector that are associated to the MC track.
+  int NumberofHitsFromTrack(detinfo::DetectorClocksData const& clockData, int TrackID, const std::vector<art::Ptr<recob::Hit> >& hits); //Returns the number of hits in the vector that are associated to the MC track.
 
-  int NumberofPrimaryHitsFromTrack(int TrackID, const std::vector<art::Ptr<recob::Hit> >& hits); //Returns the number of hits in the vector that are associated to the MC track.
+  int NumberofPrimaryHitsFromTrack(detinfo::DetectorClocksData const& clockData, int TrackID, const std::vector<art::Ptr<recob::Hit> >& hits); //Returns the number of hits in the vector that are associated to the MC track.
 
-  std::map<geo::PlaneID,int> NumberofPlaneHitsFromTrack(int TrackID, const std::vector<art::Ptr<recob::Hit> >& hits); //Returns the number of hits in the vector that are ssociated to the MC trakc split into planes.
+  std::map<geo::PlaneID,int> NumberofPlaneHitsFromTrack(detinfo::DetectorClocksData const& clockData, int TrackID, const std::vector<art::Ptr<recob::Hit> >& hits); //Returns the number of hits in the vector that are ssociated to the MC trakc split into planes.
 
-  std::map<int,std::map<geo::PlaneID,int> > NumberofPlaneHitsPerTrack(const std::vector<art::Ptr<recob::Hit> >& hits); //Returns a map of all the number of hits and the respetive track id they are associated to.
+  std::map<int,std::map<geo::PlaneID,int> > NumberofPlaneHitsPerTrack(detinfo::DetectorClocksData const& clockData, const std::vector<art::Ptr<recob::Hit> >& hits); //Returns a map of all the number of hits and the respetive track id they are associated to.
 
 
   float TrueEnergyDepositedFromMCTrack(int TrackID,const std::vector<art::Ptr<sim::SimChannel> >& simchannels); //Returns the total energy deposited from the track id given.
   std::map<geo::PlaneID,int> NumberofMCWiresHit(int TrackID,const std::vector<art::Ptr<sim::SimChannel> > & simchannels); // Returns the number of Wires that saw an energy deposit in Monte Carlo from a track.Might be useful to add an energy cut on this.
 
-  std::map<geo::PlaneID,int> NumberofHitsThatContainEnergyDepositedByTrack(int TrackID, const std::vector<art::Ptr<recob::Hit> >& hits); //Returns the number of hits in the reconstruction that saw an energy deposition by the a track. Might be useful to add an energy cut on this.
+  std::map<geo::PlaneID,int> NumberofHitsThatContainEnergyDepositedByTrack(detinfo::DetectorClocksData const& clockData, int TrackID, const std::vector<art::Ptr<recob::Hit> >& hits); //Returns the number of hits in the reconstruction that saw an energy deposition by the a track. Might be useful to add an energy cut on this.
 
-  float TotalEnergyDepinHits(const std::vector<art::Ptr<recob::Hit> >& hits, int Plane); //Returns the amount of energy deposited in the detector (before recombination and lifetime effects) in the hits.
+  float TotalEnergyDepinHits(detinfo::DetectorClocksData const& clockData, const std::vector<art::Ptr<recob::Hit> >& hits, int Plane); //Returns the amount of energy deposited in the detector (before recombination and lifetime effects) in the hits.
 
-  float TotalEnergyDepinHitsFromTrack(const std::vector<art::Ptr<recob::Hit> >& hits, int TrackID, int Plane); //Returns the amount of energy deposited in the detector (before recombination and lifetime effects)in the hits from a given particle.
+  float TotalEnergyDepinHitsFromTrack(detinfo::DetectorClocksData const& clockData, const std::vector<art::Ptr<recob::Hit> >& hits, int TrackID, int Plane); //Returns the amount of energy deposited in the detector (before recombination and lifetime effects)in the hits from a given particle.
 
   std::map<int,float> TrueEnergyDepositedFromMCTracks(const std::vector<art::Ptr<sim::SimChannel> >& simchannels); //Returns a map of the Energies depsoited by each track id.
 
   std::map<int,std::map<geo::PlaneID,int> > NumberofMCWiresHitMap(const std::vector<art::Ptr<sim::SimChannel> >& simchannels); //Returns of map of the number of wires hit in each plane for each track.
 
-  std::map<geo::PlaneID,int> NumberofHitsThatContainEnergyDepositedByTracks(std::vector<int> TrackIDs, const std::vector<art::Ptr<recob::Hit> >& hits);//Number of Hits that containt energy from the list of tracks.
+  std::map<geo::PlaneID,int> NumberofHitsThatContainEnergyDepositedByTracks(detinfo::DetectorClocksData const& clockData, std::vector<int> TrackIDs, const std::vector<art::Ptr<recob::Hit> >& hits);//Number of Hits that containt energy from the list of tracks.
 
-  int NumberofPrimaryHitsWithAllTracks(std::vector<int>& TrackIDs, const std::vector<art::Ptr<recob::Hit> >& hits);
+  int NumberofPrimaryHitsWithAllTracks(detinfo::DetectorClocksData const& clockData, std::vector<int>& TrackIDs, const std::vector<art::Ptr<recob::Hit> >& hits);
 
 }
 

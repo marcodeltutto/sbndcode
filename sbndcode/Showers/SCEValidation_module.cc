@@ -23,6 +23,7 @@
 
 //LArSoft Includes
 #include "nusimdata/SimulationBase/MCTruth.h"
+#include "lardata/DetectorInfoServices/DetectorClocksService.h"
 #include "larsim/MCCheater/ParticleInventoryService.h"
 #include "lardataobj/RecoBase/Cluster.h"
 #include "lardataobj/RecoBase/Hit.h"
@@ -169,6 +170,7 @@ void ana::SCEValidation::analyze(art::Event const& evt)
 
   // Get all the Tracks
   // for (auto const& fTrackLabel: fTrackLabels){
+  auto const clockData = art::ServiceHandle<detinfo::DetectorClocksService const>()->DataFor(evt);
   for (unsigned int i=0; i<fTrackLabels.size(); i++){
 
     std::string fTrackLabel = fTrackLabels.at(i);
@@ -242,7 +244,7 @@ void ana::SCEValidation::analyze(art::Event const& evt)
 
       const std::vector<art::Ptr<recob::Hit> >& trackHits = fmTrackHit.at(track.key());
 
-      int trueParticleId = RecoUtils::TrueParticleIDFromTotalTrueEnergy(trackHits);
+      int trueParticleId = RecoUtils::TrueParticleIDFromTotalTrueEnergy(clockData, trackHits);
 
 
       if (trueParticleId!=-99999){

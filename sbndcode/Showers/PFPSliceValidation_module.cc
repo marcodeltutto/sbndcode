@@ -24,6 +24,7 @@
 
 //LArSoft Includes
 #include "nusimdata/SimulationBase/MCTruth.h"
+#include "lardata/DetectorInfoServices/DetectorClocksService.h"
 #include "larsim/MCCheater/ParticleInventoryService.h"
 #include "larsim/MCCheater/BackTrackerService.h"
 #include "lardataobj/RecoBase/Cluster.h"
@@ -62,6 +63,7 @@ class ana::PFPSliceValidation : public art::EDAnalyzer {
 
     // Function to get a map of MCTruth to number of hits from that truth
     std::map<art::Ptr<simb::MCTruth>, int> GetTruthHitMap(
+    const detinfo::DetectorClocksData& clockData,
         const sim::ParticleList& trueParticlesMap,
         const std::map<int, art::Ptr<simb::MCTruth> >& particleTruthMap,
         const std::vector< art::Ptr< recob::Hit> >& allHits);
@@ -69,6 +71,7 @@ class ana::PFPSliceValidation : public art::EDAnalyzer {
     // Function to match a slice, really any selection of hits, back to MCTruth
     // Also calculates purity and completeness of match (by reference)
     art::Ptr<simb::MCTruth> GetSliceTruthMatchHits(
+        const detinfo::DetectorClocksData& clockData,
         const std::vector< art::Ptr< recob::Hit> >& sliceHits,
         const std::map<int, art::Ptr<simb::MCTruth> >& particleTruthMap,
         const std::map<art::Ptr<simb::MCTruth>, int>& truthHitMap,
@@ -245,7 +248,8 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
   {art::fill_ptr_vector(allHits, hitHandle);}
 
   // Get map of true primary particle to number of reco hits / energy in reco hits
-  std::map<art::Ptr<simb::MCTruth>, int> truthHitMap = GetTruthHitMap(trueParticlesMap,
+  auto const clockData = art::ServiceHandle<detinfo::DetectorClocksService const>()->DataFor(evt);
+  std::map<art::Ptr<simb::MCTruth>, int> truthHitMap = GetTruthHitMap(clockData, trueParticlesMap,
       particleTruthMap, allHits);
 
   // Create maps to store the best matched slice to each truth
@@ -351,7 +355,7 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
 
       // Find the MCTruth that contains most of the hits from the slice
       float purity(-999), completeness(-999);
-      art::Ptr<simb::MCTruth> trueMatch = GetSliceTruthMatchHits(sliceHits, particleTruthMap,
+      art::Ptr<simb::MCTruth> trueMatch = GetSliceTruthMatchHits(clockData, sliceHits, particleTruthMap,
           truthHitMap, completeness, purity);
 
       // Check if it matched to anything
@@ -513,6 +517,7 @@ void ana::PFPSliceValidation::analyze(art::Event const& evt)
 } // analyze
 
 std::map<art::Ptr<simb::MCTruth>, int> ana::PFPSliceValidation::GetTruthHitMap(
+    const detinfo::DetectorClocksData& clockData,
     const sim::ParticleList& trueParticlesMap,
     const std::map<int, art::Ptr<simb::MCTruth> >& particleTruthMap,
     const std::vector< art::Ptr< recob::Hit> >& allHits){
@@ -522,7 +527,7 @@ std::map<art::Ptr<simb::MCTruth>, int> ana::PFPSliceValidation::GetTruthHitMap(
   for (const auto& hit: allHits){
     int trackID     = 0;
     float hitEnergy = 0;
-    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(hit);
+    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(clockData, hit);
     // For each hit, chose the particle that contributed the most energy
     for (const auto& ide: trackIDEs) {
       if (ide.energy > hitEnergy){
@@ -542,6 +547,7 @@ std::map<art::Ptr<simb::MCTruth>, int> ana::PFPSliceValidation::GetTruthHitMap(
 } // GetTruthHitMap
 
 art::Ptr<simb::MCTruth> ana::PFPSliceValidation::GetSliceTruthMatchHits(
+    const detinfo::DetectorClocksData& clockData,
     const std::vector< art::Ptr< recob::Hit> >& sliceHits,
     const std::map<int, art::Ptr<simb::MCTruth> >& particleTruthMap,
     const std::map<art::Ptr<simb::MCTruth>, int>& truthHitMap,
@@ -552,7 +558,7 @@ art::Ptr<simb::MCTruth> ana::PFPSliceValidation::GetSliceTruthMatchHits(
   for (const auto& hit: sliceHits){
     int trackID     = 0;
     float hitEnergy = 0;
-    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(hit);
+    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(clockData, hit);
     // For each hit, chose the particle that contributed the most energy
     for (const auto& ide: trackIDEs) {
       if (ide.energy > hitEnergy){

@@ -183,7 +183,8 @@ double RecoUtils::CalculateTrackLength(const art::Ptr<recob::Track> track){
   return length;
 }
 
-int RecoUtils::NumberofHitsFromTrack(int TrackID, const std::vector<art::Ptr<recob::Hit> >& hits){
+int RecoUtils::NumberofHitsFromTrack(detinfo::DetectorClocksData const& clockData,
+    int TrackID, const std::vector<art::Ptr<recob::Hit> >& hits){
 
   art::ServiceHandle<cheat::BackTrackerService> bt_serv;
 
@@ -194,7 +195,7 @@ int RecoUtils::NumberofHitsFromTrack(int TrackID, const std::vector<art::Ptr<rec
 
     art::Ptr<recob::Hit> hit = *hitIt;
 
-    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(hit);
+    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(clockData, hit);
     std::map<int,float> hitEnergies;
 
     //Loop over the IDEs associated to the hit and add up energies
@@ -219,7 +220,8 @@ int RecoUtils::NumberofHitsFromTrack(int TrackID, const std::vector<art::Ptr<rec
 }
 
 
-int RecoUtils::NumberofPrimaryHitsFromTrack(int TrackID, const std::vector<art::Ptr<recob::Hit> >& hits){
+int RecoUtils::NumberofPrimaryHitsFromTrack(detinfo::DetectorClocksData const& clockData,
+    int TrackID, const std::vector<art::Ptr<recob::Hit> >& hits){
 
   art::ServiceHandle<cheat::BackTrackerService> bt_serv;
 
@@ -230,7 +232,7 @@ int RecoUtils::NumberofPrimaryHitsFromTrack(int TrackID, const std::vector<art::
 
     art::Ptr<recob::Hit> hit = *hitIt;
 
-    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(hit);
+    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(clockData, hit);
     std::map<int,float> hitEnergies;
 
     //Loop over the IDEs associated to the hit and add up energies
@@ -257,7 +259,8 @@ int RecoUtils::NumberofPrimaryHitsFromTrack(int TrackID, const std::vector<art::
   return HitNum;
 }
 
-int RecoUtils::NumberofPrimaryHitsWithAllTracks(std::vector<int>& TrackIDs, const std::vector<art::Ptr<recob::Hit> >& hits){
+int RecoUtils::NumberofPrimaryHitsWithAllTracks(detinfo::DetectorClocksData const& clockData,
+    std::vector<int>& TrackIDs, const std::vector<art::Ptr<recob::Hit> >& hits){
 
   art::ServiceHandle<cheat::BackTrackerService> bt_serv;
 
@@ -268,7 +271,7 @@ int RecoUtils::NumberofPrimaryHitsWithAllTracks(std::vector<int>& TrackIDs, cons
 
     art::Ptr<recob::Hit> hit = *hitIt;
 
-    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(hit);
+    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(clockData, hit);
     std::map<int,float> hitEnergies;
     int track_ids = 0;
 
@@ -284,7 +287,8 @@ int RecoUtils::NumberofPrimaryHitsWithAllTracks(std::vector<int>& TrackIDs, cons
   return HitNum;
 }
 
-std::map<geo::PlaneID,int> RecoUtils::NumberofPlaneHitsFromTrack(int TrackID, const std::vector<art::Ptr<recob::Hit> >& hits){
+std::map<geo::PlaneID,int> RecoUtils::NumberofPlaneHitsFromTrack(detinfo::DetectorClocksData const& clockData,
+    int TrackID, const std::vector<art::Ptr<recob::Hit> >& hits){
 
   art::ServiceHandle<cheat::BackTrackerService> bt_serv;
   art::ServiceHandle<geo::Geometry> geom;
@@ -299,7 +303,7 @@ std::map<geo::PlaneID,int> RecoUtils::NumberofPlaneHitsFromTrack(int TrackID, co
     geo::WireID wireid = hit->WireID();
     geo::PlaneID  PlaneID = wireid.planeID();
 
-    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(hit);
+    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(clockData, hit);
 
     std::map<int,float> hitEnergies;
 
@@ -324,7 +328,8 @@ std::map<geo::PlaneID,int> RecoUtils::NumberofPlaneHitsFromTrack(int TrackID, co
 }
 
 
-std::map<int,std::map<geo::PlaneID,int> > RecoUtils::NumberofPlaneHitsPerTrack(const std::vector<art::Ptr<recob::Hit> >& hits){
+std::map<int,std::map<geo::PlaneID,int> > RecoUtils::NumberofPlaneHitsPerTrack(detinfo::DetectorClocksData const& clockData,
+    const std::vector<art::Ptr<recob::Hit> >& hits){
 
   art::ServiceHandle<cheat::BackTrackerService> bt_serv;
   art::ServiceHandle<geo::Geometry> geom;
@@ -340,7 +345,7 @@ std::map<int,std::map<geo::PlaneID,int> > RecoUtils::NumberofPlaneHitsPerTrack(c
     geo::PlaneID  PlaneID = wireid.planeID();
 
 
-    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(hit);
+    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(clockData, hit);
 
     std::map<int,float> hitEnergies;
 
@@ -366,7 +371,8 @@ std::map<int,std::map<geo::PlaneID,int> > RecoUtils::NumberofPlaneHitsPerTrack(c
 
 
 
-std::map<geo::PlaneID,int> RecoUtils::NumberofHitsThatContainEnergyDepositedByTrack(int TrackID, const std::vector<art::Ptr<recob::Hit> >& hits){
+std::map<geo::PlaneID,int> RecoUtils::NumberofHitsThatContainEnergyDepositedByTrack(detinfo::DetectorClocksData const& clockData,
+    int TrackID, const std::vector<art::Ptr<recob::Hit> >& hits){
 
   art::ServiceHandle<cheat::BackTrackerService> bt_serv;
   art::ServiceHandle<geo::Geometry> geom;
@@ -383,7 +389,7 @@ std::map<geo::PlaneID,int> RecoUtils::NumberofHitsThatContainEnergyDepositedByTr
     geo::WireID wireid = hit->WireID();
     geo::PlaneID  PlaneID = wireid.planeID();
 
-    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(hit);
+    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(clockData, hit);
     //Loop over the IDEs associated to the Hit
     for (unsigned int idIt = 0; idIt < trackIDEs.size(); ++idIt) {
       if (TMath::Abs(trackIDEs.at(idIt).trackID) == TrackID) {++HitPlaneMap[PlaneID];}
@@ -393,7 +399,8 @@ std::map<geo::PlaneID,int> RecoUtils::NumberofHitsThatContainEnergyDepositedByTr
 }
 
 
-std::map<geo::PlaneID,int> RecoUtils::NumberofHitsThatContainEnergyDepositedByTracks(std::vector<int> TrackIDs, const std::vector<art::Ptr<recob::Hit> >& hits){
+std::map<geo::PlaneID,int> RecoUtils::NumberofHitsThatContainEnergyDepositedByTracks(detinfo::DetectorClocksData const& clockData,
+    std::vector<int> TrackIDs, const std::vector<art::Ptr<recob::Hit> >& hits){
 
   //Loop over the planes and create the initial PlaneMap
   art::ServiceHandle<geo::Geometry> geom;
@@ -409,7 +416,7 @@ std::map<geo::PlaneID,int> RecoUtils::NumberofHitsThatContainEnergyDepositedByTr
     geo::PlaneID  PlaneID = wireid.planeID();
 
     art::ServiceHandle<cheat::BackTrackerService> bt_serv;
-    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(hit);
+    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(clockData, hit);
     //Loop over the IDEs associated to the Hit
     for (unsigned int idIt = 0; idIt < trackIDEs.size(); ++idIt) {
       if (std::find(TrackIDs.begin(), TrackIDs.end(),TMath::Abs(trackIDEs.at(idIt).trackID)) != TrackIDs.end()) {++HitPlaneMap[PlaneID];}
@@ -596,7 +603,8 @@ std::map<int,float> RecoUtils::TrueEnergyDepositedFromMCTracks(const std::vector
 
 
 
-float RecoUtils::TotalEnergyDepinHits(const std::vector<art::Ptr<recob::Hit> >& hits, int Plane){
+float RecoUtils::TotalEnergyDepinHits(detinfo::DetectorClocksData const& clockData,
+    const std::vector<art::Ptr<recob::Hit> >& hits, int Plane){
 
   float DepEnergy = 0;
   art::ServiceHandle<cheat::BackTrackerService> bt_serv;
@@ -610,7 +618,7 @@ float RecoUtils::TotalEnergyDepinHits(const std::vector<art::Ptr<recob::Hit> >& 
     if(PlaneID != Plane){continue;}
 
     //Split the Hit into its IDE for each track it associates with.
-    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs((*hitIt));
+    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(clockData, (*hitIt));
 
     for (unsigned int idIt = 0; idIt < trackIDEs.size(); ++idIt){
 
@@ -624,7 +632,8 @@ float RecoUtils::TotalEnergyDepinHits(const std::vector<art::Ptr<recob::Hit> >& 
 }
 
 
-float RecoUtils::TotalEnergyDepinHitsFromTrack(const std::vector<art::Ptr<recob::Hit> >& hits, int TrackID, int Plane){
+float RecoUtils::TotalEnergyDepinHitsFromTrack(detinfo::DetectorClocksData const& clockData,
+    const std::vector<art::Ptr<recob::Hit> >& hits, int TrackID, int Plane){
 
   float DepEnergy = 0;
   art::ServiceHandle<cheat::BackTrackerService> bt_serv;
@@ -638,7 +647,7 @@ float RecoUtils::TotalEnergyDepinHitsFromTrack(const std::vector<art::Ptr<recob:
     if(PlaneID != Plane){continue;}
 
     //Split the Hit into its IDE for each track it associates with.
-    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs((*hitIt));
+    std::vector<sim::TrackIDE> trackIDEs = bt_serv->HitToTrackIDEs(clockData, (*hitIt));
 
     for (unsigned int idIt = 0; idIt < trackIDEs.size(); ++idIt){
 

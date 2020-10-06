@@ -1,0 +1,295 @@
+#include "geometry_sbnd.fcl"
+#include "detectorproperties_sbnd.fcl"
+#include "larproperties_sbnd.fcl"
+#include "larfft_sbnd.fcl"
+#include "messageservice.fcl"
+#include "simulationservices.fcl" 
+#include "signalservices_sbnd.fcl"
+#include "magfield_larsoft.fcl"
+#include "databaseutil_sbnd.fcl"
+#include "backtrackerservice.fcl"
+#include "particleinventoryservice.fcl"
+#include "photonbacktrackerservice.fcl"
+#include "seedservice_sbnd.fcl"
+#include "detectorclocks_sbnd.fcl"
+#include "photpropservices_sbnd.fcl"
+#include "sam_sbnd.fcl"
+#include "opticaldetectorservices_sbnd.fcl"
+# #include "channelmapping_sbnd.fcl" #nina
+#include "channelstatus_sbnd.fcl"
+# #include "pedestals_sbnd.fcl"
+# #include "daq_sbnd.fcl" #nina
+#include "detsimmodules_sbnd.fcl"
+#include "spacecharge_sbnd.fcl"
+# #include "dataprep_sbnd.fcl" #nina
+# #include "sbnd_dataprep_services.fcl" #nina
+# #include "PdspChannelMapService.fcl" #nina
+# #include "xyzcalib_sbnd.fcl" #nina
+# #include "PhotonCalibratorProtoDUNESP.fcl" #nina
+# #include "time_memory_tracker_sbnd.fcl" #nina
+ 
+BEGIN_PROLOG
+ 
+##############################
+### sbnd Single Phase ###
+##############################
+ 
+sbnd_services: {
+	       ExptGeoHelperInterface:@local::sbnd_geometry_helper
+	       Geometry: @local::sbnd_geo
+	       DetectorClocksService:@local::sbnd_detectorclocks
+	       DetectorPropertiesService:@local::sbnd_detproperties
+	       LArPropertiesService: @local::sbnd_properties
+	       LArFFT:@local::sbnd_larfft
+	       DatabaseUtil: @local::sbnd_database
+	       BackTrackerService:@local::standard_backtrackerservice
+	       ParticleInventoryService: @local::standard_particleinventoryservice
+	       # PhotonBackTrackerService: @local::dunefd_photonbacktrackerservice
+	       SpaceCharge:@local::sbnd_spacecharge
+	       NuRandomService:@local::sbnd_seedservice
+	       signalShapingServiceDUNE: @local::sbnd_signalshapingservice
+	       ChannelStatusService: @local::sbnd_channelstatus
+	       # ChannelGroupService:@local::changroup_apa_keepall #nina
+ }
+
+sbnd_rawdecoding_services: {
+			   ExptGeoHelperInterface:@local::sbnd_geometry_helper
+			   Geometry: @local::sbnd_geo
+			   DetectorClocksService:@local::sbnd_detectorclocks
+			   DetectorPropertiesService:@local::sbnd_detproperties
+			   LArPropertiesService: @local::sbnd_properties
+			   LArFFT:@local::sbnd_larfft
+			   DatabaseUtil: @local::sbnd_database
+			   ChannelStatusService: @local::sbnd_channelstatus
+			   #ChannelGroupService:@local::changroup_apa
+			   # PdspChannelMapService:@local::pdspchannelmap #nina
+}
+ 
+sbnd_data_services: {
+		    ExptGeoHelperInterface:@local::sbnd_geometry_helper
+		    Geometry: @local::sbnd_geo
+		    DetectorClocksService:@local::sbnd_detectorclocks
+		    DetectorPropertiesService:@local::sbnd_detproperties
+		    LArPropertiesService: @local::sbnd_properties
+		    LArFFT:@local::sbnd_larfft
+		    DatabaseUtil: @local::sbnd_database
+		    SpaceCharge:@local::sbnd_spacecharge
+		    NuRandomService:@local::sbnd_seedservice
+		    SignalShapingServiceSBND: @local::sbnd_signalshapingservice
+		    ChannelStatusService: @local::sbnd_channelstatus
+		    # ChannelGroupService:@local::changroup_apa_keepall #nina
+		    # Reco services for sbnd real data.
+		    # RawDigitExtractService:@local::rdx_std #nina
+		    # RawDigitPrepService:@local::adcprep_with_services_sim #nina
+		    # AdcDeconvolutionService:@local::adcdco_sbnd #nina
+		    # AdcRoiBuildingService:@local::adcroi_sbnd #nina
+		    # AdcWireBuildingService:@local::adcwire_std #nina
+}
+ 
+sbnd_simulation_services: {
+			  LArFFT:@local::sbnd_larfft
+			  # LArG4Parameters:@local::sbnd_largeantparameters #nina
+			  ExptGeoHelperInterface:@local::sbnd_geometry_helper
+			  Geometry: @local::sbnd_geo
+			  DetectorClocksService:@local::sbnd_detectorclocks
+			  DetectorPropertiesService:@local::sbnd_detproperties
+			  LArPropertiesService: @local::sbnd_properties
+			  DatabaseUtil: @local::sbnd_database
+			  # LArVoxelCalculator:@local::sbnd_larvoxelcalculator #nina
+			  MagneticField:@local::no_mag_larsoft
+			  SpaceCharge:@local::sbnd_spacecharge
+			  NuRandomService:@local::sbnd_seedservice
+			  SignalShapingServiceSBND: @local::sbnd_signalshapingservice
+			  # PhotonVisibilityService:@local::sbnd_photonvisibilityservice
+			  OpDetResponseInterface:@local::sbnd_opdetresponse
+			  ChannelStatusService: @local::sbnd_channelstatus
+			  ParticleInventoryService: @local::standard_particleinventoryservice
+}
+ 
+ 
+# Settings for optical simulation in the FD. Optical simulation not on by default
+# for FD, turned on by custom physics list and defining a photon visibility
+# services is workspace g4 fhicl file.
+ 
+sbnd_simulation_services.LArPropertiesService.ScintYield: 24000
+sbnd_simulation_services.LArPropertiesService.ScintPreScale:0.0287
+sbnd_simulation_services.LArPropertiesService.EnableCerenkovLight:false
+sbnd_simulation_services.LArG4Parameters.UseCustomPhysics: true
+sbnd_simulation_services.LArG4Parameters.EnabledPhysics: [ "Em",
+                                                                "FastOptical",
+                                                                "SynchrotronAndGN",
+                                                                "Ion",
+                                                                "Hadron",
+                                                                "Decay",
+                                                                "HadronElastic",
+                                                                "Stopping"]
+
+ 
+# Reco services for sbnd simulation.
+sbnd_reco_services:@local::sbnd_services
+# sbnd_reco_services.RawDigitExtractService: @local::rdx_std #nina
+# sbnd_reco_services.RawDigitPrepService:@local::adcprep_with_services_sim #nina
+# sbnd_reco_services.AdcDeconvolutionService:@local::adcdco_sbnd #nina
+# sbnd_reco_services.AdcRoiBuildingService:@local::adcroi_sbnd #nina
+# sbnd_reco_services.AdcWireBuildingService: @local::adcwire_std #nina
+
+# Switch to tool-based dataprep for sbnd simulation.
+# Comment out the the following lines to go back to the service-based dataprep.
+# Process simulation using tool-based dataprep.
+# sbnd_reco_services.RawDigitPrepService:@local::adcprep_with_tools_sim #nina
+# sbnd_reco_services.RawDigitPrepService.AdcChannelToolNames: @local::sbnd_dataprep_tools_sim #nina
+
+# xyz calibration service
+# sbnd_reco_services.XYZCalibService:@local::sbnd_xyzcalib #nina
+
+# channel map service
+# sbnd_reco_services.PdspChannelMapService:@local::pdspchannelmap #nina
+
+# channel status service
+sbnd_reco_services.ChannelStatusService:@local::sbnd_channelstatus
+ 
+# Reco services for sbnd data
+sbnd_data_reco_services:@local::sbnd_reco_services
+
+# Get rid of low frequency noise
+sbnd_data_reco_services.SignalShapingServiceDUNE.IndUFilter: "(x>0.01)*gaus"
+sbnd_data_reco_services.SignalShapingServiceDUNE.IndVFilter: "(x>0.01)*gaus"
+
+# Use channel service for data
+sbnd_data_reco_services.ChannelStatusService: @local::sbnd_channelstatus
+ 
+# Add the photon detector calibrator service
+#sbnd_data_reco_services.IPhotonCalibrator:@local::sbndsp_photoncalibrator
+# sbnd detector properties service
+sbnd_data_reco_services.DetectorPropertiesService: @local::sbnd_detproperties
+
+# Add the dataprep service.
+# sbnd_data_reco_services.RawDigitPrepService.AdcChannelToolNames: @local::sbnd_dataprep_tools_wirecell #nina
+ 
+########################
+### Message Services ###
+########################
+ 
+dune_message_services: {
+    debugModules: ["*"]
+    destinations: {
+        LogDebugFile: {
+            type:"file"
+            filename:"debug.log"
+            append: false
+            threshold:"DEBUG"
+            categories:{
+                default:{ limit: 0 }
+            }
+        }
+
+        LogStandardOut: {
+            type:"cout"
+            threshold:"WARNING"
+            categories:{
+            default:{ }
+            RecoBaseDefaultCtor: { limit: 0 }
+            AnaBaseDefaultCtor:{ limit: 0 }
+            GeometryBadInputPoint: { limit: 5 timespan: 1000}
+            }
+        }
+
+        LogStandardError: {
+            type:"cerr"
+            threshold:"ERROR"
+            categories:{
+            default:{ }
+            }
+        }
+    }
+}
+
+dune_message_services_prod_debug: {
+    debugModules: ["*"]
+    destinations: {
+        LogDebugFile:@local::dune_message_services.destinations.LogDebugFile
+        LogStandardOut:@local::dune_message_services.destinations.LogStandardOut
+        LogStandardError:@local::dune_message_services.destinations.LogStandardError
+    }
+}
+ 
+dune_message_services_prod_debug.destinations.LogDebugFile.categories:{
+    default: { }
+    RecoBaseDefaultCtor: { limit: 0 }
+    AnaBaseDefaultCtor:{ limit: 0 }
+    Track3DKalmanSPS_GenFit: { limit: 0 }
+    GeometryBadInputPoint: { limit: 5 timespan: 1000}
+    SpacePointAlg: { limit: 0 }
+    KalmanFilterAlg: { limit: 0 }
+    Track3DKalmanHit: { limit: 0 }
+    fuzzyCluster: { limit: 0}
+    ChannelFilter: { limit: 0}
+    HoughBaseAlg: { limit: 0}
+    DBscan: {limit: 0}
+    CosmicTracker: {limit: 0}
+    HitCheater: {limit: 0}
+    DisambigAlg35t: {limit: 0}
+    ClusterCheater: {limit: 0}
+    ClusterCrawlerAlg: {limit: 0}
+    CaloPrtTrk: {limit: 0}
+    CaloPrtHit: {limit: 0}
+    BackTrackerService: {limit: 0}
+    DisambigCheat: {limit: 0}
+    Summary: {limit: 0}
+    CosmicTracker: {limit: 0}
+    ClusterMergeTQ: {limit: 0}
+    LArPandora: {limit: 0} 
+}
+ 
+ 
+dune_message_services_prod: {
+    debugModules: ["*"]
+    destinations: {
+        LogDebugFile: {
+            type:"file"
+            filename:"debugprod.log"
+            append: false
+            threshold:"DEBUG"
+            categories:{
+                default:{ limit: 0 }
+            }
+        }
+        LogStandardOut: {
+            type:"cout"
+            threshold:"INFO"
+            categories:{
+                ArtReport: {limit: -1}
+                default:{limit: 0}
+            }
+        }
+        LogStandardError: {
+            type:"cerr"
+            threshold:"ERROR"
+            categories:{
+                default:{}
+            }
+        }
+    }
+}
+
+dune_message_services_interactive: {
+    debugModules: ["*"]
+    destinations: {
+        LogDebugFile:@local::dune_message_services.destinations.LogDebugFile
+        LogStandardOut:@local::dune_message_services.destinations.LogStandardOut
+        LogStandardError:@local::dune_message_services.destinations.LogStandardError
+    }
+}
+dune_message_services_interactive.destinations.LogStandardOut.threshold:"INFO"
+dune_message_services_interactive.destinations.LogStandardOut.categories:{
+    default: { limit: 0 }
+}
+dune_message_services_interactive.destinations.LogStandardError.threshold:"WARNING"
+dune_message_services_interactive.destinations.LogStandardError.categories: {
+    default: { }
+    RecoBaseDefaultCtor: { limit: 1 }
+    AnaBaseDefaultCtor:{ limit: 1 }
+    GeometryBadInputPoint: { limit: 5 timespan: 1000}
+}
+ 
+END_PROLOG

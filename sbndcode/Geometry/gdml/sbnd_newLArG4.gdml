@@ -35753,9 +35753,10 @@
         </subtraction>
     </solids>
     <structure>
-        <volume name="volAuxDetSensitiveCRTStrip_0">
+        <volume name="volAuxDetSensitiveCRTStrip0">
             <materialref ref="Polystyrene"/>
             <solidref ref="CRTStrip_eeb1bb44"/>
+	    <auxiliary auxtype="SensDet" auxvalue="AuxDet"/>
         </volume>
         <volume name="volAuxDetSensitiveCRTStrip_1">
             <materialref ref="Polystyrene"/>
@@ -35821,8 +35822,8 @@
             <materialref ref="Polystyrene"/>
             <solidref ref="CRTStripArray_9bb04853"/>
             <physvol>
-                <volumeref ref="volAuxDetSensitiveCRTStrip_0"/>
-                <position name="posvolAuxDetSensitiveCRTStrip_0" unit="cm" x="-84" y="0" z="0"/>
+                <volumeref ref="volAuxDetSensitiveCRTStrip0"/>
+                <position name="posvolAuxDetSensitiveCRTStrip0" unit="cm" x="-84" y="0" z="0"/>
             </physvol>
             <physvol>
                 <volumeref ref="volAuxDetSensitiveCRTStrip_1"/>

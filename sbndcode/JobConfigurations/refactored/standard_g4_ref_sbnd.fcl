@@ -94,8 +94,8 @@ services:
     category      : "world"
     gdmlFileName_ : "sbnd_newLArG4_nowires.gdml"
 
-    volumeNames   : ["volTPCActive", "volTPCActiveOuter"] # list of volumes for which the stepLimit should be set
-     volumeNames   : ["volTPCActive"] # deleting the requirement of having volTPCActiveOuter
+    #volumeNames   : ["volTPCActive", "volTPCActiveOuter"] # list of volumes for which the stepLimit should be set
+    volumeNames   : ["volTPCActive"] # deleting the requirement of having volTPCActiveOuter
     
     # stepLimits    : [0.3, 0.3] # corresponding stepLimits in mm for the volumes in the volumeNames list
     stepLimits    : [0.3]
@@ -114,9 +114,6 @@ services:
    }
 }
  
-#services.PhotonVisibilityService:               @local::sbnd_library_vuv_vis_prop_timing_photonvisibilityservice
-
-
 #source is now a root file
 source:
 {
@@ -174,18 +171,18 @@ physics:
  #define the producer and filter modules for this path, order matters, 
  #filters reject all following items.  see lines starting physics.producers below
  
- simulate: [ rns, largeant,IonAndScint,PDFastSim, simdrift ]
+ simulate: [ rns, largeant, IonAndScint, PDFastSim, simdrift ]
  
  #define the output stream, there could be more than one if using filters 
  stream1:  [ out1 ]
 
  #trigger_paths is a keyword and contains the paths that modify the art::event, 
  #ie filters and producers
- trigger_paths: [simulate] 
+ trigger_paths: [ simulate ]
 
  #end_paths is a keyword and contains the paths that do not modify the art::Event, 
  #ie analyzers and output streams.  these all run simultaneously
- end_paths:     [stream1]  
+ end_paths:     [ stream1 ]
 }
 
 #block to define where the output goes.  if you defined a filter in the physics
@@ -203,3 +200,11 @@ outputs:
 # only keep MCParticles that cross the cryostat;
 # this is relevant in extensive cosmic ray generators (like Corsika)
 #physics.producers.largeant.KeepParticlesInVolumes: ["volCryostat", "volTaggerTopHigh", "volTaggerTopLow", "volTaggerSideLeft", "volTaggerSideRight", "volTaggerFaceFront", "volTaggerFaceBack", "volTaggerBot"] 
+
+
+
+# .....ooOOoo.....ooOOoo.....ooOOoo.....ooOOoo.....ooOOoo.....ooOOoo.....ooOOoo.....ooOOoo.....ooOOoo.....ooOOoo
+# extra configurations
+
+services.LArG4Parameters.UseLitePhotons:        true   # true = produce SimPhotonsLite and OpDetBacktrackerRecord, false = produce SimPhotons
+services.PhotonVisibilityService:               @local::sbnd_library_vuv_vis_prop_timing_photonvisibilityservice

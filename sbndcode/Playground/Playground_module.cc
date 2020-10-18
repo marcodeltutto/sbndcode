@@ -29,6 +29,7 @@
 #include "lardataobj/RawData/RawDigit.h"
 #include "lardataobj/Simulation/SimChannel.h"
 #include "lardataobj/RecoBase/Hit.h"
+#include "lardataobj/RecoBase/SpacePoint.h"
 
 class Playground;
 
@@ -49,19 +50,21 @@ public:
   void analyze(art::Event const& e) override;
 
 private:
-  
-  int _subtract_pedestal = false;
 
-  detinfo::DetectorProperties const* _det_prop;
+  int _subtract_pedestal = false;
+  std::string _spacepoint_producer = "pandora";
+
+  // detinfo::DetectorProperties const* _det_prop;
   geo::GeometryCore const* _geo_service;
   detinfo::LArProperties const* _lar_prop;
 
   // Declare member data here.
-  TTree* tree;
+  TTree* _tree;
   std::vector<double> _ides_x, _ides_y, _ides_z, _ides_num_electrons, _ides_energy;
   std::vector<float> _raw_digits;
 
   std::vector<float> _hit_time, _hit_wire, _hit_plane, _hit_integral, _hit_start_time, _hit_end_time;
+  std::vector<float> _sp_x, _sp_y, _sp_z;
 };
 
 
@@ -70,25 +73,28 @@ Playground::Playground(fhicl::ParameterSet const& p)
   // More initializers here.
 {
   // Call appropriate consumes<>() for any products to be retrieved by this module.
-  _det_prop = lar::providerFrom<detinfo::DetectorPropertiesService>();
+  // _det_prop = lar::providerFrom<detinfo::DetectorPropertiesService>();
   _geo_service = lar::providerFrom<geo::Geometry>();
   _lar_prop = lar::providerFrom<detinfo::LArPropertiesService>();
 
   art::ServiceHandle<art::TFileService> fs;
-  tree = fs->make<TTree>("Tree","");
+  _tree = fs->make<TTree>("Tree","");
 
-  tree->Branch("ides_x", "std::vector<double>", &_ides_x);
-  tree->Branch("ides_y", "std::vector<double>", &_ides_y);
-  tree->Branch("ides_z", "std::vector<double>", &_ides_z);
-  tree->Branch("ides_num_electrons", "std::vector<double>", &_ides_num_electrons);
-  tree->Branch("ides_energy", "std::vector<double>", &_ides_energy);
-  tree->Branch("raw_digits", "std::vector<float>", &_raw_digits);
-  tree->Branch("hit_time", "std::vector<float>", &_hit_time);
-  tree->Branch("hit_wire", "std::vector<float>", &_hit_wire);
-  tree->Branch("hit_plane", "std::vector<float>", &_hit_plane);
-  tree->Branch("hit_integral", "std::vector<float>", &_hit_integral);
-  tree->Branch("hit_start_time", "std::vector<float>", &_hit_start_time);
-  tree->Branch("hit_end_time", "std::vector<float>", &_hit_end_time);
+  _tree->Branch("ides_x", "std::vector<double>", &_ides_x);
+  _tree->Branch("ides_y", "std::vector<double>", &_ides_y);
+  _tree->Branch("ides_z", "std::vector<double>", &_ides_z);
+  _tree->Branch("ides_num_electrons", "std::vector<double>", &_ides_num_electrons);
+  _tree->Branch("ides_energy", "std::vector<double>", &_ides_energy);
+  _tree->Branch("raw_digits", "std::vector<float>", &_raw_digits);
+  _tree->Branch("hit_time", "std::vector<float>", &_hit_time);
+  _tree->Branch("hit_wire", "std::vector<float>", &_hit_wire);
+  _tree->Branch("hit_plane", "std::vector<float>", &_hit_plane);
+  _tree->Branch("hit_integral", "std::vector<float>", &_hit_integral);
+  _tree->Branch("hit_start_time", "std::vector<float>", &_hit_start_time);
+  _tree->Branch("hit_end_time", "std::vector<float>", &_hit_end_time);
+  _tree->Branch("sp_x", "std::vector<float>", &_sp_x);
+  _tree->Branch("sp_y", "std::vector<float>", &_sp_y);
+  _tree->Branch("sp_z", "std::vector<float>", &_sp_z);
 
 }
 
@@ -152,7 +158,7 @@ void Playground::analyze(art::Event const& e)
 
       int offset = (wire - 100) * n_ticks;
       std::vector<float>::iterator startItr = _raw_digits.begin() + offset;
-      
+
       float pedestal = 0;
       if (_subtract_pedestal) {
         pedestal = ped;
@@ -187,7 +193,7 @@ void Playground::analyze(art::Event const& e)
     unsigned int plane = hit->WireID().Plane;
     unsigned int tpc = hit->WireID().TPC;
     unsigned int cryo = hit->WireID().Cryostat;
-    
+
     if (cryo != 0 || tpc != 0 || plane != 2) {
       continue;
     }
@@ -200,7 +206,6 @@ void Playground::analyze(art::Event const& e)
   }
 
 
-  tree->Fill();
 
 
 
@@ -214,10 +219,38 @@ void Playground::analyze(art::Event const& e)
   //       ides_num_electrons.push_back(ide.numElectrons);
   //       ides_energy.push_back(ide.energy);
   //       std::cout << "ide.x = " << ide.x << std::endl;
-  //       tree->Fill();
+  //       _tree->Fill();
   //     }
   //   }
   // }
+
+
+  ::art::Handle<std::vector<recob::SpacePoint>> spacepoint_h;
+  e.getByLabel(_spacepoint_producer, spacepoint_h);
+  if(!spacepoint_h.isValid() || spacepoint_h->empty()) {
+    mf::LogWarning("Playground") << "Don't have good SpacePoint." << std::endl;
+  }
+
+  // Construct the vector of SpacePoint
+  std::vector<art::Ptr<recob::SpacePoint>> spacepoint_v;
+  art::fill_ptr_vector(spacepoint_v, spacepoint_h);
+
+  _sp_x.clear();
+  _sp_y.clear();
+  _sp_z.clear();
+
+  for (size_t n_spacepoint = 0; n_spacepoint < spacepoint_v.size(); n_spacepoint++) {
+
+    auto xyz = spacepoint_v[n_spacepoint]->XYZ();
+    _sp_x.push_back(xyz[0]);
+    _sp_y.push_back(xyz[1]);
+    _sp_z.push_back(xyz[2]);
+
+  }
+
+
+
+  _tree->Fill();
 }
 
 

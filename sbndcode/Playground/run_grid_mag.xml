@@ -3,7 +3,7 @@
 <!-- Production Project -->
 
 <!DOCTYPE project [
-<!ENTITY release "v08_55_00">
+<!ENTITY release "v09_06_00">
 <!ENTITY releasetag "e19:prof">
 <!ENTITY my_version "v1">
 <!ENTITY name "sbn_mag">
@@ -11,7 +11,7 @@
 <!ENTITY file_type "data">
 <!ENTITY run_type "physics">
 <!ENTITY PNFSpath "/pnfs/sbnd/resilient/users/mdeltutt/">
-<!ENTITY par_momentum "0.2">
+<!ENTITY par_momentum "0.2to3">
 <!ENTITY mag_field "0.7">
 ]>
 
@@ -34,7 +34,7 @@
   <larsoft>
     <tag>&release;</tag>
     <qual>&releasetag;</qual>
-    <local>&PNFSpath;Tarballs/sbndcode_v08_55_00_mag__&my_version;.tgz</local>
+    <local>&PNFSpath;Tarballs/sbndcode_v09_06_00_mag__&my_version;.tgz</local>
   </larsoft>
 
   <!-- Project stages -->
@@ -43,12 +43,13 @@
     <fcl>prodsingle_mag_sbdn_pdg11_&par_momentum;GeV.fcl</fcl>
     <fcl>standard_g4_sbnd_mag&mag_field;Ty.fcl</fcl>
     <fcl>standard_detsim_sbnd.fcl</fcl>
-    <fcl>standard_reco_sbnd_basic.fcl</fcl>
+    <!-- <fcl>standard_reco_sbnd_basic.fcl</fcl> -->
+    <fcl>standard_reco1reco2_sbnd.fcl</fcl>
     <fcl>run_playground.fcl</fcl>
     <!-- <inputlist>&PNFSpath;cosmics_corsika_cmc_uboone_intime_v06_26_01.txt</inputlist> -->
     <defname>&name;_&tag;_mag</defname>
     <maxfilesperjob>1</maxfilesperjob>
-    <maxfluxfilemb>0</maxfluxfilemb> <!-- bs fix for project.py -->
+    <!-- <maxfluxfilemb>0</maxfluxfilemb>--> <!-- bs fix for project.py -->
     <outdir>/pnfs/sbnd/scratch/users/mdeltutt/&release;/mag_pdg11_&par_momentum;GeV_mag&mag_field;Ty_&my_version;</outdir>
     <workdir>&PNFSpath;grid_workdir_sbnd/mag_pdg11_&par_momentum;GeV_mag&mag_field;Ty_&my_version;</workdir>
     <numjobs>400</numjobs>

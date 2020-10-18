@@ -1,0 +1,9 @@
+BEGIN_PROLOG
+
+playground:
+{
+  module_type:   "Playground"
+  Dummy:         "dummy"
+}
+
+END_PROLOG

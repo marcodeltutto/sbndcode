@@ -1,0 +1,27 @@
+#include "standard_g4_sbnd.fcl"
+
+services.MagneticField: {
+    FieldDescriptions: [
+         {
+            ConstantField: [
+               0, # T
+               1,
+               0
+            ]
+            MagnetizedVolume: "volDetEnclosure"
+            UseField: 1
+         }
+    ]
+    service_type: "MagneticField"
+}
+
+services.LArG4Parameters.EnabledPhysics: [
+         "Em",
+         #"FastOptical",
+         "SynchrotronAndGN",
+         "Ion",
+         "Hadron",
+         "Decay",
+         "HadronElastic",
+         "Stopping"
+]
